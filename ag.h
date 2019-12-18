@@ -74,6 +74,7 @@ class Genetic{
 		void displayBest();									//Completed
 		void destroy();										//Completed
 		double getImprovRate();
+		double getFitness();
 };
 
 Genetic::Genetic(int population_size, int selection_rate, int cross_percent, int max_cross, int gen, char* file_source, bool backup, int description){
@@ -126,6 +127,11 @@ Genetic::Genetic(int population_size, int selection_rate, int cross_percent, int
 double Genetic::getImprovRate(){
 
 	return 100.00-(double)100*final_fitness/bestPrior;
+}
+
+double Genetic::getFitness(){
+
+	return final_fitness;
 }
 
 void Genetic::clearPopulation(){
