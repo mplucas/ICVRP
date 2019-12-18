@@ -1,0 +1,6 @@
+Vehicle Type    Number    Capacity    Cost
+    1             0         500       1000
+    2             0         750       1500
+    3             0         1000      2000
+    4             0         1250      2500
+    5             0         1500      3000
