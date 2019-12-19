@@ -9,13 +9,15 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
+	setbuf(stdout, NULL);
+
 	srand(time(NULL));
 	int pop_size      = 60;
 	int select        = 97;
 	int cross_percent = 100;
 	int generations   = 200;
-	int repeat = 50;
-	char source[] = {"C103.txt"};
+	int repeat = 1;
+	char source[] = {"teste.txt"};
 
 	// variable to measure value
 	double avgValue = 0;
@@ -40,10 +42,13 @@ int main(int argc, char** argv) {
 		t = clock();
 
 		// processing
-		Genetic alg(pop_size, select, cross_percent, 50, generations, source, false, 0);
+		Genetic alg(pop_size, select, cross_percent, 50, generations, source, false, 2);
 		alg.solve();
+		printf("\nG\n\n");
 		auxValue = alg.getFitness();
+		printf("\nH\n\n");
 		alg.destroy();
+		printf("\nI\n\n");
 
 		t = clock() - t;
 		// finished measuring time and printing time ans value of this iteration

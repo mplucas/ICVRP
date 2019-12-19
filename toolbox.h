@@ -18,7 +18,9 @@ typedef struct{
 
 void freeMemory(void* var){
 	free(var);
+	printf("\n003\n\n");
 	var=NULL;
+	printf("\n004\n\n");
 }
 
 void printfGene(int* gene, int size){
@@ -330,12 +332,13 @@ int*  mix_half(int* gene, int elements){
 	int* result = (int*)malloc(sizeof(int)*elements);
 	int half;
 
+	// maybe if elements is odd than it will cause error
 	if(elements%2==1)	half= (elements+1)/2;
 	else	half= elements/2;
 
-	for(i=0; i<half-1; i++)	result[i] = gene[half + i];
+	for(i=0; i<half; i++)	result[i] = gene[half + i];
 
-	for(i=half-1; i<elements; i++)	result[i] = gene[i - half];
+	for(i=half; i<elements; i++)	result[i] = gene[i - half];
 	
 	return result;
 }
