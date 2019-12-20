@@ -18,9 +18,9 @@ typedef struct{
 
 void freeMemory(void* var){
 	free(var);
-	printf("\n003\n\n");
+	//printf("\n003\n\n");
 	var=NULL;
-	printf("\n004\n\n");
+	//printf("\n004\n\n");
 }
 
 void printfGene(int* gene, int size){
@@ -196,7 +196,7 @@ int* endTimeVector(Vrp* prob, int elements){
 	mergeSort(result, 0, elements-1);
 	
 	int target;
-	//printf("\n\n");
+	////printf("\n\n");
 	for(i=0; i<elements; i++){
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= result[i].fitness)
@@ -227,7 +227,7 @@ int* endTimeVector(Vrp* prob, int elements){
 			cost+=prob->cost[prev][0];
 			prev=0;
 			if(lost==true){
-				printf("\nERROR!");
+				//printf("\nERROR!");
 			}
 			i=-1;
 			index++;
@@ -244,7 +244,7 @@ int* endTimeVector(Vrp* prob, int elements){
 			lost=true;
 		}
 	}
-	//printf("\nCost: %.2f\n", cost);
+	////printf("\nCost: %.2f\n", cost);
 	freeMemory(result);
 	freeMemory(visited);
 	freeMemory(timer_truck);
@@ -272,7 +272,7 @@ int* startTimeVector(Vrp* prob, int elements){
 	mergeSort(result, 0, elements-1);
 	
 	int target;
-	//printf("\n\n");
+	////printf("\n\n");
 	for(i=0; i<elements; i++){
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= prob->dueTime[target] )
@@ -303,7 +303,7 @@ int* startTimeVector(Vrp* prob, int elements){
 			cost+=prob->cost[prev][0];
 			prev=0;
 			if(lost==true){
-				printf("\nERROR!");
+				//printf("\nERROR!");
 			}
 			i=-1;
 			index++;
@@ -320,7 +320,7 @@ int* startTimeVector(Vrp* prob, int elements){
 			lost=true;
 		}
 	}
-	//printf("\nCost: %.2f\n", cost);
+	////printf("\nCost: %.2f\n", cost);
 	freeMemory(result);
 	freeMemory(visited);
 	freeMemory(timer_truck);
@@ -336,9 +336,9 @@ int*  mix_half(int* gene, int elements){
 	if(elements%2==1)	half= (elements+1)/2;
 	else	half= elements/2;
 
-	for(i=0; i<half; i++)	result[i] = gene[half + i];
+	for(i=0; i<half-1; i++)	result[i] = gene[half + i];
 
-	for(i=half; i<elements; i++)	result[i] = gene[i - half];
+	for(i=half-1; i<elements; i++)	result[i] = gene[i - half];
 	
 	return result;
 }
@@ -555,7 +555,7 @@ int* agrupamento(int toAdd, bool visited[], int elements, Tupla parts[], int tSi
 			result[0]=cont;
 			
 			*bestFit = sum;
-			printf("\nFitness: %.2f, parts: %d", sum, cont);
+			//printf("\nFitness: %.2f, parts: %d", sum, cont);
 			newBest(result, best);
 			visited[elements]=true;
 		}else{
@@ -580,7 +580,7 @@ int* arranjo(int elements, Tupla parts[], int tSize, Tupla original[]){
 	double bestFit, sum=0.0;
 	best[0]=0;
 	for(i=0; i<tSize; i++){
-		printf("\nCiclo %d/%d", i+1, tSize);
+		//printf("\nCiclo %d/%d", i+1, tSize);
 		setVisit(visited, elements, false);
 		best = agrupamento(i, visited, elements, parts, tSize, result, cont, original, best, &bestFit, sum);
 	}

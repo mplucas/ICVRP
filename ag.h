@@ -104,7 +104,7 @@ Genetic::Genetic(int population_size, int selection_rate, int cross_percent, int
 	new_gen   = NULL;
 	newFitness   = NULL;
 	generalFitness   = NULL;
-	readBackup = backup;
+	readBackup = false;//backup;
 	max_interval = max_cross;
 	pop_size=population_size;
 	sel_rate = selection_rate;
@@ -122,7 +122,7 @@ Genetic::Genetic(int population_size, int selection_rate, int cross_percent, int
 	elements = problem->client-1;
 	if(details) printf(" [%d Clients instance]", elements);
 	mut_base=0.1;
-	printf("\nF\n\n");
+	//printf("\nF\n\n");
 }
 
 double Genetic::getImprovRate(){
@@ -330,14 +330,14 @@ int* Genetic::random_gene(){
 	}
 	for(i=0; i<elements; i++){
 		switch(elements){
-			case 25: 	choosen=choosen=random_gen_025(choosen);	break;
-			case 50: 	choosen=choosen=random_gen_050(choosen);	break;
-			case 100:	choosen=choosen=random_gen_100(choosen);	break;
-			default:	choosen = (rand()%elements) + 1;	break;
+			case 25: 	choosen = random_gen_025(choosen);	break;
+			case 50: 	choosen = random_gen_050(choosen);	break;
+			case 100:	choosen = random_gen_100(choosen);	break;
+			default:	choosen = (rand() % elements) + 1;	break; //aqui
 		}
-		//choosen-=1;
-		printf("\nchoosen %i\n", choosen);
-		printf("\nsetted[choosen] %i\n", setted[choosen]);
+		choosen-=1;
+		//printf("\nchoosen %i\n", choosen);
+		//printf("\nsetted[choosen] %i\n", setted[choosen]);
 		if(setted[choosen]==false){
 			gene[i] = choosen+1;
 			setted[choosen]=true;
@@ -363,14 +363,14 @@ int* Genetic::random_gene(){
 				if(got_it==false)	printf("\nERROR!\n");
 			}
 		}
-		printf("\n0a\n\n");
+		//printf("\n0a\n\n");
 	}
-	printf("\n001\n\n");
+	//printf("\n001\n\n");
 	for(int i = 0; i < elements; i++){
-		printf("\n%i %i\n", i, setted[i]);
+		//printf("\n%i %i\n", i, setted[i]);
 	}
 	freeMemory(setted);
-	printf("\n002\n\n");
+	//printf("\n002\n\n");
 	return gene;
 }
 
@@ -468,7 +468,7 @@ double Genetic::breakRoute2(int* major){
 			Tupla* node = newNode(list);
 			node->part = copyPart(parcial, passo+1);
 			node->fitness = fitness + problem->cost[dest][0];
-			//printf("\n%d", list->size);
+			////printf("\n%d", list->size);
 			if(timer < problem->readyTime[dest])	timer = problem->readyTime[dest];
 			
 			timer += problem->serviceTime[dest];
@@ -492,16 +492,16 @@ double Genetic::breakRoute2(int* major){
 	}
 	mergeSort(order, 0, tSize-1);
 	
-	//printf("\nLista: %d", tSize);
+	printf("\nLista: %d", tSize);
 	for(i=0; i<list->size; i++){
-		//printf("\n%.2f", original[i].fitness);
+		printf("\n%.2f", original[i].fitness);
 	}
 	freeLista(list);
 	printf("\nStandard: %.2f", breakRoute(major));
 	int* final = arranjo(elements, order, tSize, original);
 	double sum=0.0;
 	if(final!=NULL){
-		//printf("\nGrupos: ");
+		printf("\nGrupos: ");
 		for(i=1; i<final[0]+1; i++){
 			//printf("\n%d: ", final[i]);
 			//printfPart(original[final[i]].part);
@@ -545,19 +545,19 @@ void Genetic::solve(){
 	unsigned int i;
 	//breakRoute2(cost_shortcut(problem));
 	//printf("\nCost: %.2f", breakRoute(cost_shortcut(problem)));
-	printf("\n0\n\n");
+	//printf("\n0\n\n");
 	populate();
-	printf("\n1\n\n");
+	//printf("\n1\n\n");
 	if(titles) printf("\n------------------------------------------------");
 	for(i=0; i<generation; i++){
 		if(titles)
 			printf("\n-------------------CICLE %2d/%2d------------------", i+1, generation);
 		selection();
-		printf("\n2\n\n");
+		//printf("\n2\n\n");
 		crossover();
-		printf("\n3\n\n");
+		//printf("\n3\n\n");
 		mutation();
-		printf("\n4\n\n");
+		//printf("\n4\n\n");
 		validate();
 		recovery();
 		update();
@@ -595,13 +595,14 @@ void Genetic::populate(){
 		i=0;
 		bool tryFirst=true;
 		do{
+			printf("\ni: %i\n",i);
 			if(tryFirst){
 				int* tmp;
 
 				tmp=endTimeVector(problem, elements);
-				printf("\n01\n\n");
+				//printf("\n01\n\n");
 				fit = breakRoute(tmp);
-				printf("\n02\n\n");
+				//printf("\n02\n\n");
 				if(fit == -1 || !checkConsistency(tmp, elements) || i>=pop_size){
 					freeMemory(tmp);
 				}else{
@@ -609,12 +610,12 @@ void Genetic::populate(){
 					generalFitness[i]=fit;
 					pop[i++]=tmp;
 				}
-				printf("\n03\n\n");
+				//printf("\n03\n\n");
 
 				tmp=startTimeVector(problem, elements);
-				printf("\n04\n\n");
+				//printf("\n04\n\n");
 				fit = breakRoute(tmp);
-				printf("\n05\n\n");
+				//printf("\n05\n\n");
 				if(fit == -1 || !checkConsistency(tmp, elements) || i>=pop_size){
 					freeMemory(tmp);
 				}else{
@@ -622,7 +623,7 @@ void Genetic::populate(){
 					generalFitness[i]=fit;
 					pop[i++]=tmp;
 				}
-				printf("\n06\n\n");
+				//printf("\n06\n\n");
 
 				tmp=cost_shortcut(problem);
 				fit = breakRoute(tmp);
@@ -633,26 +634,27 @@ void Genetic::populate(){
 					generalFitness[i]=fit;
 					pop[i++]=tmp;
 				}
-				printf("\n07\n\n");
+				//printf("\n07\n\n");
 
 				tryFirst=false;
 			}
 
 			int* a = random_gene();
-			printf("\n08 a: ");
-			for(int j = 0; j < elements; j++){
-				printf("%i ",a[j]);
-			}
-			printf("\n");
+			//printf("\n08\n\n");
+			// for(int j = 0; j < elements; j++){
+			// 	printf("%i ",a[j]);
+			// }
+			//printf("\n");
 			int* b = mix_half(a, elements);
-			printf("\n09\n\n");
+			//printf("\n09\n\n");
 			int* c = mix_invert(a, elements);
-			printf("\n010\n\n");
+			//printf("\n010\n\n");
 			int* d = mix_complement(a, elements);
-			printf("\n011\n\n");
+			//printf("\n011\n\n");
 
 
 			fit = breakRoute(a);
+			//printf("\n012\n\n");
 			if(fit!=-1 && i<pop_size && checkConsistency(a, elements)){
 				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
 				generalFitness[i]=fit;
@@ -660,6 +662,7 @@ void Genetic::populate(){
 			}else	freeMemory(a);
 
 			fit = breakRoute(b);
+			//printf("\n013\n\n");
 			if(fit!=-1 && i<pop_size && checkConsistency(b, elements)){
 				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
 				generalFitness[i]=fit;
@@ -667,6 +670,7 @@ void Genetic::populate(){
 			}else	freeMemory(b);
 			
 			fit = breakRoute(c);
+			//printf("\n014\n\n");
 			if(fit!=-1 && i<pop_size && checkConsistency(c, elements)){
 				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
 				generalFitness[i]=fit;
@@ -674,6 +678,7 @@ void Genetic::populate(){
 			}else	freeMemory(c);
 
 			fit = breakRoute(d);
+			//printf("\n015\n\n");
 			if(fit!=-1 && i<pop_size && checkConsistency(d, elements)){
 				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
 				generalFitness[i]=fit;
@@ -681,13 +686,17 @@ void Genetic::populate(){
 			}else	freeMemory(d);
 
 		}while(i<pop_size);
+		//rem(instance);
 		for(i=0; i<pop_size; i++)	writeSol(pop[i], elements, instance);
 	}else{
+		//printf("\n02\n\n");
 		pop=readSol(pop_size, elements, instance);
+		//printf("\n03\n\n");
 		for(i=0; i<pop_size; i++){
 			generalFitness[i]=breakRoute(pop[i]);
 			if(generalFitness[i]<bestPrior || bestPrior<0) bestPrior = generalFitness[i];
 		}
+		//printf("\n04\n\n");
 	}
 }
 

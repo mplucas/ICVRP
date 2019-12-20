@@ -278,13 +278,13 @@ int** readRow(FILE *instance, int clients){
 		matrix[i][3]=ready;
 		matrix[i][4]=due;
 		matrix[i][5]=service;
-		printf("\n i: %i\n x: %i \t y: %i \t demand: %i\n ready: %i \t due: %i \t service: %i\n", i,x,y,demand,ready,due,service);
+		//printf("\n i: %i\n x: %i \t y: %i \t demand: %i\n ready: %i \t due: %i \t service: %i\n", i,x,y,demand,ready,due,service);
 		i+=1;
 		if(i==clients)
 			flag=0;
 	}
 	free(buffer);
-	printf("\nA\n\n");
+	//printf("\nA\n\n");
 	return matrix;
 }
 
@@ -320,11 +320,11 @@ Solomon readInstance(char* instanceName){
 	instance.nDestination=clientCheck(instance_file);
 	rewind(instance_file);
 	readHeader(instance_file, &instance.nVehicle, &instance.capacity);
-	printf("\n instance.nVehicle: %i \t instance.capacity: %i\n", instance.nVehicle, instance.capacity);
+	//printf("\n instance.nVehicle: %i \t instance.capacity: %i\n", instance.nVehicle, instance.capacity);
 	instance.dest_info = readRow(instance_file, instance.nDestination);
 	
 	fclose(instance_file);
-	printf("\nB\n\n");
+	//printf("\nB\n\n");
 	
 	instance.cost_Matrix=(double**)malloc(sizeof(double*)*instance.nDestination);
 	
@@ -336,7 +336,7 @@ Solomon readInstance(char* instanceName){
 		}
 	}
 
-	printf("\nC\n\n");
+	//printf("\nC\n\n");
 
 	return instance;
 }
@@ -348,7 +348,7 @@ Vrp* Vrp_init(char* src){
 	Solomon instance_model=readInstance(src);
 	//memcpy (problem->source, src, size );
 	strcpy (problem->source, src);
-	printf("\nD %s\n\n", src);
+	//printf("\nD %s\n\n", src);
 	problem->vehicle = instance_model.nVehicle;
 	problem->client = instance_model.nDestination;
 	problem->capacity = instance_model.capacity;
@@ -367,7 +367,7 @@ Vrp* Vrp_init(char* src){
 		problem->dueTime[i]     = problem->info[i][4];
 		problem->serviceTime[i] = problem->info[i][5];
 	}
-	printf("\nE\n\n");
+	//printf("\nE\n\n");
 	
 	return problem;
 }
