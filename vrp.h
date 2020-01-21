@@ -7,17 +7,23 @@
 
 
 typedef struct{
-	unsigned int vehicle;
-	unsigned int client;
-	unsigned int capacity;
-	unsigned int linear3;
-	double** cost;
-	int ** info;
-	char* source;
-	int* demand;
-	double* readyTime;
-	double* dueTime;
-	double* serviceTime;
+	unsigned int vehicle;	// number of vehicles
+	unsigned int client;	// number of clients
+	unsigned int capacity;	// capacity os the vehicles
+	unsigned int linear3;	// not used
+	double** cost; 			// matrix with the costs between all the clients
+	int ** info;			// array with information about each client:
+								// [i][0]: x position
+								// [i][1]: y position
+								// [i][2]: demand
+								// [i][3]: readyTime
+								// [i][4]: dueTime
+								// [i][5]: serviceTime
+	char* source;			// sourcefile
+	int* demand;			// demands of clients
+	double* readyTime;		// ready times of clients
+	double* dueTime;		// due times of clients
+	double* serviceTime;	// service times of clients
 	int** getInfo();
 }Vrp;
 
