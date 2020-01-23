@@ -7,10 +7,10 @@
 
 
 typedef struct{
-	unsigned int vehicle;	// number of vehicles
-	unsigned int client;	// number of clients
-	unsigned int capacity;	// capacity os the vehicles
-	unsigned int linear3;	// not used
+	/*unsigned*/ int vehicle;	// number of vehicles
+	/*unsigned*/ int client;	// number of clients
+	/*unsigned*/ int capacity;	// capacity os the vehicles
+	/*unsigned*/ int linear3;	// not used
 	double** cost; 			// matrix with the costs between all the clients
 	int ** info;			// array with information about each client:
 								// [i][0]: x position
@@ -29,15 +29,15 @@ typedef struct{
 
 typedef struct{
 	char* src;
-	unsigned int nVehicle;
-	unsigned int nDestination;
-	unsigned int capacity;
+	/*unsigned*/ int nVehicle;
+	/*unsigned*/ int nDestination;
+	/*unsigned*/ int capacity;
 	int** dest_info;
 	double **cost_Matrix;
 }Solomon;
 
 void eraseInstance(Vrp* problem){
-	int i, j;
+	/*unsigned*/ int i;
 	if(problem->cost!=NULL){
 		for(i=0; i<problem->client; i++){
 			free(problem->cost[i]);
@@ -70,7 +70,7 @@ void eraseInstance(Vrp* problem){
 }
 
 void printInstance(Vrp* problem){
-	int i;
+	/*unsigned*/ int i;
 	printf("\nINSTANCE SRC: <%s>", problem->source);
 	printf("\nVEHICLE NUMBER: %d     CAPACITY: %d", problem->vehicle, problem->capacity);
 	printf("\nCUST NO.  XCOORD.   YCOORD.    DEMAND   READY TIME  DUE DATE   SERVICE TIME");
@@ -103,7 +103,7 @@ int clientCheck(FILE* instance){
 	return lines-10;
 }
 
-void readHeader(FILE* instance, unsigned int* vehicle, unsigned int* load){
+void readHeader(FILE* instance, /*unsigned*/ int* vehicle, /*unsigned*/ int* load){
 	int i, flag;
 	char* buffer=(char*)malloc(sizeof(char));
 	
@@ -149,8 +149,8 @@ void readHeader(FILE* instance, unsigned int* vehicle, unsigned int* load){
 
 int** readRow(FILE *instance, int clients){
 	char* buffer=(char*)malloc(sizeof(char));
-	unsigned int flag=1, i;
-	int customer, x, y, demand, ready, due, service;
+	/*unsigned*/ int flag=1;
+	int i, customer, x, y, demand, ready, due, service;
 	int** matrix = (int**)malloc(sizeof(int*)*(clients+1));
 	for(i=0; i<=clients; i++)
 		matrix[i]=(int*)malloc(sizeof(int)*5);
@@ -303,7 +303,7 @@ double distanceAB(int x1, int y1, int x2, int y2){
 
 Solomon readInstance(char* instanceName){
 	Solomon instance;
-	int i=0, j;
+	/*unsigned*/ int i=0, j;
 	
 	if(instanceName==NULL){
 		printf("\nInvalid file. Operation aborted.");
@@ -366,7 +366,7 @@ Vrp* Vrp_init(char* src){
 	problem->dueTime     = (double*)malloc(sizeof(double)*problem->client);
 	problem->serviceTime = (double*)malloc(sizeof(double)*problem->client);
 	
-	int i;
+	/*unsigned*/ int i;
 	for(i=0; i<problem->client; i++){
 		problem->demand[i]      = problem->info[i][2];
 		problem->readyTime[i]   = problem->info[i][3];

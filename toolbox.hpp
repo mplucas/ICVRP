@@ -1,7 +1,7 @@
 #ifndef __TOOLBOX_H
 #define __TOOLBOX_H
 
-#include "vrp.h"
+#include "vrp.hpp"
 
 typedef struct Tupla{
 	double fitness;
@@ -128,7 +128,7 @@ int** readSol(int size, int elements, char *file){
 void writeSol(int* sol, int elements, char *file){
 	FILE* instance_file = fopen(file,"a+");
 	if(instance_file == NULL){
-		FILE* instance_file = fopen(file,"wt");
+		instance_file = fopen(file,"wt");
 	}
 	int i;
 	for(i=0; i<elements; i++)	fprintf(instance_file,"%3i", sol[i]);
@@ -138,7 +138,7 @@ void writeSol(int* sol, int elements, char *file){
 void writePar(int* partial, int elements, double fit){
 	FILE* instance_file = fopen("partial.txt","a+");
 	if(instance_file == NULL){
-		FILE* instance_file = fopen("partial.txt","wt");
+		instance_file = fopen("partial.txt","wt");
 	}
 	int i;
 	fprintf(instance_file,"%f", fit);
@@ -178,9 +178,8 @@ int random_gen_100(int previous){
 int* endTimeVector(Vrp* prob, int elements){
 	Tupla* result = (Tupla*)malloc(sizeof(Tupla)*elements);
 	bool* visited = (bool*)malloc(sizeof(bool)*elements);
-	unsigned int j, k= prob->vehicle, cont=0;
 	int* final_sol = (int*)malloc(sizeof(int)*elements);
-	int i, capacity=0, index=0, prev=0;
+	int i, index = 0, prev = 0, k = prob->vehicle, j, cont = 0, capacity = 0;
 	double* timer_truck = (double*)malloc(sizeof(double)*k);
 	bool lost=false;
 	double minTime, cost=0.0;
@@ -200,7 +199,7 @@ int* endTimeVector(Vrp* prob, int elements){
 	for(i=0; i<elements; i++){
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= result[i].fitness)
-			&& (capacity + prob->demand[target] <=prob->capacity)
+			&& (capacity + prob->demand[target] <= prob->capacity)
 			&& visited[i]==false){
 
 			cost+=prob->cost[prev][target];
@@ -254,7 +253,7 @@ int* endTimeVector(Vrp* prob, int elements){
 int* startTimeVector(Vrp* prob, int elements){
 	Tupla* result = (Tupla*)malloc(sizeof(Tupla)*elements);
 	bool* visited = (bool*)malloc(sizeof(bool)*elements);
-	unsigned int j, k= prob->vehicle, cont=0;
+	/*unsigned*/ int j, k= prob->vehicle, cont=0;
 	int* final_sol = (int*)malloc(sizeof(int)*elements);
 	int i, capacity=0, index=0, prev=0;
 	double* timer_truck = (double*)malloc(sizeof(double)*k);
@@ -362,7 +361,7 @@ int*  mix_invert(int* gene, int elements){
 }
 
 bool checkConsistency(int* v, int elements){
-	int i;
+
 	bool visited[elements];
 	for (int i = 0; i < elements; i++)
 	{
@@ -394,7 +393,7 @@ int* cost_shortcut(Vrp* prob){
 		mergeSort(lower[i], 0, prob->client-1);
 	}
 	int index=0, dest, prev=0, capacity=0, k=0;
-	double fit=0, timer=0.0, acum[prob->vehicle];
+	double timer=0.0, acum[prob->vehicle];
 	bool found, flip=false, visited[prob->client-1];
 	for(i=0; i<prob->vehicle;   i++) acum[i]=0;
 	for(i=0; i<prob->client -1; i++) visited[i]=false;
@@ -574,7 +573,7 @@ int* agrupamento(int toAdd, bool visited[], int elements, Tupla parts[], int tSi
 
 int* arranjo(int elements, Tupla parts[], int tSize, Tupla original[]){
 	bool visited[elements+1];
-	int i, j, cont=1;
+	int i, cont=1;
 	int* result = (int*)malloc(sizeof(int)*elements+1);
 	int* best = (int*)malloc(sizeof(int)*elements+1);
 	double bestFit, sum=0.0;

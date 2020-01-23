@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 #include <time.h>
 #include <math.h>
-#include "ag.h"
+#include "ag.hpp"
 
 using namespace std;
 
