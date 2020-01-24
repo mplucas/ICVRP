@@ -331,6 +331,39 @@ void Genetic::setPopulation(int** new_pop, int new_pop_size){
 	pop_size = new_pop_size;
 }
 
+void printGene(int* gene, int gene_size){
+
+	for(int i = 0; i < gene_size; i++){
+		printf(" %i", gene[i]);
+	}
+
+}
+
+void plotKMeans( vector<k_cluster> clusters, int max_x, int max_y, int** info ){
+
+	int matrix[max_y][max_x];
+
+	for(int i = 0; i < max_y; i++){
+		for(int j = 0; j < max_x; j++){
+			matrix[i][j] = 0;
+		}
+	}
+
+	for(int i = 0; i < clusters.size(); i++){	
+		for(int j = 0; j < clusters[i].assigneds.size(); j++){
+			matrix[info[clusters[i].assigneds[j]][1]][info[clusters[i].assigneds[j]][0]] = clusters[i].id;
+		}	
+	}
+
+	for(int i = 0; i < max_y; i++){
+		for(int j = 0; j < max_x; j++){
+			printf(" %i", matrix[i][j]);
+		}
+		printf("\n");
+	}
+
+}
+
 // returns a randomic population
 int* Genetic::random_gene(){
 	int* gene = (int*)malloc(sizeof(int)*elements);
