@@ -1,10 +1,7 @@
 #ifndef __VRP_H
 #define __VRP_H
 
-#include <string.h>
-#include <stdio.h>
-#include <cmath>
-
+#include<bits/stdc++.h>
 
 typedef struct{
 	/*unsigned*/ int vehicle;	// number of vehicles

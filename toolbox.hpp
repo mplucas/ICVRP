@@ -197,6 +197,7 @@ int* endTimeVector(Vrp* prob, int elements){
 	int target;
 	////printf("\n\n");
 	for(i=0; i<elements; i++){
+		printf("%i, %i\n", i, elements);
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= result[i].fitness)
 			&& (capacity + prob->demand[target] <= prob->capacity)
@@ -222,6 +223,7 @@ int* endTimeVector(Vrp* prob, int elements){
 		if(i+1 == elements && cont != elements){
 			//printf(" |");
 			capacity=0;
+			// send truck back to depot
 			timer_truck[index] += prob->cost[prev][0];
 			cost+=prob->cost[prev][0];
 			prev=0;
@@ -273,6 +275,7 @@ int* startTimeVector(Vrp* prob, int elements){
 	int target;
 	////printf("\n\n");
 	for(i=0; i<elements; i++){
+		printf("%i, %i\n", i, elements);
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= prob->dueTime[target] )
 			&& (capacity + prob->demand[target] <= prob->capacity)
@@ -298,6 +301,7 @@ int* startTimeVector(Vrp* prob, int elements){
 		if(i+1 == elements && cont != elements){
 			//printf(" |");
 			capacity=0;
+			// send truck back to depot
 			timer_truck[index] += prob->cost[prev][0];
 			cost+=prob->cost[prev][0];
 			prev=0;
