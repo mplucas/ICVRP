@@ -12,8 +12,8 @@ int main(int argc, char** argv) {
 	int pop_size      = 60;
 	int select        = 97;
 	int cross_percent = 100;
-	int generations   = 500;
-	int repeat = 15;
+	int generations   = 200;
+	int repeat = 3;
 	char source[] = {"entrada.txt"};
 
 	// variable to measure value

@@ -175,6 +175,62 @@ int random_gen_100(int previous){
 	return sort[new_random];
 }
 
+// returna randomic population
+int* random_gene(int elements){
+	int* gene = (int*)malloc(sizeof(int)*elements);
+	bool* setted = (bool*)malloc(sizeof(bool)*elements);
+	int i, j, choosen=-1;
+	bool got_it=false;
+	for(i=0; i<elements; i++){
+		setted[i]=false;
+		gene[i]=-1;
+	}
+	for(i=0; i<elements; i++){
+		switch(elements){
+			case 25: 	choosen = random_gen_025(choosen);	break;
+			case 50: 	choosen = random_gen_050(choosen);	break;
+			case 100:	choosen = random_gen_100(choosen);	break;
+			default:	choosen = (rand() % elements) + 1;	break; //aqui
+		}
+		choosen-=1;
+		//printf("\nchoosen %i\n", choosen);
+		//printf("\nsetted[choosen] %i\n", setted[choosen]);
+		if(setted[choosen]==false){
+			gene[i] = choosen+1;
+			setted[choosen]=true;
+		}else{
+			got_it=false;
+			for(j=choosen; j<elements; j++){
+				if(setted[j]==false){
+					gene[i] = j+1;
+					setted[j]=true;
+					got_it=true;
+					j=elements;
+				}
+			}
+			if(got_it==false){
+				for(j=choosen; j>=0; j--){
+					if(setted[j]==false){
+						gene[i] = j+1;
+						setted[j]=true;
+						got_it=true;
+						j=-1;
+					}
+				}
+				if(got_it==false)	printf("\nERROR!\n");
+			}
+		}
+		//printf("\n0a\n\n");
+	}
+	//printf("\n001\n\n");
+	// for(int i = 0; i < elements; i++){
+	// 	printf("\n%i %i\n", i, setted[i]);
+	// }
+	freeMemory(setted);
+	//printf("\n002\n\n");
+	return gene;
+}
+
 int* endTimeVector(Vrp* prob, int elements){
 	Tupla* result = (Tupla*)malloc(sizeof(Tupla)*elements);
 	bool* visited = (bool*)malloc(sizeof(bool)*elements);
@@ -197,22 +253,23 @@ int* endTimeVector(Vrp* prob, int elements){
 	int target;
 	////printf("\n\n");
 	for(i=0; i<elements; i++){
-		printf("%i, %i\n", i, elements);
+		printf("%i, %i, %i\n", i, elements, cont);
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= result[i].fitness)
 			&& (capacity + prob->demand[target] <= prob->capacity)
 			&& visited[i]==false){
 
-			cost+=prob->cost[prev][target];
-			//printf("%d ", target);
-			visited[i]=true;
-			lost=false;
-			final_sol[cont++]=target;
+			cost += prob->cost[prev][target];
+			printf("\n\na ");
+			visited[i] = true;
+			lost = false;
+			final_sol[cont] = target;
+			cont++;
 
 			capacity += prob->demand[target];
 			timer_truck[index] += prob->cost[prev][target];
 
-			if(timer_truck[index]<prob->readyTime[target]) timer_truck[index] = prob->readyTime[target];
+			if(timer_truck[index] < prob->readyTime[target]) timer_truck[index] = prob->readyTime[target];
 			
 
 			timer_truck[index] += prob->serviceTime[target];
@@ -221,14 +278,14 @@ int* endTimeVector(Vrp* prob, int elements){
 		}
 
 		if(i+1 == elements && cont != elements){
-			//printf(" |");
+			printf("\n\na2 ");
 			capacity=0;
 			// send truck back to depot
 			timer_truck[index] += prob->cost[prev][0];
 			cost+=prob->cost[prev][0];
 			prev=0;
 			if(lost==true){
-				//printf("\nERROR!");
+				return random_gene(elements);
 			}
 			i=-1;
 			index++;
@@ -275,14 +332,14 @@ int* startTimeVector(Vrp* prob, int elements){
 	int target;
 	////printf("\n\n");
 	for(i=0; i<elements; i++){
-		printf("%i, %i\n", i, elements);
+		printf("%i, %i, %i\n", i, elements, cont);
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= prob->dueTime[target] )
 			&& (capacity + prob->demand[target] <= prob->capacity)
 			&& visited[i]==false){
 
 			cost+=prob->cost[prev][target];
-			//printf("%d ", target);
+			printf("\n\nb ");
 			visited[i]=true;
 			lost=false;
 			final_sol[cont++]=target;
@@ -299,14 +356,14 @@ int* startTimeVector(Vrp* prob, int elements){
 		}
 
 		if(i+1 == elements && cont != elements){
-			//printf(" |");
+			printf("\n\nb2");
 			capacity=0;
 			// send truck back to depot
 			timer_truck[index] += prob->cost[prev][0];
 			cost+=prob->cost[prev][0];
 			prev=0;
-			if(lost==true){
-				//printf("\nERROR!");
+			if(lost == true){
+				return random_gene(elements);
 			}
 			i=-1;
 			index++;
@@ -386,7 +443,7 @@ bool checkConsistency(int* v, int elements){
 }
 
 int* cost_shortcut(Vrp* prob){
-	int* result= (int*)malloc(sizeof(int)*(prob->client-1));;
+	int* result = (int*)malloc(sizeof(int)*(prob->client-1));;
 	int i, j;
 	Tupla lower[prob->client][prob->client];
 	for(i=0; i<prob->client; i++){
@@ -396,50 +453,55 @@ int* cost_shortcut(Vrp* prob){
 		}
 		mergeSort(lower[i], 0, prob->client-1);
 	}
-	int index=0, dest, prev=0, capacity=0, k=0;
-	double timer=0.0, acum[prob->vehicle];
+	int index = 0, dest, prev = 0, capacity = 0, k = 0;
+	double timer = 0.0, acum[prob->vehicle];
 	bool found, flip=false, visited[prob->client-1];
-	for(i=0; i<prob->vehicle;   i++) acum[i]=0;
-	for(i=0; i<prob->client -1; i++) visited[i]=false;
+	for(i=0; i<prob->vehicle;   i++) acum[i] = 0;
+	for(i=0; i<prob->client -1; i++) visited[i] = false;
 	do{
 		found=false;
 		for(i=1; i<prob->client; i++){
+			printf("\n\nc");
 			if(lower[prev][i].index == 0) i++;
 			dest = lower[prev][i].index;
 			if((timer + prob->cost[prev][dest] <= prob->dueTime[dest]) && (capacity + prob->demand[dest] <= prob->capacity) && !visited[dest]){
-				visited[dest]=true;
-				found=true;
-				flip=false;
-				result[index++]=dest;
+				visited[dest] = true;
+				found = true;
+				flip = false;
+				result[index] = dest;
+				index++;
 				timer += prob->cost[prev][dest];
-				if(timer < prob->readyTime[dest]) timer=prob->readyTime[dest];
-				timer+=prob->serviceTime[dest];
+				if(timer < prob->readyTime[dest]) timer = prob->readyTime[dest];
+				timer += prob->serviceTime[dest];
 
-				prev=dest;
-				i=prob->client;
+				prev = dest;
+				i = prob->client;
+				printf("\n\n%d %d", i, prob->client);
 			}
 		}
 		if(!found && index < prob->client -1){
-			acum[k++]+=timer + prob->cost[prev][0];
-			timer=0;
-			capacity=0;
+			printf("\n\nc2");
+			acum[k++] += timer + prob->cost[prev][0];
+			timer = 0;
+			capacity = 0;
 			if(flip){
 				free(result);
 				return NULL;
 			}else{
-				if(k>=prob->vehicle){
-					k=0;
-					timer=acum[0];
-					for(i=1; i<prob->vehicle; i++){
-						if(timer>acum[i]){
-							k=i;
-							timer=acum[i];
+				if(k >= prob->vehicle){
+					k = 0;
+					timer = acum[0];
+					for(i = 1; i < prob->vehicle; i++){
+						if(timer > acum[i]){
+							k = i;
+							timer = acum[i];
 						}
 					}
 				}
 			}
 		}
 	}while(index < prob->client-1);
+	printf("\n\nc3");
 	return result;
 }
 

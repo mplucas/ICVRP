@@ -751,7 +751,7 @@ void Genetic::populate(){
 		float kmeans3_pop_size  = ceil(float(pop_size)*0.6); // 20%
 		float kmeans4_pop_size  = ceil(float(pop_size)*0.8); // 20% (the 20% missing is for kmeans5)
 
-		bool tryFirst = false;
+		bool tryFirst = true;
 		i = 0;
 
 		// randomic generation
@@ -761,7 +761,7 @@ void Genetic::populate(){
 			if(tryFirst){
 				int* tmp;
 
-				tmp=endTimeVector(problem, elements);
+				tmp = endTimeVector(problem, elements);
 				// printf("\n01\n\n");
 				fit = breakRoute(false, tmp);
 				// printf("\n02\n\n");
@@ -774,7 +774,7 @@ void Genetic::populate(){
 				}
 				// printf("\n03\n\n");
 
-				tmp=startTimeVector(problem, elements);
+				tmp = startTimeVector(problem, elements);
 				// printf("\n04\n\n");
 				fit = breakRoute(false, tmp);
 				// printf("\n05\n\n");
@@ -787,7 +787,7 @@ void Genetic::populate(){
 				}
 				// printf("\n06\n\n");
 
-				tmp=cost_shortcut(problem);
+				tmp = cost_shortcut(problem);
 				fit = breakRoute(false, tmp);
 				if(fit == -1 || !checkConsistency(tmp, elements) || i>=randomic_pop_size){
 					freeMemory(tmp);
@@ -796,57 +796,57 @@ void Genetic::populate(){
 					generalFitness[i]=fit;
 					pop[i++]=tmp;
 				}
-				// printf("\n07\n\n");
+				printf("\n\n%d %lf", i, randomic_pop_size);
 
-				tryFirst=false;
+				// tryFirst=false;
 			}
 			// printf("b");
 
-			int* a = random_gene();
-			//printf("\n08\n\n");
-			// for(int j = 0; j < elements; j++){
-			// 	printf("%i ",a[j]);
-			// }
-			//printf("\n");
-			int* b = mix_half(a, elements);
-			// printf("\n09\n\n");
-			int* c = mix_invert(a, elements);
-			// printf("\n010\n\n");
-			int* d = mix_complement(a, elements);
-			// printf("\n011\n\n");
+			// int* a = random_gene();
+			// //printf("\n08\n\n");
+			// // for(int j = 0; j < elements; j++){
+			// // 	printf("%i ",a[j]);
+			// // }
+			// //printf("\n");
+			// int* b = mix_half(a, elements);
+			// // printf("\n09\n\n");
+			// int* c = mix_invert(a, elements);
+			// // printf("\n010\n\n");
+			// int* d = mix_complement(a, elements);
+			// // printf("\n011\n\n");
 
 
-			fit = breakRoute(false, a);
-			// printf("\n012\n\n");
-			if(fit!=-1 && i<randomic_pop_size && checkConsistency(a, elements)){
-				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
-				generalFitness[i]=fit;
-				pop[i++]=a;
-			}else	freeMemory(a);
+			// fit = breakRoute(false, a);
+			// // printf("\n012\n\n");
+			// if(fit!=-1 && i<randomic_pop_size && checkConsistency(a, elements)){
+			// 	if(fit<bestPrior || bestPrior<0) bestPrior = fit;
+			// 	generalFitness[i]=fit;
+			// 	pop[i++]=a;
+			// }else	freeMemory(a);
 
-			fit = breakRoute(false, b);
-			// printf("\n013\n\n");
-			if(fit!=-1 && i<randomic_pop_size && checkConsistency(b, elements)){
-				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
-				generalFitness[i]=fit;
-				pop[i++]=b;
-			}else	freeMemory(b);
+			// fit = breakRoute(false, b);
+			// // printf("\n013\n\n");
+			// if(fit!=-1 && i<randomic_pop_size && checkConsistency(b, elements)){
+			// 	if(fit<bestPrior || bestPrior<0) bestPrior = fit;
+			// 	generalFitness[i]=fit;
+			// 	pop[i++]=b;
+			// }else	freeMemory(b);
 			
-			fit = breakRoute(false, c);
-			// printf("\n014\n\n");
-			if(fit!=-1 && i<randomic_pop_size && checkConsistency(c, elements)){
-				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
-				generalFitness[i]=fit;
-				pop[i++]=c;
-			}else	freeMemory(c);
+			// fit = breakRoute(false, c);
+			// // printf("\n014\n\n");
+			// if(fit!=-1 && i<randomic_pop_size && checkConsistency(c, elements)){
+			// 	if(fit<bestPrior || bestPrior<0) bestPrior = fit;
+			// 	generalFitness[i]=fit;
+			// 	pop[i++]=c;
+			// }else	freeMemory(c);
 
-			fit = breakRoute(false, d);
-			// printf("\n015\n\n");
-			if(fit!=-1 && i<randomic_pop_size && checkConsistency(d, elements)){
-				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
-				generalFitness[i]=fit;
-				pop[i++]=d;
-			}else	freeMemory(d);
+			// fit = breakRoute(false, d);
+			// // printf("\n015\n\n");
+			// if(fit!=-1 && i<randomic_pop_size && checkConsistency(d, elements)){
+			// 	if(fit<bestPrior || bestPrior<0) bestPrior = fit;
+			// 	generalFitness[i]=fit;
+			// 	pop[i++]=d;
+			// }else	freeMemory(d);
 
 		}while(i<randomic_pop_size);
 
@@ -862,6 +862,7 @@ void Genetic::populate(){
 				generalFitness[i]=fit;
 				pop[i++]=a;
 			}else	freeMemory(a);
+			printf("\n\n%d %lf", i, kmeans3_pop_size);
 
 		}
 		// k = 4
@@ -875,6 +876,7 @@ void Genetic::populate(){
 				generalFitness[i]=fit;
 				pop[i++]=a;
 			}else	freeMemory(a);
+			printf("\n\n%d %lf", i, kmeans4_pop_size);
 
 		}
 		// k = 5
@@ -888,6 +890,7 @@ void Genetic::populate(){
 				generalFitness[i]=fit;
 				pop[i++]=a;
 			}else	freeMemory(a);
+			printf("\n\n%d %d", i, pop_size);
 
 		}
 
