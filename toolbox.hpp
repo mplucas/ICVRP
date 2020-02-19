@@ -18,9 +18,7 @@ typedef struct{
 
 void freeMemory(void* var){
 	free(var);
-	//printf("\n003\n\n");
 	var=NULL;
-	//printf("\n004\n\n");
 }
 
 void printfGene(int* gene, int size){
@@ -193,8 +191,6 @@ int* random_gene(int elements){
 			default:	choosen = (rand() % elements) + 1;	break; //aqui
 		}
 		choosen-=1;
-		//printf("\nchoosen %i\n", choosen);
-		//printf("\nsetted[choosen] %i\n", setted[choosen]);
 		if(setted[choosen]==false){
 			gene[i] = choosen+1;
 			setted[choosen]=true;
@@ -220,14 +216,8 @@ int* random_gene(int elements){
 				if(got_it==false)	printf("\nERROR!\n");
 			}
 		}
-		//printf("\n0a\n\n");
 	}
-	//printf("\n001\n\n");
-	// for(int i = 0; i < elements; i++){
-	// 	printf("\n%i %i\n", i, setted[i]);
-	// }
 	freeMemory(setted);
-	//printf("\n002\n\n");
 	return gene;
 }
 
@@ -251,16 +241,13 @@ int* endTimeVector(Vrp* prob, int elements){
 	mergeSort(result, 0, elements-1);
 	
 	int target;
-	////printf("\n\n");
 	for(i=0; i<elements; i++){
-		printf("%i, %i, %i\n", i, elements, cont);
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= result[i].fitness)
 			&& (capacity + prob->demand[target] <= prob->capacity)
 			&& visited[i]==false){
 
 			cost += prob->cost[prev][target];
-			printf("\n\na ");
 			visited[i] = true;
 			lost = false;
 			final_sol[cont] = target;
@@ -278,7 +265,6 @@ int* endTimeVector(Vrp* prob, int elements){
 		}
 
 		if(i+1 == elements && cont != elements){
-			printf("\n\na2 ");
 			capacity=0;
 			// send truck back to depot
 			timer_truck[index] += prob->cost[prev][0];
@@ -302,7 +288,6 @@ int* endTimeVector(Vrp* prob, int elements){
 			lost=true;
 		}
 	}
-	////printf("\nCost: %.2f\n", cost);
 	freeMemory(result);
 	freeMemory(visited);
 	freeMemory(timer_truck);
@@ -330,16 +315,13 @@ int* startTimeVector(Vrp* prob, int elements){
 	mergeSort(result, 0, elements-1);
 	
 	int target;
-	////printf("\n\n");
 	for(i=0; i<elements; i++){
-		printf("%i, %i, %i\n", i, elements, cont);
 		target=result[i].index;
 		if( (timer_truck[index] + prob->cost[prev][target] <= prob->dueTime[target] )
 			&& (capacity + prob->demand[target] <= prob->capacity)
 			&& visited[i]==false){
 
 			cost+=prob->cost[prev][target];
-			printf("\n\nb ");
 			visited[i]=true;
 			lost=false;
 			final_sol[cont++]=target;
@@ -356,7 +338,6 @@ int* startTimeVector(Vrp* prob, int elements){
 		}
 
 		if(i+1 == elements && cont != elements){
-			printf("\n\nb2");
 			capacity=0;
 			// send truck back to depot
 			timer_truck[index] += prob->cost[prev][0];
@@ -380,7 +361,6 @@ int* startTimeVector(Vrp* prob, int elements){
 			lost=true;
 		}
 	}
-	////printf("\nCost: %.2f\n", cost);
 	freeMemory(result);
 	freeMemory(visited);
 	freeMemory(timer_truck);
@@ -461,7 +441,6 @@ int* cost_shortcut(Vrp* prob){
 	do{
 		found=false;
 		for(i=1; i<prob->client; i++){
-			printf("\n\nc");
 			if(lower[prev][i].index == 0) i++;
 			dest = lower[prev][i].index;
 			if((timer + prob->cost[prev][dest] <= prob->dueTime[dest]) && (capacity + prob->demand[dest] <= prob->capacity) && !visited[dest]){
@@ -476,11 +455,9 @@ int* cost_shortcut(Vrp* prob){
 
 				prev = dest;
 				i = prob->client;
-				printf("\n\n%d %d", i, prob->client);
 			}
 		}
 		if(!found && index < prob->client -1){
-			printf("\n\nc2");
 			acum[k++] += timer + prob->cost[prev][0];
 			timer = 0;
 			capacity = 0;
@@ -501,7 +478,6 @@ int* cost_shortcut(Vrp* prob){
 			}
 		}
 	}while(index < prob->client-1);
-	printf("\n\nc3");
 	return result;
 }
 
@@ -620,7 +596,6 @@ int* agrupamento(int toAdd, bool visited[], int elements, Tupla parts[], int tSi
 			result[0]=cont;
 			
 			*bestFit = sum;
-			//printf("\nFitness: %.2f, parts: %d", sum, cont);
 			newBest(result, best);
 			visited[elements]=true;
 		}else{
@@ -645,7 +620,6 @@ int* arranjo(int elements, Tupla parts[], int tSize, Tupla original[]){
 	double bestFit, sum=0.0;
 	best[0]=0;
 	for(i=0; i<tSize; i++){
-		//printf("\nCiclo %d/%d", i+1, tSize);
 		setVisit(visited, elements, false);
 		best = agrupamento(i, visited, elements, parts, tSize, result, cont, original, best, &bestFit, sum);
 	}

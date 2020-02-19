@@ -69,7 +69,6 @@ class Genetic{
 		int* k_means(int k, int max_x, int max_y);
 		void printPop(int**, int);
 		void update();
-		double breakRoute2(int*);
 		void swapGenes();
 	
 	public:
@@ -133,7 +132,6 @@ Genetic::Genetic(int population_size, int selection_rate, int cross_percent, int
 	elements = problem->client-1;
 	if(details) printf(" [%d Clients instance]", elements);
 	mut_base=0.1;
-	//printf("\nF\n\n");
 }
 
 double Genetic::getImprovRate(){
@@ -338,6 +336,7 @@ void printGene(int* gene, int gene_size){
 
 }
 
+// show kmeans clusters
 void plotKMeans( vector<k_cluster> clusters, int max_x, int max_y, int** info ){
 
 	int matrix[max_y][max_x];
@@ -392,8 +391,6 @@ int* Genetic::random_gene(){
 			default:	choosen = (rand() % elements) + 1;	break; //aqui
 		}
 		choosen-=1;
-		//printf("\nchoosen %i\n", choosen);
-		//printf("\nsetted[choosen] %i\n", setted[choosen]);
 		if(setted[choosen]==false){
 			gene[i] = choosen+1;
 			setted[choosen]=true;
@@ -419,14 +416,9 @@ int* Genetic::random_gene(){
 				if(got_it==false)	printf("\nERROR!\n");
 			}
 		}
-		//printf("\n0a\n\n");
 	}
-	//printf("\n001\n\n");
-	// for(int i = 0; i < elements; i++){
-	// 	printf("\n%i %i\n", i, setted[i]);
-	// }
+
 	freeMemory(setted);
-	//printf("\n002\n\n");
 	return gene;
 }
 
@@ -518,7 +510,6 @@ double Genetic::breakRoute(bool printRoutes, int* major){
 		if( (timer + problem->cost[prev][dest] > problem->dueTime[dest]) ||
 			(capacity +problem->demand[dest] > problem->capacity)){
 			
-			//printf(" | ");
 			if(flip==true){
 				fitness=-1.0;
 				return fitness;
@@ -555,7 +546,6 @@ double Genetic::breakRoute(bool printRoutes, int* major){
 			capacity +=  problem->demand[dest];
 			routes[index].push_back(dest);
 			
-			//printf("%d ", major[i]);
 			flip=false;
 			
 			if(timer < problem->readyTime[dest])	timer = problem->readyTime[dest];
@@ -576,88 +566,6 @@ double Genetic::breakRoute(bool printRoutes, int* major){
 
 	}
 	return fitness;
-}
-
-double Genetic::breakRoute2(int* major){
-	if(major==NULL) return -1.0;
-	int* parcial = (int*)malloc(sizeof(int)*(elements+1));
-	int i, /*k, index=0,*/ prev=0;
-	/*unsigned*/ int capacity=0;
-	double timer=0.0;
-	double fitness=0/*, min*/;
-	int dest, passo=0, cont=0;
-	Lista* list = newList();
-	//int contador=0;
-	for(i=0; i<elements; i++){	
-		dest = major[i];
-		if( (timer + problem->cost[prev][dest] > problem->dueTime[dest]) ||
-			(capacity +problem->demand[dest] > problem->capacity)){
-			cont++;
-
-			prev	 = 0;
-			timer    = 0.0;
-			capacity = 0.0;
-			fitness  = 0.0;
-			i=cont;
-			passo=0;
-		}else{
-			passo+=1;
-			parcial[passo]=dest;
-			parcial[0]=passo;
-
-			timer += problem->cost[prev][dest];
-			fitness += problem->cost[prev][dest];
-			capacity +=  problem->demand[dest];
-			
-			Tupla* node = newNode(list);
-			node->part = copyPart(parcial, passo+1);
-			node->fitness = fitness + problem->cost[dest][0];
-			////printf("\n%d", list->size);
-			if(timer < problem->readyTime[dest])	timer = problem->readyTime[dest];
-			
-			timer += problem->serviceTime[dest];
-			prev=dest;
-		}
-	}
-	int tSize = list->size;
-	Tupla order[tSize];
-	Tupla original[tSize];
-	Tupla* node = list->head;
-	for(i=0 ; i<tSize; i++){
-		order[i].index = node->index;
-		order[i].fitness = node->fitness/(double)node->part[0];
-		order[i].part = copyPart(node->part, node->part[0]+1);
-		
-		original[i].index = node->index;
-		original[i].fitness = node->fitness;
-		original[i].part = copyPart(node->part, node->part[0]+1);
-
-		node = node->next;
-	}
-	mergeSort(order, 0, tSize-1);
-	
-	printf("\nLista: %d", tSize);
-	for(i=0; i<list->size; i++){
-		printf("\n%.2f", original[i].fitness);
-	}
-	freeLista(list);
-	printf("\nStandard: %.2f", breakRoute(false, major));
-	int* final = arranjo(elements, order, tSize, original);
-	double sum=0.0;
-	if(final!=NULL){
-		printf("\nGrupos: ");
-		for(i=1; i<final[0]+1; i++){
-			//printf("\n%d: ", final[i]);
-			//printfPart(original[final[i]].part);
-			sum += original[final[i]].fitness;
-		}
-	}else{
-		printf("\nNone found.");
-	}
-	printf("\nFitness: %.2f", sum);
-	printf("\nStandard: %.2f", breakRoute(false, major));
-
-	return 0.0;
 }
 
 void Genetic::printPop(int** popu, int le_size){
@@ -687,21 +595,14 @@ void Genetic::swapGenes(){
 
 void Genetic::solve(){
 	/*unsigned*/ int i;
-	//breakRoute2(cost_shortcut(problem));
-	//printf("\nCost: %.2f", breakRoute(false, cost_shortcut(problem)));
-	//printf("\n0\n\n");
 	populate();
-	//printf("\n1\n\n");
 	if(titles) printf("\n------------------------------------------------");
 	for(i=0; i<generation; i++){
 		if(titles)
 			printf("\n-------------------CICLE %2d/%2d------------------", i+1, generation);
 		selection();
-		//printf("\n2\n\n");
 		crossover();
-		//printf("\n3\n\n");
 		mutation();
-		//printf("\n4\n\n");
 		validate();
 		recovery();
 		update();
@@ -736,35 +637,28 @@ void Genetic::populate(){
 	}
 	// if(elements!=100 && elements!=50 && elements!=25 ) readBackup=false;
 	if(readBackup){ // readBackup allways false
-		//printf("\n02\n\n");
 		pop=readSol(pop_size, elements, instance);
-		//printf("\n03\n\n");
 		for(i=0; i<pop_size; i++){
 			generalFitness[i]=breakRoute(false, pop[i]);
 			if(generalFitness[i]<bestPrior || bestPrior<0) bestPrior = generalFitness[i];
 		}
-		//printf("\n04\n\n");
 	}else{
 
 		// size of populations generated by different methods
-		float randomic_pop_size = ceil(float(pop_size)*0.4); // 40%
-		float kmeans3_pop_size  = ceil(float(pop_size)*0.6); // 20%
-		float kmeans4_pop_size  = ceil(float(pop_size)*0.8); // 20% (the 20% missing is for kmeans5)
+		float randomic_pop_size = ceil(float(pop_size)*0.55); // 55%
+		float kmeans3_pop_size  = ceil(float(pop_size)*0.15); // 15%
+		float kmeans4_pop_size  = ceil(float(pop_size)*0.15); // 15% (15% missing is for kmeans5)
 
 		bool tryFirst = true;
 		i = 0;
 
 		// randomic generation
 		do{
-			// printf("a");
-			// printf("\ni: %i\n",i);
 			if(tryFirst){
 				int* tmp;
 
 				tmp = endTimeVector(problem, elements);
-				// printf("\n01\n\n");
 				fit = breakRoute(false, tmp);
-				// printf("\n02\n\n");
 				if(fit == -1 || !checkConsistency(tmp, elements) || i>=randomic_pop_size){
 					freeMemory(tmp);
 				}else{
@@ -772,12 +666,9 @@ void Genetic::populate(){
 					generalFitness[i]=fit;
 					pop[i++]=tmp;
 				}
-				// printf("\n03\n\n");
 
 				tmp = startTimeVector(problem, elements);
-				// printf("\n04\n\n");
 				fit = breakRoute(false, tmp);
-				// printf("\n05\n\n");
 				if(fit == -1 || !checkConsistency(tmp, elements) || i>=randomic_pop_size){
 					freeMemory(tmp);
 				}else{
@@ -785,7 +676,6 @@ void Genetic::populate(){
 					generalFitness[i]=fit;
 					pop[i++]=tmp;
 				}
-				// printf("\n06\n\n");
 
 				tmp = cost_shortcut(problem);
 				fit = breakRoute(false, tmp);
@@ -796,105 +686,125 @@ void Genetic::populate(){
 					generalFitness[i]=fit;
 					pop[i++]=tmp;
 				}
-				printf("\n\n%d %lf", i, randomic_pop_size);
 
-				// tryFirst=false;
+				tryFirst=false;
 			}
-			// printf("b");
 
-			// int* a = random_gene();
-			// //printf("\n08\n\n");
-			// // for(int j = 0; j < elements; j++){
-			// // 	printf("%i ",a[j]);
-			// // }
-			// //printf("\n");
-			// int* b = mix_half(a, elements);
-			// // printf("\n09\n\n");
-			// int* c = mix_invert(a, elements);
-			// // printf("\n010\n\n");
-			// int* d = mix_complement(a, elements);
-			// // printf("\n011\n\n");
+			int* a = random_gene();
+			int* b = mix_half(a, elements);
+			int* c = mix_invert(a, elements);
+			int* d = mix_complement(a, elements);
 
 
-			// fit = breakRoute(false, a);
-			// // printf("\n012\n\n");
-			// if(fit!=-1 && i<randomic_pop_size && checkConsistency(a, elements)){
-			// 	if(fit<bestPrior || bestPrior<0) bestPrior = fit;
-			// 	generalFitness[i]=fit;
-			// 	pop[i++]=a;
-			// }else	freeMemory(a);
+			fit = breakRoute(false, a);
+			if(fit!=-1 && i<randomic_pop_size && checkConsistency(a, elements)){
+				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
+				generalFitness[i]=fit;
+				pop[i++]=a;
+			}else	freeMemory(a);
 
-			// fit = breakRoute(false, b);
-			// // printf("\n013\n\n");
-			// if(fit!=-1 && i<randomic_pop_size && checkConsistency(b, elements)){
-			// 	if(fit<bestPrior || bestPrior<0) bestPrior = fit;
-			// 	generalFitness[i]=fit;
-			// 	pop[i++]=b;
-			// }else	freeMemory(b);
+			if(i<randomic_pop_size) continue;
+
+			fit = breakRoute(false, b);
+			if(fit!=-1 && i<randomic_pop_size && checkConsistency(b, elements)){
+				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
+				generalFitness[i]=fit;
+				pop[i++]=b;
+			}else	freeMemory(b);
+
+			if(i<randomic_pop_size) continue;
 			
-			// fit = breakRoute(false, c);
-			// // printf("\n014\n\n");
-			// if(fit!=-1 && i<randomic_pop_size && checkConsistency(c, elements)){
-			// 	if(fit<bestPrior || bestPrior<0) bestPrior = fit;
-			// 	generalFitness[i]=fit;
-			// 	pop[i++]=c;
-			// }else	freeMemory(c);
+			fit = breakRoute(false, c);
+			if(fit!=-1 && i<randomic_pop_size && checkConsistency(c, elements)){
+				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
+				generalFitness[i]=fit;
+				pop[i++]=c;
+			}else	freeMemory(c);
 
-			// fit = breakRoute(false, d);
-			// // printf("\n015\n\n");
-			// if(fit!=-1 && i<randomic_pop_size && checkConsistency(d, elements)){
-			// 	if(fit<bestPrior || bestPrior<0) bestPrior = fit;
-			// 	generalFitness[i]=fit;
-			// 	pop[i++]=d;
-			// }else	freeMemory(d);
+			if(i<randomic_pop_size) continue;
+
+			fit = breakRoute(false, d);
+			if(fit!=-1 && i<randomic_pop_size && checkConsistency(d, elements)){
+				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
+				generalFitness[i]=fit;
+				pop[i++]=d;
+			}else	freeMemory(d);
+
+			if(i<randomic_pop_size) continue;
 
 		}while(i<randomic_pop_size);
 
+		int kmeans_error_count = 0;
+		int kmeans_error_limit = 10;
 		// k-means generations
 		// k = 3
 		while(i < kmeans3_pop_size){
 
-			int* a = k_means(3, elements, elements);
+			int* a;
+			if(kmeans_error_count < kmeans_error_limit){
+				a = k_means(3, elements, elements);	
+			}else{
+				a = random_gene();	
+			}
 			fit = breakRoute(false, a);
 
 			if(fit!=-1 && i<pop_size && checkConsistency(a, elements)){
 				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
 				generalFitness[i]=fit;
 				pop[i++]=a;
-			}else	freeMemory(a);
-			printf("\n\n%d %lf", i, kmeans3_pop_size);
+				kmeans_error_count = 0;
+			}else{
+				freeMemory(a);
+				kmeans_error_count++;
+			}	
 
 		}
+		kmeans_error_count = 0;
 		// k = 4
 		while(i < kmeans4_pop_size){
 
-			int* a = k_means(4, elements, elements);
+			int* a;
+			if(kmeans_error_count < kmeans_error_limit){
+				a = k_means(4, elements, elements);	
+			}else{
+				a = random_gene();	
+			}
 			fit = breakRoute(false, a);
 
 			if(fit!=-1 && i<pop_size && checkConsistency(a, elements)){
 				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
 				generalFitness[i]=fit;
 				pop[i++]=a;
-			}else	freeMemory(a);
-			printf("\n\n%d %lf", i, kmeans4_pop_size);
+				kmeans_error_count = 0;
+			}else{
+				freeMemory(a);
+				kmeans_error_count++;
+			}	
 
 		}
+		kmeans_error_count = 0;
 		// k = 5
 		while(i < pop_size){
 
-			int* a = k_means(5, elements, elements);
-			fit = breakRoute(false, a);
+			int* a;
+			if(kmeans_error_count < kmeans_error_limit){
+				a = k_means(5, elements, elements);	
+			}else{
+				a = random_gene();	
+			}
 
 			if(fit!=-1 && i<pop_size && checkConsistency(a, elements)){
 				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
 				generalFitness[i]=fit;
 				pop[i++]=a;
-			}else	freeMemory(a);
-			printf("\n\n%d %d", i, pop_size);
+				kmeans_error_count = 0;
+			}else{
+				freeMemory(a);
+				kmeans_error_count++;
+			}	
 
 		}
 
-		//rem(instance);
 		for(i=0; i<pop_size; i++)	writeSol(pop[i], elements, instance);
 	}
 }
@@ -1194,7 +1104,7 @@ void Genetic::displayBest(){
 	
 	if(details){
 		printf("\nRoutes:\n");
-		breakRoute(true,  pop[best_i] );
+		breakRoute(false,  pop[best_i] );
 
 		printf("\nInitial Population Best: %.2f", bestPrior);
 		printf("\nImprovement ratio: %.2f", 100-(double)100*fit/bestPrior);
