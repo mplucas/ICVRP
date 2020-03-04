@@ -1,7 +1,6 @@
-#ifndef __TOOLBOX_H
-#define __TOOLBOX_H
-
 #include "vrp.hpp"
+
+using namespace std;
 
 typedef struct Tupla{
 	double fitness;
@@ -15,6 +14,62 @@ typedef struct{
 	Tupla* tail;
 	int size;
 }Lista;
+
+typedef struct{
+	
+	int id;
+	int x, y;
+	vector<int> assigneds;
+
+}k_cluster;
+
+typedef struct{
+	
+	int x, y;
+
+}clientNode;
+
+bool xClientComparator(clientNode a, clientNode b) 
+{ 
+    return a.x > b.x; 
+}
+
+// show kmeans clusters
+void plotKMeans( vector<k_cluster> clusters, int max_x, int max_y, int** info ){
+
+	int matrix[max_y][max_x];
+
+	for(int i = 0; i < max_y; i++){
+		for(int j = 0; j < max_x; j++){
+			matrix[i][j] = -1;
+		}
+	}
+
+	for(unsigned int i = 0; i < clusters.size(); i++){	
+		printf("cluster %i:\n", clusters[i].id);
+		for(unsigned int j = 0; j < clusters[i].assigneds.size(); j++){
+			printf(" %i", clusters[i].assigneds[j]);
+			matrix[info[clusters[i].assigneds[j]][1]][info[clusters[i].assigneds[j]][0]] = clusters[i].id;
+		}
+		matrix[clusters[i].y][clusters[i].x] = -2;
+		printf("\n");	
+	}
+	
+	for(int i = 0; i < max_y; i++){
+		printf("|");
+		for(int j = 0; j < max_x; j++){
+			if(matrix[i][j] == -1){
+				printf(" ");
+			}else if(matrix[i][j] == -2){
+				printf("*");
+			}else{
+				printf("%i", matrix[i][j]);
+			}
+		}
+		printf("|\n");
+	}
+
+}
 
 void freeMemory(void* var){
 	free(var);
@@ -173,7 +228,7 @@ int random_gen_100(int previous){
 	return sort[new_random];
 }
 
-// returna randomic population
+// return a randomic population
 int* random_gene(int elements){
 	int* gene = (int*)malloc(sizeof(int)*elements);
 	bool* setted = (bool*)malloc(sizeof(bool)*elements);
@@ -221,6 +276,8 @@ int* random_gene(int elements){
 	return gene;
 }
 
+// Returns a viable population. If it can't return a viable population, it
+// returns the result of the function random_gene()
 int* endTimeVector(Vrp* prob, int elements){
 	Tupla* result = (Tupla*)malloc(sizeof(Tupla)*elements);
 	bool* visited = (bool*)malloc(sizeof(bool)*elements);
@@ -256,36 +313,36 @@ int* endTimeVector(Vrp* prob, int elements){
 			capacity += prob->demand[target];
 			timer_truck[index] += prob->cost[prev][target];
 
-			if(timer_truck[index] < prob->readyTime[target]) timer_truck[index] = prob->readyTime[target];
+			if(timer_truck[index] < prob->readyTime[target])
+				timer_truck[index] = prob->readyTime[target];
 			
-
 			timer_truck[index] += prob->serviceTime[target];
 
 			prev=target;
 		}
 
 		if(i+1 == elements && cont != elements){
-			capacity=0;
+			capacity = 0;
 			// send truck back to depot
 			timer_truck[index] += prob->cost[prev][0];
-			cost+=prob->cost[prev][0];
-			prev=0;
-			if(lost==true){
+			cost += prob->cost[prev][0];
+			prev = 0;
+			if(lost == true){
 				return random_gene(elements);
 			}
-			i=-1;
+			i =- 1;
 			index++;
-			if(index==k){
-				minTime=timer_truck[0];
-				index=0;
-				for(j=0; j<k; j++){
-					if(minTime>timer_truck[j]){
-						minTime=timer_truck[j];
-						index=j;
+			if(index == k){
+				minTime = timer_truck[0];
+				index = 0;
+				for(j = 0; j < k; j++){
+					if(minTime > timer_truck[j]){
+						minTime = timer_truck[j];
+						index = j;
 					}
 				}
 			}
-			lost=true;
+			lost = true;
 		}
 	}
 	freeMemory(result);
@@ -294,6 +351,7 @@ int* endTimeVector(Vrp* prob, int elements){
 	return final_sol;
 }
 
+// Does the exact same thing as the function endTimeVector()
 int* startTimeVector(Vrp* prob, int elements){
 	Tupla* result = (Tupla*)malloc(sizeof(Tupla)*elements);
 	bool* visited = (bool*)malloc(sizeof(bool)*elements);
@@ -321,16 +379,17 @@ int* startTimeVector(Vrp* prob, int elements){
 			&& (capacity + prob->demand[target] <= prob->capacity)
 			&& visited[i]==false){
 
-			cost+=prob->cost[prev][target];
-			visited[i]=true;
-			lost=false;
-			final_sol[cont++]=target;
+			cost += prob->cost[prev][target];
+			visited[i] = true;
+			lost = false;
+			final_sol[cont] = target;
+			cont++;
 
 			capacity += prob->demand[target];
 			timer_truck[index] += prob->cost[prev][target];
 
-			if(timer_truck[index]<prob->readyTime[target]) timer_truck[index] = prob->readyTime[target];
-			
+			if(timer_truck[index] < prob->readyTime[target])
+				timer_truck[index] = prob->readyTime[target];
 
 			timer_truck[index] += prob->serviceTime[target];
 
@@ -338,27 +397,27 @@ int* startTimeVector(Vrp* prob, int elements){
 		}
 
 		if(i+1 == elements && cont != elements){
-			capacity=0;
+			capacity = 0;
 			// send truck back to depot
 			timer_truck[index] += prob->cost[prev][0];
-			cost+=prob->cost[prev][0];
-			prev=0;
+			cost += prob->cost[prev][0];
+			prev = 0;
 			if(lost == true){
 				return random_gene(elements);
 			}
-			i=-1;
+			i =- 1;
 			index++;
-			if(index==k){
-				minTime=timer_truck[0];
-				index=0;
-				for(j=0; j<k; j++){
-					if(minTime>timer_truck[j]){
-						minTime=timer_truck[j];
-						index=j;
+			if(index == k){
+				minTime = timer_truck[0];
+				index = 0;
+				for(j = 0; j < k; j++){
+					if(minTime > timer_truck[j]){
+						minTime = timer_truck[j];
+						index = j;
 					}
 				}
 			}
-			lost=true;
+			lost = true;
 		}
 	}
 	freeMemory(result);
@@ -422,6 +481,7 @@ bool checkConsistency(int* v, int elements){
 	return true;
 }
 
+// Returns a viable population (similar to endTimeVector())
 int* cost_shortcut(Vrp* prob){
 	int* result = (int*)malloc(sizeof(int)*(prob->client-1));;
 	int i, j;
@@ -443,7 +503,10 @@ int* cost_shortcut(Vrp* prob){
 		for(i=1; i<prob->client; i++){
 			if(lower[prev][i].index == 0) i++;
 			dest = lower[prev][i].index;
-			if((timer + prob->cost[prev][dest] <= prob->dueTime[dest]) && (capacity + prob->demand[dest] <= prob->capacity) && !visited[dest]){
+			if((timer + prob->cost[prev][dest] <= prob->dueTime[dest])
+				&& (capacity + prob->demand[dest] <= prob->capacity)
+				&& !visited[dest]){
+
 				visited[dest] = true;
 				found = true;
 				flip = false;
@@ -458,6 +521,7 @@ int* cost_shortcut(Vrp* prob){
 			}
 		}
 		if(!found && index < prob->client -1){
+			// send truck back to depot
 			acum[k++] += timer + prob->cost[prev][0];
 			timer = 0;
 			capacity = 0;
@@ -625,4 +689,4 @@ int* arranjo(int elements, Tupla parts[], int tSize, Tupla original[]){
 	}
 	return best;
 }
-#endif
+

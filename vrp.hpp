@@ -1,6 +1,3 @@
-#ifndef __VRP_H
-#define __VRP_H
-
 #include<bits/stdc++.h>
 
 typedef struct{
@@ -367,6 +364,3 @@ Vrp* Vrp_init(char* src){
 	return problem;
 }
 
-
-
-#endif
