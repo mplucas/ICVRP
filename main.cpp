@@ -9,11 +9,12 @@ int main(int argc, char** argv) {
 	setbuf(stdout, NULL);
 
 	srand(time(NULL));
-	int pop_size      = 60;
+	int pop_size      = 200;
 	int select        = 97;
-	int cross_percent = 100;
-	int generations   = 200;
-	int repeat = 3;
+	int cross_percent = 90;
+	int mut_percent   = 10;
+	int generations   = 300;
+	int repeat = 1;
 	char source[] = {"entrada.txt"};
 
 	// variable to measure value
@@ -39,7 +40,7 @@ int main(int argc, char** argv) {
 		t = clock();
 
 		// processing
-		Genetic alg(pop_size, select, cross_percent, 50, generations, source, false, 2);
+		Genetic alg(pop_size, select, cross_percent, mut_percent, 50, generations, source, false, 2);
 		alg.solve();
 		//printf("\nG\n\n");
 		auxValue = alg.getFitness();
