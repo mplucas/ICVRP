@@ -9,10 +9,10 @@ int main(int argc, char** argv) {
 	setbuf(stdout, NULL);
 
 	srand(time(NULL));
-	int pop_size      = 200;
+	int pop_size      = 100;
 	int select        = 97;
-	int cross_percent = 90;
-	int mut_percent   = 10;
+	int cross_percent = 100;
+	int mut_percent   = 2;
 	int generations   = 300;
 	int repeat = 1;
 	char source[] = {"entrada.txt"};

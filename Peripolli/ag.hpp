@@ -459,7 +459,7 @@ double Genetic::breakRoute(bool printRoutes, int* major){
 	// printf("\n\nl b");
 
 	int i, k, index=0, prev=0;
-	/*unsigned*/ int capacity=0;
+	unsigned int capacity=0;
 	double finalTime[problem->vehicle], timer=0.0;
 	vector<vector<int>> routes(problem->vehicle);
 	bool first_track=true, flip=false;
@@ -491,9 +491,9 @@ double Genetic::breakRoute(bool printRoutes, int* major){
 			routes[index].push_back(0);
 			finalTime[index++] += timer;
 			
-			prev	 = 0;
-			timer    = 0;
-			capacity = 0;
+			prev	 = 0.0;
+			timer    = 0.0;
+			capacity = 0.0;
 
 			if(first_track==false || index>=problem->vehicle){
 				first_track=false;
@@ -623,20 +623,20 @@ void Genetic::populate(){
 		// randomic generation
 		while(i < randomic_pop_size){
 
-			if(conterror == 10000 && i == 0) exit(0);
-			conterror++;
+			// if(conterror == 10000 && i == 0) exit(0);
+			// conterror++;
 
 			int* a = random_gene();
 			int* b = mix_half(a, elements);
 			int* c = mix_invert(a, elements);
 			int* d = mix_complement(a, elements);
 
-			// printf("\n\nL a:\n");
-			// for(int j=0; j<elements; j++){
-			// 	printf("[%i]: %i ", j, a[j]);
-			// }
-
 			fit = breakRoute(false, a);
+
+			printf("\n\nl: ");
+			printfGene(a, elements);
+			printf("\n\nl: %i %lf %lf %i", i, randomic_pop_size, fit, elements);
+
 			// printf("\n\nl fit %lf   i %i   randomic_pop_size %lf", fit, i, randomic_pop_size);
 			if(fit!=-1 && i<randomic_pop_size && checkConsistency(a, elements)){
 				if(fit<bestPrior || bestPrior<0) bestPrior = fit;
