@@ -123,25 +123,27 @@ bool eval_solution(
 }
 
 MySolution mutate(
-	const MySolution& X_base,
+	const MySolution& baseGene,
 	const std::function<double(void)> &rnd01,
 	double shrink_scale)
 {
-	MySolution X_new;
-	bool out_of_range;
-	do{
-		out_of_range=false;
-		X_new=X_base;
+
+	MySolution mutatedGene = baseGene;
+
+	if( (int)rnd01() % 100 < 100 * shrink_scale ){
 		
-		for(unsigned long i=0;i<X_new.x.size();i++)
-		{
-			double mu=1.7*rnd01()*shrink_scale;
-			X_new.x[i]+=mu*(rnd01()-rnd01());
-			if(std::abs(X_new.x[i])>5.12)
-				out_of_range=true;
-		}
-	} while(out_of_range);
-	return X_new;
+		int choosenNode1 = (int)rnd01() % baseGene.route.size();
+		int choosenNode2;
+
+		do{
+			choosenNode2 = (int)rnd01() % baseGene.route.size();
+		}while(choosenNode2 == choosenNode1);
+
+		mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
+		mutatedGene.route[choosenNode2] = baseGene.route[choosenNode1];
+	}
+
+	return mutatedGene;
 }
 
 MySolution crossover(
