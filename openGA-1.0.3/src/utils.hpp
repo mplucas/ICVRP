@@ -8,20 +8,27 @@ typedef struct{
 
 typedef struct{
 
+	double timer = 0;
+    int usedCapacity = 0;
+
+}vehicle;
+
+typedef struct{
+
 	string sourceName;		        // sourcefile
 	int numVehicles;	            // number of vehicles
-	int numClients;                 // number of clients
-	int capacity;	                // capacity os the vehicles
+	int numNodes;                   // number of nodes
+	int capacity;	                // capacity of the vehicles
 
-    // vectors withinformations about nodes:
+    // vectors with informations about nodes:
         // 0 is the depot,
         // rest are clients
-	vector<int> demand;		        // demands of clients
-	vector<double> readyTime;	    // ready times of clients
-	vector<double> dueTime;	        // due times of clients
-	vector<double> serviceTime;     // service times of clients
-	vector<vector<double>> cost;    // matrix with the costs between all the clients
-	vector<location> locations;     // array with the location of each client:
+	vector<int> demand;		        // demands of nodes
+	vector<double> readyTime;	    // ready times of nodes
+	vector<double> dueTime;	        // due times of nodes
+	vector<double> serviceTime;     // service times of nodes
+	vector<vector<double>> cost;    // matrix with the costs between all the nodes
+	vector<location> locations;     // array with the location of each node:
 }vrp;
 
 double distanceAB(int x1, int y1, int x2, int y2){
@@ -61,9 +68,9 @@ vrp readFile(string fileName){
         for(int i = 0; i < 12; i++)
             fileStream >> line;
 
-        problem.numClients = 0;
+        problem.numNodes = 0;
 
-        // skipping first client index
+        // skipping first node index
             fileStream >> line;
 
         while (!fileStream.eof()) {
@@ -80,25 +87,25 @@ vrp readFile(string fileName){
 
             problem.locations.push_back(auxLocation);
             
-            // reading demand of client
+            // reading demand of node
             fileStream >> line;
             problem.demand.push_back( stoi(line) );
 
-            // reading ready time of client
+            // reading ready time of node
             fileStream >> line;
             problem.readyTime.push_back( stoi(line) );
 
-            // reading due time of client
+            // reading due time of node
             fileStream >> line;
             problem.dueTime.push_back( stoi(line) );
 
-            // reading service time of client
+            // reading service time of node
             fileStream >> line;
             problem.serviceTime.push_back( stoi(line) );
 
-            problem.numClients++;
+            problem.numNodes++;
 
-            // skipping next client index
+            // skipping next node index
             fileStream >> line;
         }
     }
@@ -108,14 +115,14 @@ vrp readFile(string fileName){
     // calculating costs
     
     // resizing matrix
-    problem.cost.resize(problem.numClients);
-    for(int i = 0; i < problem.numClients; i++){
-        problem.cost[i].resize(problem.numClients);
+    problem.cost.resize(problem.numNodes);
+    for(int i = 0; i < problem.numNodes; i++){
+        problem.cost[i].resize(problem.numNodes);
     }
 
-    for(int i = 0; i < problem.numClients; i++){
+    for(int i = 0; i < problem.numNodes; i++){
 
-        for(int j = i; j < problem.numClients; j++){
+        for(int j = i; j < problem.numNodes; j++){
 
             if( j == i ){
 
@@ -139,9 +146,9 @@ string printVrpString(vrp problem){
     info = "\n\nSource: " + problem.sourceName;
     info += "\nNum. vehicle: " + problem.numVehicles;
     info += "\nCapacity: " + problem.capacity;
-    info += "\nNum. clients: " + problem.numClients;
+    info += "\nNum. nodes: " + problem.numNodes;
 
-    for(int i = 0; i < problem.numClients; i++){
+    for(int i = 0; i < problem.numNodes; i++){
 
         info += "\n\nIndex: " + i;
         info += "\nX: " + problem.locations[i].x;
@@ -154,11 +161,11 @@ string printVrpString(vrp problem){
 
     info += "\n\nCost Matrix:\n";
 
-    for(int i = 0; i < problem.numClients; i++){
+    for(int i = 0; i < problem.numNodes; i++){
         
         info += "\n";
         
-        for(int j = 0; j < problem.numClients; j++){
+        for(int j = 0; j < problem.numNodes; j++){
             info += to_string( problem.cost[i][j] ) + " ";
         }
     }
