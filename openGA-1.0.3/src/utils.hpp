@@ -24,6 +24,16 @@ typedef struct{
 	vector<location> locations;     // array with the location of each client:
 }vrp;
 
+double distanceAB(int x1, int y1, int x2, int y2){
+
+	double realX, realY;
+	
+    realX = (double)(x1 - x2);
+	realY = (double)(y1 - y2);
+	
+    return sqrt(realX * realX + realY * realY);
+}
+
 vrp readFile(string fileName){
 
     vrp problem;
@@ -91,31 +101,72 @@ vrp readFile(string fileName){
             // skipping next client index
             fileStream >> line;
         }
-
     }
 
     fileStream.close();
 
+    // calculating costs
+    
+    // resizing matrix
+    problem.cost.resize(problem.numClients);
+    for(int i = 0; i < problem.numClients; i++){
+        problem.cost[i].resize(problem.numClients);
+    }
+
+    for(int i = 0; i < problem.numClients; i++){
+
+        for(int j = i; j < problem.numClients; j++){
+
+            if( j == i ){
+
+                problem.cost[i][j] = 0;
+                continue;
+            }
+
+            double distance = distanceAB( problem.locations[i].x, problem.locations[i].y, problem.locations[j].x, problem.locations[j].y );
+            problem.cost[i][j] = distance;
+            problem.cost[j][i] = distance;
+        }
+    }
+
     return problem;
+}
+
+string printVrpString(vrp problem){
+
+    string info;
+
+    info = "\n\nSource: " + problem.sourceName;
+    info += "\nNum. vehicle: " + problem.numVehicles;
+    info += "\nCapacity: " + problem.capacity;
+    info += "\nNum. clients: " + problem.numClients;
+
+    for(int i = 0; i < problem.numClients; i++){
+
+        info += "\n\nIndex: " + i;
+        info += "\nX: " + problem.locations[i].x;
+        info += "\nY: " + problem.locations[i].y;
+        info += "\nDemand: " + problem.demand[i];
+        info += "\nReady Time: " + to_string( problem.readyTime[i] );
+        info += "\nDue Time: " + to_string( problem.dueTime[i] );
+        info += "\nService Time: " + to_string( problem.serviceTime[i] );
+    }
+
+    info += "\n\nCost Matrix:\n";
+
+    for(int i = 0; i < problem.numClients; i++){
+        
+        info += "\n";
+        
+        for(int j = 0; j < problem.numClients; j++){
+            info += to_string( problem.cost[i][j] ) + " ";
+        }
+    }
+
+    return info;
 }
 
 void printVrp(vrp problem){
 
-    cout << "\nSource: " << problem.sourceName;
-    cout << "\nNum. vehicle: " << problem.numVehicles;
-    cout << "\nCapacity: " << problem.capacity;
-    cout << "\nNum. clients: " << problem.numClients;
-
-    for(int i = 0; i < problem.numClients; i++){
-
-        cout << "\n\nIndex: " << i;
-        cout << "\nX: " << problem.locations[i].x;
-        cout << "\nY: " << problem.locations[i].y;
-        cout << "\nDemand: " << problem.demand[i];
-        cout << "\nReady Time: " << problem.readyTime[i];
-        cout << "\nDue Time: " << problem.dueTime[i];
-        cout << "\nService Time: " << problem.serviceTime[i];
-
-    }
-
+    cout << printVrpString(problem);
 }
