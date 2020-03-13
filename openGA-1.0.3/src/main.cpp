@@ -209,12 +209,7 @@ void SO_report_generation(
 	output_file
 		<<generation_number<<"\t"
 		<<last_generation.average_cost<<"\t"
-		<<last_generation.best_total_cost<<"\t"
-		<<best_genes.x[0]<<"\t"
-		<<best_genes.x[1]<<"\t"
-		<<best_genes.x[2]<<"\t"
-		<<best_genes.x[3]<<"\t"
-		<<best_genes.x[4]<<"\t"
+		<<last_generation.best_total_cost
 		<<"\n";
 }
 
@@ -223,16 +218,11 @@ int main()
 
 	problem = readFile("entrada.txt");	
 
-	output_file.open("./bin/result_so-rastrigin.txt");
+	output_file.open("./bin/result_.txt");
 	output_file
 		<<"step"<<"\t"
 		<<"cost_avg"<<"\t"
-		<<"cost_best"<<"\t"
-		<<"x_best0"<<"\t"
-		<<"x_best1"<<"\t"
-		<<"x_best2"<<"\t"
-		<<"x_best3"<<"\t"
-		<<"x_best4"
+		<<"cost_best"
 		<<"\n";
 
 	EA::Chronometer timer;
@@ -244,8 +234,8 @@ int main()
 	ga_obj.dynamic_threading=false;
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;
-	ga_obj.population=10000;
-	ga_obj.generation_max=1000;
+	ga_obj.population=100;
+	ga_obj.generation_max=100;
 	ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
 	ga_obj.init_genes=init_genes;
 	ga_obj.eval_solution=eval_solution;
@@ -266,3 +256,4 @@ int main()
 	output_file.close();
 	return 0;
 }
+// g++ -O3 -s -DNDEBUG -std=c++11 -pthread -I./src -Wall -Wconversion -Wfatal-errors -Wextra main.cpp
