@@ -147,17 +147,42 @@ MySolution mutate(
 }
 
 MySolution crossover(
-	const MySolution& X1,
-	const MySolution& X2,
+	const MySolution& gene1,
+	const MySolution& gene2,
 	const std::function<double(void)> &rnd01)
 {
-	MySolution X_new;
-	for(unsigned long i=0;i<X1.x.size();i++)
-	{
-		double r=rnd01();
-		X_new.x.push_back(r*X1.x[i]+(1.0-r)*X2.x[i]);
+	MySolution newGene;
+	
+	int choosenNode1 = (int)rnd01() % gene1.route.size();
+	int choosenNode2;
+
+	do{
+		choosenNode2 = (int)rnd01() % gene1.route.size();
+	}while(choosenNode2 == choosenNode1);
+
+	int smallerIndex, biggerIndex;
+
+	if( choosenNode1 > choosenNode2 ){
+		
+		biggerIndex  = choosenNode1;
+		smallerIndex = choosenNode2;
+	}else{
+
+		biggerIndex  = choosenNode2;
+		smallerIndex = choosenNode1;
 	}
-	return X_new;
+
+	for(int i = 0; i < smallerIndex; i++){
+		newGene.route.push_back( gene1.route[i] );
+	}
+	for(int i = smallerIndex; i < biggerIndex; i++){
+		newGene.route.push_back( gene2.route[i] );
+	}
+	for(int i = biggerIndex; i < gene1.route.size(); i++){
+		newGene.route.push_back( gene1.route[i] );
+	}
+
+	return newGene;
 }
 
 double calculate_SO_total_fitness(const GA_Type::thisChromosomeType &X)
