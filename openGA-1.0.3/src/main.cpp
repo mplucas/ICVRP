@@ -32,6 +32,7 @@ typedef EA::GenerationType<MySolution,MyMiddleCost> Generation_Type;
 
 void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
+	// cout << "\n\na chosens:\n"; // lll
 	vector<bool> visited(problem.numNodes, false);
 
 	// marking depot as visited because it do not enter de solution
@@ -39,7 +40,9 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 	
 	for(int i = 1; i < problem.numNodes; i++){
 		
-		int choosen = (int)((int)rnd01() % problem.numNodes);
+		int choosen = (int)(rand() % problem.numNodes);
+
+		// cout << choosen << " ";
 
 		while(visited[choosen]){
 
@@ -56,7 +59,9 @@ bool eval_solution(
 	const MySolution& p,
 	MyMiddleCost &c)
 {
+	// cout << "b";// lll
 	vector<vehicle> vehicles( problem.numVehicles );
+	vector<double> distances( problem.numVehicles, 0 );
 	int choosenVehicle = 0;
 	int originNode = 0;
 	int countRejected = 0;  // counter of vehicles that were rejected, if it reaches problem.numVehicles, then the solution is unfeaseble
@@ -73,6 +78,7 @@ bool eval_solution(
 			// add cost and demand to vehicle
 			vehicles[choosenVehicle].usedCapacity += problem.demand[destinyNode];
 			vehicles[choosenVehicle].timer += problem.cost[originNode][destinyNode];
+			distances[choosenVehicle] += problem.cost[originNode][destinyNode];
 
 			// if vehicle arrives earlier than start of TW, it waits until the start
 			if( vehicles[choosenVehicle].timer < problem.readyTime[destinyNode] ){
@@ -83,8 +89,8 @@ bool eval_solution(
 			vehicles[choosenVehicle].timer += problem.serviceTime[destinyNode];
 
 			// save fit if it is bigger
-			if( vehicles[choosenVehicle].timer > bestFit ){
-				bestFit = vehicles[choosenVehicle].timer;
+			if( distances[choosenVehicle] > bestFit ){
+				bestFit = distances[choosenVehicle];
 			}
 
 			// update destiny
@@ -96,8 +102,9 @@ bool eval_solution(
 		else
 		{
 			// send vehicle back to depot, add cost and reset capacity
-			vehicles[choosenVehicle].timer += problem.cost[originNode][0];
 			vehicles[choosenVehicle].usedCapacity = 0;
+			vehicles[choosenVehicle].timer += problem.cost[originNode][0];
+			distances[choosenVehicle] += problem.cost[originNode][0];
 
 			// resets originNode to depot
 			originNode = 0;
@@ -127,16 +134,17 @@ MySolution mutate(
 	const std::function<double(void)> &rnd01,
 	double shrink_scale)
 {
+	// cout << "c";// lll
 
 	MySolution mutatedGene = baseGene;
 
-	if( (int)rnd01() % 100 < 100 * shrink_scale ){
+	if( rnd01() < shrink_scale ){
 		
-		int choosenNode1 = (int)rnd01() % baseGene.route.size();
+		int choosenNode1 = rand() % baseGene.route.size();
 		int choosenNode2;
 
 		do{
-			choosenNode2 = (int)rnd01() % baseGene.route.size();
+			choosenNode2 = rand() % baseGene.route.size();
 		}while(choosenNode2 == choosenNode1);
 
 		mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
@@ -151,13 +159,14 @@ MySolution crossover(
 	const MySolution& gene2,
 	const std::function<double(void)> &rnd01)
 {
+	// cout << "d"; // lll
 	MySolution newGene;
 	
-	int choosenNode1 = (int)rnd01() % gene1.route.size();
+	int choosenNode1 = rand() % gene1.route.size();
 	int choosenNode2;
 
 	do{
-		choosenNode2 = (int)rnd01() % gene1.route.size();
+		choosenNode2 = rand() % gene1.route.size();
 	}while(choosenNode2 == choosenNode1);
 
 	int smallerIndex, biggerIndex;
@@ -187,6 +196,7 @@ MySolution crossover(
 
 double calculate_SO_total_fitness(const GA_Type::thisChromosomeType &X)
 {
+	// cout << "e"; // lll
 	// finalize the cost
 	return X.middle_costs.cost;
 }
@@ -216,6 +226,7 @@ void SO_report_generation(
 int main()
 {
 
+	srand(time(NULL));
 	problem = readFile("entrada.txt");	
 
 	output_file.open("./bin/result_.txt");
@@ -234,8 +245,8 @@ int main()
 	ga_obj.dynamic_threading=false;
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;
-	ga_obj.population=100;
-	ga_obj.generation_max=100;
+	ga_obj.population=10000;
+	ga_obj.generation_max=1000;
 	ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
 	ga_obj.init_genes=init_genes;
 	ga_obj.eval_solution=eval_solution;
