@@ -61,7 +61,7 @@ bool eval_solution(
 {
 	// cout << "b";// lll
 	vector<vehicle> vehicles( problem.numVehicles );
-	vector<double> distances( problem.numVehicles, 0 );
+	// vector<double> distances( problem.numVehicles, 0 );
 	int choosenVehicle = 0;
 	int originNode = 0;
 	int countRejected = 0;  // counter of vehicles that were rejected, if it reaches problem.numVehicles, then the solution is unfeaseble
@@ -78,7 +78,7 @@ bool eval_solution(
 			// add cost and demand to vehicle
 			vehicles[choosenVehicle].usedCapacity += problem.demand[destinyNode];
 			vehicles[choosenVehicle].timer += problem.cost[originNode][destinyNode];
-			distances[choosenVehicle] += problem.cost[originNode][destinyNode];
+			// distances[choosenVehicle] += problem.cost[originNode][destinyNode];
 
 			// if vehicle arrives earlier than start of TW, it waits until the start
 			if( vehicles[choosenVehicle].timer < problem.readyTime[destinyNode] ){
@@ -89,8 +89,11 @@ bool eval_solution(
 			vehicles[choosenVehicle].timer += problem.serviceTime[destinyNode];
 
 			// save fit if it is bigger
-			if( distances[choosenVehicle] > bestFit ){
-				bestFit = distances[choosenVehicle];
+			// if( distances[choosenVehicle] > bestFit ){
+			// 	bestFit = distances[choosenVehicle];
+			// }
+			if( vehicles[choosenVehicle].timer > bestFit ){
+				bestFit = vehicles[choosenVehicle].timer;
 			}
 
 			// update destiny
@@ -104,7 +107,7 @@ bool eval_solution(
 			// send vehicle back to depot, add cost and reset capacity
 			vehicles[choosenVehicle].usedCapacity = 0;
 			vehicles[choosenVehicle].timer += problem.cost[originNode][0];
-			distances[choosenVehicle] += problem.cost[originNode][0];
+			// distances[choosenVehicle] += problem.cost[originNode][0];
 
 			// resets originNode to depot
 			originNode = 0;
@@ -140,11 +143,11 @@ MySolution mutate(
 
 	if( rnd01() < shrink_scale ){
 		
-		int choosenNode1 = rand() % baseGene.route.size();
+		int choosenNode1 = (int)(rand() % baseGene.route.size());
 		int choosenNode2;
 
 		do{
-			choosenNode2 = rand() % baseGene.route.size();
+			choosenNode2 = (int)(rand() % baseGene.route.size());
 		}while(choosenNode2 == choosenNode1);
 
 		mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
@@ -162,11 +165,11 @@ MySolution crossover(
 	// cout << "d"; // lll
 	MySolution newGene;
 	
-	int choosenNode1 = rand() % gene1.route.size();
+	int choosenNode1 = (int)(rand() % gene1.route.size());
 	int choosenNode2;
 
 	do{
-		choosenNode2 = rand() % gene1.route.size();
+		choosenNode2 = (int)(rand() % gene1.route.size());
 	}while(choosenNode2 == choosenNode1);
 
 	int smallerIndex, biggerIndex;
