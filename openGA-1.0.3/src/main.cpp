@@ -40,7 +40,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 	
 	for(int i = 1; i < problem.numNodes; i++){
 		
-		int choosen = (int)(rand() % problem.numNodes);
+		unsigned int choosen = (int)(rnd01() * problem.numNodes) % problem.numNodes;
 
 		// cout << choosen << " ";
 
@@ -123,6 +123,23 @@ bool eval_solution(
 			// try to assign this node to the next vehicle route
 			choosenVehicle++;
 			choosenVehicle %= problem.numVehicles;
+
+			// // find minimum timer of vehicle to assign next
+			// int minTimerIndex = 0;
+			// double minTimer = vehicles[0].timer;
+			
+			// for( int j = 1; j < problem.numVehicles; j++ ){
+
+			// 	if( vehicles[j].timer < minTimer ){
+
+			// 		minTimer = vehicles[j].timer;
+			// 		minTimerIndex = j;
+			// 	}
+			// }
+
+			// choosenVehicle = minTimerIndex;
+
+			// returns to same client
 			i--;
 		}
 	}
@@ -137,22 +154,24 @@ MySolution mutate(
 	const std::function<double(void)> &rnd01,
 	double shrink_scale)
 {
-	// cout << "c";// lll
+	cout << "\nMutation\nBase: " << baseGene.to_string();// lll
 
 	MySolution mutatedGene = baseGene;
 
 	if( rnd01() < shrink_scale ){
 		
-		int choosenNode1 = (int)(rand() % baseGene.route.size());
-		int choosenNode2;
+		unsigned int choosenNode1 = (int)(rnd01() * baseGene.route.size()) % baseGene.route.size();
+		unsigned int choosenNode2;
 
 		do{
-			choosenNode2 = (int)(rand() % baseGene.route.size());
+			choosenNode2 = (int)(rnd01() * baseGene.route.size()) % baseGene.route.size();
 		}while(choosenNode2 == choosenNode1);
 
 		mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
 		mutatedGene.route[choosenNode2] = baseGene.route[choosenNode1];
 	}
+
+	cout << "\n Mut: " << mutatedGene.to_string() << endl;// lll
 
 	return mutatedGene;
 }
@@ -162,16 +181,15 @@ MySolution crossover(
 	const MySolution& gene2,
 	const std::function<double(void)> &rnd01)
 {
-	// cout << "d"; // lll
 	MySolution newGene;
 	
-	int choosenNode1 = (int)(rand() % gene1.route.size());
-	int choosenNode2;
+	unsigned int choosenNode1 = (int)(rnd01() * gene1.route.size()) % gene1.route.size();
+	unsigned int choosenNode2;
 
 	do{
-		choosenNode2 = (int)(rand() % gene1.route.size());
+		choosenNode2 = (int)(rnd01() * gene1.route.size()) % gene1.route.size();
 	}while(choosenNode2 == choosenNode1);
-
+	
 	int smallerIndex, biggerIndex;
 
 	if( choosenNode1 > choosenNode2 ){
@@ -184,6 +202,8 @@ MySolution crossover(
 		smallerIndex = choosenNode1;
 	}
 
+	cout << "\nCrossOver " << smallerIndex << " " << biggerIndex << "\n G1: " << gene1.to_string() << "\n G2: " << gene2.to_string();// lll
+
 	for(int i = 0; i < smallerIndex; i++){
 		newGene.route.push_back( gene1.route[i] );
 	}
@@ -193,6 +213,8 @@ MySolution crossover(
 	for(int i = biggerIndex; i < gene1.route.size(); i++){
 		newGene.route.push_back( gene1.route[i] );
 	}
+
+	cout << "\nRes: " << newGene.to_string() << endl;// lll
 
 	return newGene;
 }
@@ -228,8 +250,6 @@ void SO_report_generation(
 
 int main()
 {
-
-	srand(time(NULL));
 	problem = readFile("entrada.txt");	
 
 	output_file.open("./bin/result_.txt");
