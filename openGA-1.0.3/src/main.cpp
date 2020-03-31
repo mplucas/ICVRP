@@ -53,6 +53,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 		p.route.push_back(choosen);
 		visited[choosen] = true;
 	}
+    // cout << "pop " << p.to_string() << endl; // lll
 }
 
 bool eval_solution(
@@ -61,7 +62,6 @@ bool eval_solution(
 {
 	// cout << "b";// lll
 	vector<vehicle> vehicles( problem.numVehicles );
-	// vector<double> distances( problem.numVehicles, 0 );
 	int choosenVehicle = 0;
 	int originNode = 0;
 	int countRejected = 0;  // counter of vehicles that were rejected, if it reaches problem.numVehicles, then the solution is unfeaseble
@@ -78,7 +78,6 @@ bool eval_solution(
 			// add cost and demand to vehicle
 			vehicles[choosenVehicle].usedCapacity += problem.demand[destinyNode];
 			vehicles[choosenVehicle].timer += problem.cost[originNode][destinyNode];
-			// distances[choosenVehicle] += problem.cost[originNode][destinyNode];
 
 			// if vehicle arrives earlier than start of TW, it waits until the start
 			if( vehicles[choosenVehicle].timer < problem.readyTime[destinyNode] ){
@@ -89,9 +88,6 @@ bool eval_solution(
 			vehicles[choosenVehicle].timer += problem.serviceTime[destinyNode];
 
 			// save fit if it is bigger
-			// if( distances[choosenVehicle] > bestFit ){
-			// 	bestFit = distances[choosenVehicle];
-			// }
 			if( vehicles[choosenVehicle].timer > bestFit ){
 				bestFit = vehicles[choosenVehicle].timer;
 			}
@@ -104,40 +100,27 @@ bool eval_solution(
 		}
 		else
 		{
-			// send vehicle back to depot, add cost and reset capacity
-			vehicles[choosenVehicle].usedCapacity = 0;
-			vehicles[choosenVehicle].timer += problem.cost[originNode][0];
-			// distances[choosenVehicle] += problem.cost[originNode][0];
+			if( vehicles[choosenVehicle].usedCapacity + problem.demand[destinyNode] > problem.capacity ){
 
-			// resets originNode to depot
-			originNode = 0;
+                // send vehicle back to depot, add cost and reset capacity
+                vehicles[choosenVehicle].usedCapacity = 0;
+                vehicles[choosenVehicle].timer += problem.cost[originNode][0];
 
-			// increments rejected vehicles
-			countRejected++;
+                // resets originNode to depot
+                originNode = 0;
+            }
+                
+            // increments rejected vehicles
+            countRejected++;
 
-			if( countRejected == problem.numVehicles ){
-				isFeasible = false;
-				break;
-			}
+            if( countRejected == problem.numVehicles ){
+                isFeasible = false;
+                break;
+            }
 
-			// try to assign this node to the next vehicle route
-			choosenVehicle++;
-			choosenVehicle %= problem.numVehicles;
-
-			// // find minimum timer of vehicle to assign next
-			// int minTimerIndex = 0;
-			// double minTimer = vehicles[0].timer;
-			
-			// for( int j = 1; j < problem.numVehicles; j++ ){
-
-			// 	if( vehicles[j].timer < minTimer ){
-
-			// 		minTimer = vehicles[j].timer;
-			// 		minTimerIndex = j;
-			// 	}
-			// }
-
-			// choosenVehicle = minTimerIndex;
+            // try to assign this node to the next vehicle route
+            choosenVehicle++;
+            choosenVehicle %= problem.numVehicles;
 
 			// returns to same client
 			i--;
@@ -154,8 +137,6 @@ MySolution mutate(
 	const std::function<double(void)> &rnd01,
 	double shrink_scale)
 {
-	cout << "\nMutation\nBase: " << baseGene.to_string();// lll
-
 	MySolution mutatedGene = baseGene;
 
 	if( rnd01() < shrink_scale ){
@@ -169,9 +150,10 @@ MySolution mutate(
 
 		mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
 		mutatedGene.route[choosenNode2] = baseGene.route[choosenNode1];
-	}
 
-	cout << "\n Mut: " << mutatedGene.to_string() << endl;// lll
+        // cout << "\nMutation " << choosenNode1 << " " << choosenNode2 << "\nBase: " << baseGene.to_string();// lll
+	    // cout << "\n Mut: " << mutatedGene.to_string() << endl;// lll
+	}    
 
 	return mutatedGene;
 }
@@ -213,6 +195,68 @@ MySolution crossover(
 	for(int i = biggerIndex; i < gene1.route.size(); i++){
 		newGene.route.push_back( gene1.route[i] );
 	}
+
+    // Correcting cross over
+    // Finding duplicated and missing nodes
+    list<int> duplicatedNodes;
+    list<int> missingNodes;
+
+    for(int i = smallerIndex; i < biggerIndex; i++){
+        
+        bool isDuplicated = true;
+        bool isMissing = true;
+		
+        for(int j = smallerIndex; j < biggerIndex; j++){
+        
+            // if not found in gene1 than it is duplicated in newGene
+            if(gene2.route[i] == gene1.route[j]){
+                isDuplicated = false;
+            }
+            // if not found in gene2 than it is missing in newGene
+            if(gene1.route[i] == gene2.route[j]){
+                isMissing = false;
+            }
+        }
+
+        if(isDuplicated){
+            duplicatedNodes.push_back(gene2.route[i]);
+        }
+        if(isMissing){
+            missingNodes.push_back(gene1.route[i]);
+        }
+
+	}
+
+    cout << "\nSizes d:" << duplicatedNodes.size() << " m:" << missingNodes.size() << endl;
+
+    // Correcting duplicated nodes
+    for(int i = 0; i < smallerIndex; i++){
+
+        // if node is duplicated, replace it with a missing one
+        list<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
+        
+        if( itDuplicatedNodes != duplicatedNodes.end() ){
+            
+            newGene.route[i] = missingNodes.front();
+            duplicatedNodes.erase( itDuplicatedNodes );
+            missingNodes.pop_front();
+        }
+
+    }
+
+    for(int i = biggerIndex; i < newGene.route.size(); i++){
+
+        // if node is duplicated, replace it with a missing one
+        list<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
+        
+        if( itDuplicatedNodes != duplicatedNodes.end() ){
+            
+            newGene.route[i] = missingNodes.front();
+            duplicatedNodes.erase( itDuplicatedNodes );
+            missingNodes.pop_front();
+        }
+
+    }
 
 	cout << "\nRes: " << newGene.to_string() << endl;// lll
 
@@ -268,8 +312,8 @@ int main()
 	ga_obj.dynamic_threading=false;
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;
-	ga_obj.population=10000;
-	ga_obj.generation_max=1000;
+	ga_obj.population=1000;
+	ga_obj.generation_max=100;
 	ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
 	ga_obj.init_genes=init_genes;
 	ga_obj.eval_solution=eval_solution;
