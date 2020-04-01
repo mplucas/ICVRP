@@ -6,14 +6,23 @@ typedef struct{
 	int x, y;
 }location;
 
-typedef struct{
+typedef struct Vehicle{
 
 	double timer = 0;
     int usedCapacity = 0;
 
+    std::string to_string() const
+    {
+        std::ostringstream out;
+		out << "{";
+		out << " Cap: " << usedCapacity << ", Timer: " << timer << " ";
+		out << "}";
+		return out.str();
+    }
+
 }vehicle;
 
-typedef struct{
+typedef struct Vrp{
 
 	string sourceName;		        // sourcefile
 	int numVehicles;	            // number of vehicles

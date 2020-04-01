@@ -40,7 +40,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 	
 	for(int i = 1; i < problem.numNodes; i++){
 		
-		unsigned int choosen = (int)(rnd01() * problem.numNodes) % problem.numNodes;
+		unsigned int choosen = (unsigned int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 
 		// cout << choosen << " ";
 
@@ -68,7 +68,7 @@ bool eval_solution(
 	double bestFit = 0;     // biggest cost in all routes, since it determines the cost of whole operation
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
 
-	for(int i = 0; i < p.route.size(); i++){
+	for(unsigned int i = 0; i < p.route.size(); i++){
 		
 		int destinyNode = p.route[i];
 
@@ -141,11 +141,11 @@ MySolution mutate(
 
 	if( rnd01() < shrink_scale ){
 		
-		unsigned int choosenNode1 = (int)(rnd01() * baseGene.route.size()) % baseGene.route.size();
+		unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
 		unsigned int choosenNode2;
 
 		do{
-			choosenNode2 = (int)(rnd01() * baseGene.route.size()) % baseGene.route.size();
+			choosenNode2 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
 		}while(choosenNode2 == choosenNode1);
 
 		mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
@@ -165,11 +165,11 @@ MySolution crossover(
 {
 	MySolution newGene;
 	
-	unsigned int choosenNode1 = (int)(rnd01() * gene1.route.size()) % gene1.route.size();
+	unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)gene1.route.size()) % gene1.route.size());
 	unsigned int choosenNode2;
 
 	do{
-		choosenNode2 = (int)(rnd01() * gene1.route.size()) % gene1.route.size();
+		choosenNode2 = (unsigned int)((int)(rnd01() * (double)gene1.route.size()) % gene1.route.size());
 	}while(choosenNode2 == choosenNode1);
 	
 	int smallerIndex, biggerIndex;
@@ -184,7 +184,7 @@ MySolution crossover(
 		smallerIndex = choosenNode1;
 	}
 
-	cout << "\nCrossOver " << smallerIndex << " " << biggerIndex << "\n G1: " << gene1.to_string() << "\n G2: " << gene2.to_string();// lll
+	// cout << "\nCrossOver " << smallerIndex << " " << biggerIndex << "\n G1: " << gene1.to_string() << "\n G2: " << gene2.to_string();// lll
 
 	for(int i = 0; i < smallerIndex; i++){
 		newGene.route.push_back( gene1.route[i] );
@@ -192,14 +192,14 @@ MySolution crossover(
 	for(int i = smallerIndex; i < biggerIndex; i++){
 		newGene.route.push_back( gene2.route[i] );
 	}
-	for(int i = biggerIndex; i < gene1.route.size(); i++){
+	for(int i = biggerIndex; i < (int)gene1.route.size(); i++){
 		newGene.route.push_back( gene1.route[i] );
 	}
 
     // Correcting cross over
     // Finding duplicated and missing nodes
-    list<int> duplicatedNodes;
-    list<int> missingNodes;
+    vector<int> duplicatedNodes;
+    vector<int> missingNodes;
 
     for(int i = smallerIndex; i < biggerIndex; i++){
         
@@ -227,38 +227,40 @@ MySolution crossover(
 
 	}
 
-    cout << "\nSizes d:" << duplicatedNodes.size() << " m:" << missingNodes.size() << endl;
+    // cout << "\nSizes d:" << duplicatedNodes.size() << " m:" << missingNodes.size() << endl;
 
     // Correcting duplicated nodes
     for(int i = 0; i < smallerIndex; i++){
 
         // if node is duplicated, replace it with a missing one
-        list<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
+        vector<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
         
         if( itDuplicatedNodes != duplicatedNodes.end() ){
             
-            newGene.route[i] = missingNodes.front();
+            vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
+            newGene.route[i] = *itMissingNodes;
             duplicatedNodes.erase( itDuplicatedNodes );
-            missingNodes.pop_front();
+            missingNodes.erase( itMissingNodes );
         }
 
     }
 
-    for(int i = biggerIndex; i < newGene.route.size(); i++){
+    for(unsigned int i = biggerIndex; i < newGene.route.size(); i++){
 
         // if node is duplicated, replace it with a missing one
-        list<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
+        vector<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
         
         if( itDuplicatedNodes != duplicatedNodes.end() ){
             
-            newGene.route[i] = missingNodes.front();
+            vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
+            newGene.route[i] = *itMissingNodes;
             duplicatedNodes.erase( itDuplicatedNodes );
-            missingNodes.pop_front();
+            missingNodes.erase( itMissingNodes );
         }
 
     }
 
-	cout << "\nRes: " << newGene.to_string() << endl;// lll
+	// cout << "\nRes: " << newGene.to_string() << endl;// lll
 
 	return newGene;
 }
@@ -312,7 +314,7 @@ int main()
 	ga_obj.dynamic_threading=false;
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;
-	ga_obj.population=1000;
+	ga_obj.population=100;
 	ga_obj.generation_max=100;
 	ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
 	ga_obj.init_genes=init_genes;
