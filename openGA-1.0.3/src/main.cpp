@@ -65,8 +65,12 @@ bool eval_solution(
 	int choosenVehicle = 0;
 	int originNode = 0;
 	int countRejected = 0;  // counter of vehicles that were rejected, if it reaches problem.numVehicles, then the solution is unfeaseble
-	double bestFit = 0;     // biggest cost in all routes, since it determines the cost of whole operation
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
+
+    // if problem.fitCriterion == 0 (Time)
+    double bestFit = 0;     // biggest cost in all routes, since it determines the cost of whole operation
+    // if problem.fitCriterion == 1 (Distance)
+    vector<double> distances( problem.numVehicles, 0 );
 
 	for(unsigned int i = 0; i < p.route.size(); i++){
 		
@@ -87,10 +91,14 @@ bool eval_solution(
 			// adds service time
 			vehicles[choosenVehicle].timer += problem.serviceTime[destinyNode];
 
-			// save fit if it is bigger
-			if( vehicles[choosenVehicle].timer > bestFit ){
-				bestFit = vehicles[choosenVehicle].timer;
-			}
+			if(problem.fitCriterion == 0){
+                // save fit if it is bigger
+                if( vehicles[choosenVehicle].timer > bestFit ){
+                    bestFit = vehicles[choosenVehicle].timer;
+                }
+            }else if(problem.fitCriterion == 1){
+                distances[choosenVehicle] += problem.cost[originNode][destinyNode];
+            }
 
 			// update destiny
 			originNode = destinyNode;
@@ -127,7 +135,19 @@ bool eval_solution(
 		}
 	}
 
-	c.cost = bestFit;
+	// finalizing fit
+    if(problem.fitCriterion == 0){
+        
+        c.cost = bestFit;
+    
+    }else if(problem.fitCriterion == 1){
+        
+        c.cost = 0;
+
+        for(int i = 0; i < problem.numVehicles; i++){
+            c.cost += distances[i];
+        }
+    }
 
 	return isFeasible;
 }
@@ -296,7 +316,8 @@ void SO_report_generation(
 
 int main()
 {
-	problem = readFile("entrada.txt");	
+	problem = readFile("entrada.txt");
+    problem.fitCriterion = 1; // Distance
 
 	output_file.open("./bin/result_.txt");
 	output_file
@@ -314,7 +335,7 @@ int main()
 	ga_obj.dynamic_threading=false;
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;
-	ga_obj.population=100;
+	ga_obj.population=1000;
 	ga_obj.generation_max=100;
 	ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
 	ga_obj.init_genes=init_genes;

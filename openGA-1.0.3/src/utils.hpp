@@ -28,6 +28,9 @@ typedef struct Vrp{
 	int numVehicles;	            // number of vehicles
 	int numNodes;                   // number of nodes
 	int capacity;	                // capacity of the vehicles
+    int fitCriterion;               // criterion utilized in fit calculation:
+                                        // 0 - Time
+                                        // 1 - Distance
 
     // vectors with informations about nodes:
         // 0 is the depot,
