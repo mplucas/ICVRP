@@ -4,6 +4,7 @@
 
 // global vrp problem variable
 vrp problem;
+bool debug = false;
 
 struct MySolution
 {
@@ -64,13 +65,14 @@ bool eval_solution(
 	vector<vehicle> vehicles( problem.numVehicles );
 	int choosenVehicle = 0;
 	int originNode = 0;
-	int countRejected = 0;  // counter of vehicles that were rejected, if it reaches problem.numVehicles, then the solution is unfeaseble
+	//int countRejected = 0;  // counter of vehicles that were rejected, if it reaches problem.numVehicles, then the solution is unfeaseble
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
 
     // if problem.fitCriterion == 0 (Time)
     double bestFit = 0;     // biggest cost in all routes, since it determines the cost of whole operation
     // if problem.fitCriterion == 1 (Distance)
     vector<double> distances( problem.numVehicles, 0 );
+    vector<int> lastNodeVisited( problem.numVehicles );
 
 	for(unsigned int i = 0; i < p.route.size(); i++){
 		
@@ -98,37 +100,70 @@ bool eval_solution(
                 }
             }else if(problem.fitCriterion == 1){
                 distances[choosenVehicle] += problem.cost[originNode][destinyNode];
+                lastNodeVisited[choosenVehicle] = destinyNode;
             }
 
 			// update destiny
 			originNode = destinyNode;
 
 			// reset rejected vehicles
-			countRejected = 0;
+			//countRejected = 0;
 		}
 		else
 		{
-			if( vehicles[choosenVehicle].usedCapacity + problem.demand[destinyNode] > problem.capacity ){
+			// if( vehicles[choosenVehicle].timer + problem.cost[originNode][destinyNode] > problem.dueTime[destinyNode] ){
+
+            //     // increments rejected vehicles
+            //     countRejected++;
+
+            //     if( countRejected == problem.numVehicles ){
+            //         isFeasible = false;
+            //         break;
+            //     }
+            // }
+
+            // try to assign this node to the next vehicle route
+            // choosenVehicle++;
+            // choosenVehicle %= problem.numVehicles;
+
+            // choosing better vehicle to assign node
+            int newChoosenVehicle;
+
+            if( vehicles[choosenVehicle].timer + problem.cost[originNode][destinyNode] > problem.dueTime[destinyNode] ){
+
+                newChoosenVehicle = -1;
+
+                for(int j = 0; j < problem.numVehicles; j++){
+
+                    if( vehicles[j].timer + problem.cost[lastNodeVisited[j]][destinyNode] <= problem.dueTime[destinyNode] ){
+                        newChoosenVehicle = j;
+                        break;
+                    }
+                }
+
+                if( newChoosenVehicle == -1 ){
+                    isFeasible = false;
+                    break;
+                }
+            }else{
+                newChoosenVehicle = 0; // Force to use the least vehicles as possible
+            }
+            
+            if( vehicles[choosenVehicle].usedCapacity + problem.demand[destinyNode] > problem.capacity ){
 
                 // send vehicle back to depot, add cost and reset capacity
                 vehicles[choosenVehicle].usedCapacity = 0;
                 vehicles[choosenVehicle].timer += problem.cost[originNode][0];
 
-                // resets originNode to depot
-                originNode = 0;
-            }
-                
-            // increments rejected vehicles
-            countRejected++;
-
-            if( countRejected == problem.numVehicles ){
-                isFeasible = false;
-                break;
+                if(problem.fitCriterion == 1){
+                    distances[choosenVehicle] += problem.cost[originNode][0];
+                    lastNodeVisited[choosenVehicle] = 0;
+                }
             }
 
-            // try to assign this node to the next vehicle route
-            choosenVehicle++;
-            choosenVehicle %= problem.numVehicles;
+            // properly assign next vehicle and origin
+            choosenVehicle = newChoosenVehicle;
+            originNode = lastNodeVisited[choosenVehicle];
 
 			// returns to same client
 			i--;
@@ -145,8 +180,21 @@ bool eval_solution(
         c.cost = 0;
 
         for(int i = 0; i < problem.numVehicles; i++){
-            c.cost += distances[i];
+            c.cost += distances[i] + problem.cost[lastNodeVisited[i]][0];
         }
+    }
+
+    if(debug){
+        cout << endl << "Distances: { ";
+        for(int i = 0; i < problem.numVehicles; i++){
+            cout << ( i?", ":"" ) << distances[i];
+        }
+        cout << " }" << endl;
+        cout << "Vehicles: { ";
+        for(int i = 0; i < problem.numVehicles; i++){
+            cout << ( i?",":"" ) << vehicles[i].to_string();
+        }
+        cout << " }" << endl;
     }
 
 	return isFeasible;
@@ -353,6 +401,10 @@ int main()
 	ga_obj.solve();
 
 	std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
+
+    debug = true;
+    MyMiddleCost c;
+    ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
 
 	output_file.close();
 	return 0;
