@@ -4,7 +4,7 @@
 
 // global vrp problem variable
 vrp problem;
-// bool debug = false;
+bool debug = false;
 
 struct MySolution
 {
@@ -61,20 +61,23 @@ bool eval_solution(
 	const MySolution& p,
 	MyMiddleCost &c)
 {
-	// Variables to control vehicle being used
+	bool isFeasible = true; // if true accepts gene, if false rejects gene
+
+	// VARIABLES TO CONTROL VEHICLE BEING USED
 	int choosenVehicle = 0; // vehicle wich route belongs to, if it turns equal to problem.numVehicles than its unfeasible
 	double vehicleTimer = 0;
 	int vehicleUsedCapacity = 0;
 	int originNode = 0;
-	
-	bool isFeasible = true; // if true accepts gene, if false rejects gene
 
-    // VARIABLES ACCORDING TO FITCRITERION
+    // VARIABLES TO CALCULATE FIT ACCORDING TO FITCRITERION
 	// if problem.fitCriterion == 0 (Time)
     double biggestTimer = 0; // biggest cost in all routes, since it determines the cost of whole operation
 
     // if problem.fitCriterion == 1 (Distance)
     double totalDistance = 0;
+
+	// VARIABLES TO DEBUG
+	vector<vehicle> vehicleDebugger(1);
 
 	for(unsigned int i = 0; i < p.route.size(); i++){
 		
@@ -105,6 +108,12 @@ bool eval_solution(
                 totalDistance += problem.cost[originNode][destinyNode];
             }
 
+			if(debug){
+
+				vehicleDebugger[choosenVehicle].distance += problem.cost[originNode][destinyNode];
+				vehicleDebugger[choosenVehicle].route.push_back(destinyNode);
+			}
+
 			// update next origin
 			originNode = destinyNode;
 		}
@@ -121,6 +130,14 @@ bool eval_solution(
                 }
             }else if(problem.fitCriterion == 1){
 				totalDistance += problem.cost[originNode][0];
+			}
+
+			if(debug){
+
+				vehicleDebugger[choosenVehicle].timer = vehicleTimer;
+				vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
+				vehicle newVehicle;
+				vehicleDebugger.push_back(newVehicle);
 			}
 
             // try to assign this node to the next vehicle route
@@ -159,6 +176,16 @@ bool eval_solution(
         // Adding distance to return to depot of the last vehicle
         c.cost = totalDistance + problem.cost[originNode][0];
     }
+
+	if(debug){
+
+		vehicleDebugger.back().timer += problem.cost[originNode][0];
+		vehicleDebugger.back().distance += problem.cost[originNode][0];
+
+		for(unsigned int i = 0; i < vehicleDebugger.size(); i++){
+			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
+		}
+	}
 
 	return isFeasible;
 }
@@ -364,7 +391,8 @@ int main()
 
 	std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
 
-    MyMiddleCost c;
+    debug = true;
+	MyMiddleCost c;
     ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
 
 	output_file.close();

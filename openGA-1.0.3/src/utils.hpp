@@ -6,21 +6,27 @@ typedef struct{
 	int x, y;
 }location;
 
-// typedef struct Vehicle{
+typedef struct Vehicle{
 
-// 	double timer = 0;
-//     int usedCapacity = 0;
+	double timer = 0;
+    int usedCapacity = 0;
+    double distance = 0;
+    vector<int> route;
 
-//     std::string to_string() const
-//     {
-//         std::ostringstream out;
-// 		out << "{";
-// 		out << " Cap: " << usedCapacity << ", Timer: " << timer << " ";
-// 		out << "}";
-// 		return out.str();
-//     }
+    std::string to_string() const
+    {
+        std::ostringstream out;
+		out << "{" << endl;
+		out << "\tCap: " << usedCapacity << ", Timer: " << timer << ", Distance: " << distance << endl;
+        out << "\tRoute: [ ";
+		for(unsigned long i = 0;i < route.size(); i++)
+			out << ( i?", ":"" ) << std::setprecision(10) << route[i];
+		out << " ]";
+		out << endl << "}";
+		return out.str();
+    }
 
-// }vehicle;
+}vehicle;
 
 typedef struct Vrp{
 
