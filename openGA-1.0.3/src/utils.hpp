@@ -195,3 +195,31 @@ void printVrp(vrp problem){
 
     cout << printVrpString(problem);
 }
+
+vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
+
+    vector<int> newPop;
+    vector<bool> visited(problem.numNodes, false);
+
+	// marking depot as visited because it do not enter de solution
+	visited[0] = true;
+	
+	for(int i = 1; i < problem.numNodes; i++){
+		
+		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
+
+		// cout << choosen << " ";
+
+		while(visited[choosen]){
+
+			choosen++;
+			choosen %= problem.numNodes;
+		}
+
+		newPop.push_back(choosen);
+		visited[choosen] = true;
+	}
+
+    return newPop;
+
+}

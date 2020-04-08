@@ -34,26 +34,7 @@ typedef EA::GenerationType<MySolution,MyMiddleCost> Generation_Type;
 void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
 	// cout << "\n\n chosens:\n"; // lll
-	vector<bool> visited(problem.numNodes, false);
-
-	// marking depot as visited because it do not enter de solution
-	visited[0] = true;
-	
-	for(int i = 1; i < problem.numNodes; i++){
-		
-		unsigned int choosen = (unsigned int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
-
-		// cout << choosen << " ";
-
-		while(visited[choosen]){
-
-			choosen++;
-			choosen %= problem.numNodes;
-		}
-
-		p.route.push_back(choosen);
-		visited[choosen] = true;
-	}
+	p.route = randomPop( problem, rnd01 );
     // cout << "pop " << p.to_string() << endl; // lll
 }
 
