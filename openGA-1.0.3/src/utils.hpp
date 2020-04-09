@@ -196,6 +196,7 @@ void printVrp(vrp problem){
     cout << printVrpString(problem);
 }
 
+// Population functions
 vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
     vector<int> newPop;
@@ -221,5 +222,103 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 	}
 
     return newPop;
+
+}
+
+bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode ){
+
+    bool isFeasible = true;
+    double oldBegin = 0;
+    int oldOriginNode = 0;
+
+    // adding return no depot to verify feasibility
+    route.push_back(0);
+
+    // calculating begin time of until the route reaches addBeforeThisNode
+    for( int i = 0; i < addBeforeThisNode; i++ ){
+
+        int destinyNode = route[i];
+
+        oldBegin += problem.cost[oldOriginNode][destinyNode];
+
+        // if vehicle arrives earlier than start of TW, it waits until the start
+        if( oldBegin < problem.readyTime[destinyNode] ){
+            oldBegin = problem.readyTime[destinyNode];
+        }
+
+        // adds service time
+        oldBegin += problem.serviceTime[destinyNode];
+
+        // update next origin
+    	oldOriginNode = destinyNode;
+
+    }
+
+    // calculate begin of service service in nodeToAdd
+    double newBegin = oldBegin;
+
+    newBegin += problem.cost[oldOriginNode][nodeToAdd];
+
+    // if vehicle arrives earlier than start of TW, it waits until the start
+    if( newBegin < problem.readyTime[nodeToAdd] ){
+        newBegin = problem.readyTime[nodeToAdd];
+    }
+
+    // saves origin of new partial path
+    int newOriginNode = nodeToAdd;
+
+    if( newBegin > problem.dueTime[nodeToAdd] ){ // fail
+
+        isFeasible = false;
+
+    }else{
+        
+        for( int i = addBeforeThisNode; i < route.size(); i++ ){
+        
+            int destinyNode = route[i];
+
+            // CALCULATING OLDBEGIN
+            oldBegin += problem.cost[oldOriginNode][destinyNode];
+
+            // if vehicle arrives earlier than start of TW, it waits until the start
+            if( oldBegin < problem.readyTime[destinyNode] ){
+                oldBegin = problem.readyTime[destinyNode];
+            }
+
+            // adds service time
+            oldBegin += problem.serviceTime[destinyNode];
+
+            // update next origin
+            oldOriginNode = destinyNode;
+
+            // CALCULATING NEWBEGIN
+            newBegin += problem.cost[newOriginNode][destinyNode];
+
+            // if vehicle arrives earlier than start of TW, it waits until the start
+            if( newBegin < problem.readyTime[destinyNode] ){
+                newBegin = problem.readyTime[destinyNode];
+            }
+
+            // adds service time
+            newBegin += problem.serviceTime[destinyNode];
+
+            // update next origin (newOrigin and oldOrigin stays the same after the first iteration, it's better to understand like this)
+            newOriginNode = destinyNode;
+            
+            // CALCULATING PUSH-FOWARD
+            double pf = newBegin - oldBegin;
+            
+            if( pf <= 0 ){ // success
+                break;
+            }else if( newBegin + pf > problem.dueTime[destinyNode] ){ // fail
+                isFeasible = false;
+                break;
+            }
+
+        }
+
+    }
+
+    return isFeasible;
 
 }
