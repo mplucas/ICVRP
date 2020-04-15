@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <cfloat>
 
 using namespace std;
 
@@ -225,7 +226,7 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
 }
 
-bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode ){
+bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp problem ){
 
     bool isFeasible = true;
     double oldBegin = 0;
@@ -321,4 +322,70 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode ){
 
     return isFeasible;
 
+}
+
+bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight, double timeWeight, double urgencyWeight ){
+
+    bool isFeasible = true;
+    vector<bool> routedNodes( problem.numNodes, false );
+    int originNode = 0;
+    int destinationIndex;
+    double destinationCost;
+    double timer = 0;
+    int vehicleRouteStart = 0;
+    int vehiclesUsed = 1;
+
+    routedNodes[0] = true;
+
+    for( int i = 1; i < problem.numNodes; i++ ){
+
+        destinationCost = DBL_MAX; // infinity
+        
+        vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
+        vector<int> :: const_iterator last = newPop.end();
+        vector<int> testRoute(first, last);
+        
+        for( int j = 1; j < problem.numNodes; j++ ){
+        
+            if( !routedNodes[j] && addIsFeasible( testRoute, j, testRoute.size(), problem ) ){
+                
+                // the time difference between the completion of service at originNode and the beginning of service at j
+                double time = max( problem.cost[originNode][j], problem.readyTime[j] - timer );
+                double urgency = problem.dueTime[j] - ( timer + problem.cost[originNode][j] );
+                double currentCost = distanceWeight * problem.cost[originNode][j] + timeWeight * time + urgencyWeight * urgency;
+
+                if( currentCost < destinationCost ){
+                    destinationCost = currentCost;
+                    destinationIndex = j;
+                }
+            }
+
+        }
+
+        if( destinationCost != DBL_MAX ){ // if found a node to add
+
+            newPop.push_back( destinationIndex );
+            routedNodes[destinationIndex] = true;
+            timer = max( timer + problem.cost[originNode][destinationIndex] + problem.serviceTime[destinationIndex], problem.readyTime[destinationIndex] );
+            originNode = destinationIndex;
+
+        }else{
+
+            vehicleRouteStart = newPop.size();
+            timer = 0;
+            originNode = 0;
+
+            vehiclesUsed++;
+            if(vehiclesUsed > problem.numVehicles){
+                isFeasible = false;
+                break;
+            }
+
+            // returns to same node
+            i--;
+        }
+
+    }    
+
+    return isFeasible;
 }
