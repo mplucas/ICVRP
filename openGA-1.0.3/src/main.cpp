@@ -4,7 +4,19 @@
 
 // global vrp problem variable
 vrp problem;
+
+// easy debug variable
 bool debug = false;
+
+// variables to control pop creation
+int popSize = 1000;
+int popCount = 0;
+std::vector<std::vector<double>> nnPopParameters{
+    {0.4, 0.4, 0.2},
+    {0, 1, 0},
+    {0.5, 0.5, 0},
+    {0.3, 0.3, 0.4}
+};
 
 struct MySolution
 {
@@ -33,9 +45,41 @@ typedef EA::GenerationType<MySolution,MyMiddleCost> Generation_Type;
 
 void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
-	// cout << "\n\n chosens:\n"; // lll
-	p.route = randomPop( problem, rnd01 );
+	int nnPopSize = (int)nnPopParameters.size();
+
+    // cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
+    if (popCount < nnPopSize) {
+
+        int currentPopCount = popCount;
+
+        while(currentPopCount == popCount){
+
+            int choosenParameters = popCount % (int)nnPopParameters.size();
+
+            if (nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2])){
+                popCount++;
+            }else{
+                
+                p.route.clear();
+                nnPopParameters.erase(nnPopParameters.begin() + choosenParameters);
+                
+                if(nnPopParameters.size() == 0){
+                    popCount = nnPopSize;
+                    break;
+                }
+
+            }
+
+        }
+
+    } else {
+
+        p.route = randomPop( problem, rnd01 );
+        popCount++;
+    
+    }
     // cout << "pop " << p.to_string() << endl; // lll
+
 }
 
 bool eval_solution(
@@ -59,7 +103,7 @@ bool eval_solution(
 
 	// VARIABLES TO DEBUG
 	vector<vehicle> vehicleDebugger(1);
-
+    
 	for(unsigned int i = 0; i < p.route.size(); i++){
 		
 		int destinyNode = p.route[i];
@@ -166,7 +210,11 @@ bool eval_solution(
 		for(unsigned int i = 0; i < vehicleDebugger.size(); i++){
 			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
 		}
+
+        // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
 	}
+
+    // if(isFeasible) cout << "FEASIBLE " << popCount << endl;
 
 	return isFeasible;
 }
@@ -334,6 +382,8 @@ void SO_report_generation(
 
 int main()
 {
+    setbuf(stdout, NULL);
+
 	problem = readFile("entrada.txt");
     problem.fitCriterion = 1; // Distance
 
@@ -353,7 +403,7 @@ int main()
 	ga_obj.dynamic_threading=false;
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;
-	ga_obj.population=1000;
+	ga_obj.population=popSize;
 	ga_obj.generation_max=1000;
 	ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
 	ga_obj.init_genes=init_genes;

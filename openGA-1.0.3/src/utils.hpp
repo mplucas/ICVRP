@@ -158,7 +158,7 @@ vrp readFile(string fileName){
     return problem;
 }
 
-string printVrpString(vrp problem){
+string printVrpString(vrp problem, bool nodesDetails, bool matrix){
 
     string info;
 
@@ -167,34 +167,40 @@ string printVrpString(vrp problem){
     info += "\nCapacity: " + problem.capacity;
     info += "\nNum. nodes: " + problem.numNodes;
 
-    for(int i = 0; i < problem.numNodes; i++){
+    if(nodesDetails){
 
-        info += "\n\nIndex: " + i;
-        info += "\nX: " + problem.locations[i].x;
-        info += "\nY: " + problem.locations[i].y;
-        info += "\nDemand: " + problem.demand[i];
-        info += "\nReady Time: " + to_string( problem.readyTime[i] );
-        info += "\nDue Time: " + to_string( problem.dueTime[i] );
-        info += "\nService Time: " + to_string( problem.serviceTime[i] );
+        for(int i = 0; i < problem.numNodes; i++){
+
+            info += "\n\nIndex: " + i;
+            info += "\nX: " + problem.locations[i].x;
+            info += "\nY: " + problem.locations[i].y;
+            info += "\nDemand: " + problem.demand[i];
+            info += "\nReady Time: " + to_string( problem.readyTime[i] );
+            info += "\nDue Time: " + to_string( problem.dueTime[i] );
+            info += "\nService Time: " + to_string( problem.serviceTime[i] );
+        }
     }
+    
+    if(matrix){
 
-    info += "\n\nCost Matrix:\n";
+        info += "\n\nCost Matrix:\n";
 
-    for(int i = 0; i < problem.numNodes; i++){
-        
-        info += "\n";
-        
-        for(int j = 0; j < problem.numNodes; j++){
-            info += to_string( problem.cost[i][j] ) + " ";
+        for(int i = 0; i < problem.numNodes; i++){
+            
+            info += "\n";
+            
+            for(int j = 0; j < problem.numNodes; j++){
+                info += to_string( problem.cost[i][j] ) + " ";
+            }
         }
     }
 
     return info;
 }
 
-void printVrp(vrp problem){
+void printVrp(vrp problem, bool nodesDetails, bool matrix){
 
-    cout << printVrpString(problem);
+    cout << printVrpString(problem, nodesDetails, matrix);
 }
 
 // Population functions
@@ -274,7 +280,7 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
 
     }else{
         
-        for( int i = addBeforeThisNode; i < route.size(); i++ ){
+        for( int i = addBeforeThisNode; i < (int)route.size(); i++ ){
         
             int destinyNode = route[i];
 
@@ -347,7 +353,7 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
         
         for( int j = 1; j < problem.numNodes; j++ ){
         
-            if( !routedNodes[j] && addIsFeasible( testRoute, j, testRoute.size(), problem ) ){
+            if( !routedNodes[j] && addIsFeasible( testRoute, j, (int)testRoute.size(), problem ) ){
                 
                 // the time difference between the completion of service at originNode and the beginning of service at j
                 double time = max( problem.cost[originNode][j], problem.readyTime[j] - timer );
@@ -371,7 +377,7 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
 
         }else{
 
-            vehicleRouteStart = newPop.size();
+            vehicleRouteStart = (int)newPop.size();
             timer = 0;
             originNode = 0;
 
