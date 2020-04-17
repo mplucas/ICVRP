@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 #include <cfloat>
+#include <vector>
 
 using namespace std;
 
@@ -203,35 +204,6 @@ void printVrp(vrp problem, bool nodesDetails, bool matrix){
     cout << printVrpString(problem, nodesDetails, matrix);
 }
 
-// Population functions
-vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
-
-    vector<int> newPop;
-    vector<bool> visited(problem.numNodes, false);
-
-	// marking depot as visited because it do not enter de solution
-	visited[0] = true;
-	
-	for(int i = 1; i < problem.numNodes; i++){
-		
-		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
-
-		// cout << choosen << " ";
-
-		while(visited[choosen]){
-
-			choosen++;
-			choosen %= problem.numNodes;
-		}
-
-		newPop.push_back(choosen);
-		visited[choosen] = true;
-	}
-
-    return newPop;
-
-}
-
 bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp problem ){
 
     bool isFeasible = true;
@@ -327,6 +299,101 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
     }
 
     return isFeasible;
+
+}
+
+// Population functions
+vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
+
+    vector<int> newPop;
+    vector<bool> visited(problem.numNodes, false);
+    int vehicleRouteStart = 0;
+
+	// marking depot as visited because it do not enter de solution
+	visited[0] = true;
+	
+	for(int i = 1; i < problem.numNodes; i++){
+
+        cout << endl << "i " << i << " " << problem.numNodes;
+		
+		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
+
+		// cout << choosen << " ";
+
+		while(visited[choosen]){
+			choosen++;
+			choosen %= problem.numNodes;
+		}
+
+        vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
+        vector<int> :: const_iterator last = newPop.end();
+        vector<int> testRoute(first, last);
+
+        // if insertion is not feasible, injects feasible nodes in the partial route
+        if(addIsFeasible( testRoute, choosen, (int)testRoute.size(), problem )){
+            
+            newPop.push_back(choosen);
+		    visited[choosen] = true;
+
+        }else{
+
+            // getting not visited nodes
+            vector<int> notVisited;
+
+            for(int j = 0; j < problem.numNodes; j++){
+                if(!visited[j]){
+                    notVisited.push_back(j);
+                }
+            }
+
+            vector<bool> usedNode(notVisited.size(), false);
+
+            // assigning not visited nodes to partial route
+            for(int j = 0; j < (int)testRoute.size(); j++){
+
+                cout << endl << "j " << j << " " << (int)testRoute.size();
+                
+                for(int k = 0; k < (int)notVisited.size(); k++){
+
+                    cout << endl << "k " << k << " " << (int)notVisited.size();
+
+                    choosen = (int)((int)(rnd01() * (double)notVisited.size()) % notVisited.size());
+
+                    while(usedNode[choosen]){
+                        choosen++;
+			            choosen %= (int)notVisited.size();
+                        cout << endl << choosen;
+                    }
+
+                    usedNode[choosen] = true;
+
+                    if(addIsFeasible( testRoute, choosen, vehicleRouteStart + j, problem )){
+
+                        // inserting node
+                        newPop.insert(newPop.begin() + vehicleRouteStart + j, choosen);
+                        i++;
+                        
+                        // updating partial route
+                        first = newPop.begin() + vehicleRouteStart;
+                        last = newPop.end();
+                        testRoute = vector<int>(first, last);
+
+                        // updating not visited nodes
+                        notVisited.erase(notVisited.begin() + choosen);
+                        usedNode.erase(usedNode.begin() + choosen);
+                        k--;
+
+                    }
+
+                }
+            }
+
+            vehicleRouteStart = (int)newPop.size();
+
+        }
+	}
+
+    return newPop;
 
 }
 
