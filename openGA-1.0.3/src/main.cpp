@@ -9,7 +9,7 @@ vrp problem;
 bool debug = false;
 
 // variables to control pop creation
-int popSize = 1000;
+int popSize = 100;
 int popCount = 0;
 std::vector<std::vector<double>> nnPopParameters{
     {0.4, 0.4, 0.2},
@@ -47,7 +47,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
 	int nnPopSize = (int)nnPopParameters.size();
 
-    // cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
+    cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
     if (popCount < nnPopSize) {
 
         int currentPopCount = popCount;
@@ -78,7 +78,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
         popCount++;
     
     }
-    // cout << "pop " << p.to_string() << endl; // lll
+    cout << "pop " << p.to_string() << endl; // lll
 
 }
 
@@ -399,7 +399,7 @@ int main()
 
 	GA_Type ga_obj;
 	ga_obj.problem_mode=EA::GA_MODE::SOGA;
-	ga_obj.multi_threading=true;
+	ga_obj.multi_threading=false;
 	ga_obj.dynamic_threading=false;
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;

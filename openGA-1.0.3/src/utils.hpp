@@ -312,9 +312,9 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 	// marking depot as visited because it do not enter de solution
 	visited[0] = true;
 	
-	for(int i = 1; i < problem.numNodes; i++){
+	while( (int)newPop.size() < problem.numNodes - 1){
 
-        cout << endl << "i " << i << " " << problem.numNodes;
+        cout << endl << "i " << (int)newPop.size() << " " << problem.numNodes;// lll
 		
 		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 
@@ -323,6 +323,7 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 		while(visited[choosen]){
 			choosen++;
 			choosen %= problem.numNodes;
+            cout << endl << choosen;// lll
 		}
 
         vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
@@ -346,32 +347,35 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
                 }
             }
 
-            vector<bool> usedNode(notVisited.size(), false);
-
             // assigning not visited nodes to partial route
             for(int j = 0; j < (int)testRoute.size(); j++){
 
-                cout << endl << "j " << j << " " << (int)testRoute.size();
+                // cout << endl << "j " << j << " " << (int)testRoute.size();// lll
+
+                vector<bool> usedNode(notVisited.size(), false);
                 
                 for(int k = 0; k < (int)notVisited.size(); k++){
 
-                    cout << endl << "k " << k << " " << (int)notVisited.size();
-
                     choosen = (int)((int)(rnd01() * (double)notVisited.size()) % notVisited.size());
+
+                    // cout << endl << "k " << k << " " << choosen << " " << (int)notVisited.size() << " " << (int)usedNode.size();// lll
 
                     while(usedNode[choosen]){
                         choosen++;
 			            choosen %= (int)notVisited.size();
-                        cout << endl << choosen;
+                        // cout << endl << choosen;// lll
                     }
 
                     usedNode[choosen] = true;
 
-                    if(addIsFeasible( testRoute, choosen, vehicleRouteStart + j, problem )){
+                    // cout << endl << "k2 " << testRoute.size() << " " << vehicleRouteStart << "+" << j;// lll
+
+                    if(addIsFeasible( testRoute, notVisited[choosen], j, problem )){
 
                         // inserting node
-                        newPop.insert(newPop.begin() + vehicleRouteStart + j, choosen);
-                        i++;
+                        // cout << endl << "k3 " << newPop.size() << " " << vehicleRouteStart + j; // lll
+                        newPop.insert(newPop.begin() + vehicleRouteStart + j, notVisited[choosen]);
+                        visited[notVisited[choosen]] = true;
                         
                         // updating partial route
                         first = newPop.begin() + vehicleRouteStart;
