@@ -47,7 +47,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
 	int nnPopSize = (int)nnPopParameters.size();
 
-    cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
+    // cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
     if (popCount < nnPopSize) {
 
         int currentPopCount = popCount;
@@ -78,7 +78,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
         popCount++;
     
     }
-    cout << "pop " << p.to_string() << endl; // lll
+    // cout << "pop " << p.to_string() << endl; // lll
 
 }
 

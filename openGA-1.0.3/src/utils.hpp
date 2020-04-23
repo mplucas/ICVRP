@@ -286,11 +286,12 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
             
             // CALCULATING PUSH-FOWARD
             double pf = newBegin - oldBegin;
-            
+            // cout << endl << newBegin << " " << oldBegin << " " << destinyNode; //lll
             if( pf <= 0 ){ // success
                 break;
-            }else if( newBegin + pf > problem.dueTime[destinyNode] ){ // fail
+            }else if( oldBegin + pf > problem.dueTime[destinyNode] ){ // fail
                 isFeasible = false;
+                // cout << endl << oldBegin << " " << pf << " " << problem.dueTime[destinyNode]; //lll
                 break;
             }
 
@@ -314,7 +315,7 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 	
 	while( (int)newPop.size() < problem.numNodes - 1){
 
-        cout << endl << "i " << (int)newPop.size() << " " << problem.numNodes;// lll
+        // cout << endl << "i " << (int)newPop.size() << " " << problem.numNodes;// lll
 		
 		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 
@@ -323,8 +324,8 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 		while(visited[choosen]){
 			choosen++;
 			choosen %= problem.numNodes;
-            cout << endl << choosen;// lll
 		}
+        // cout << endl << choosen;// lll
 
         vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
         vector<int> :: const_iterator last = newPop.end();
@@ -341,24 +342,24 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
             // getting not visited nodes
             vector<int> notVisited;
 
-            for(int j = 0; j < problem.numNodes; j++){
-                if(!visited[j]){
-                    notVisited.push_back(j);
+            for(int i = 0; i < problem.numNodes; i++){
+                if(!visited[i]){
+                    notVisited.push_back(i);
                 }
             }
 
             // assigning not visited nodes to partial route
-            for(int j = 0; j < (int)testRoute.size(); j++){
+            for(int i = 0; i < (int)testRoute.size(); i++){
 
-                // cout << endl << "j " << j << " " << (int)testRoute.size();// lll
+                // cout << endl << "i " << i << " " << (int)testRoute.size();// lll
 
                 vector<bool> usedNode(notVisited.size(), false);
                 
-                for(int k = 0; k < (int)notVisited.size(); k++){
+                for(int j = 0; j < (int)notVisited.size(); j++){
 
                     choosen = (int)((int)(rnd01() * (double)notVisited.size()) % notVisited.size());
 
-                    // cout << endl << "k " << k << " " << choosen << " " << (int)notVisited.size() << " " << (int)usedNode.size();// lll
+                    // cout << endl << "j " << j << " " << choosen << " " << (int)notVisited.size() << " " << (int)usedNode.size();// lll
 
                     while(usedNode[choosen]){
                         choosen++;
@@ -368,13 +369,13 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
                     usedNode[choosen] = true;
 
-                    // cout << endl << "k2 " << testRoute.size() << " " << vehicleRouteStart << "+" << j;// lll
+                    // cout << endl << "k2 " << testRoute.size() << " " << vehicleRouteStart << "+" << i;// lll
 
-                    if(addIsFeasible( testRoute, notVisited[choosen], j, problem )){
+                    if(addIsFeasible( testRoute, notVisited[choosen], i, problem )){
 
                         // inserting node
-                        // cout << endl << "k3 " << newPop.size() << " " << vehicleRouteStart + j; // lll
-                        newPop.insert(newPop.begin() + vehicleRouteStart + j, notVisited[choosen]);
+                        // cout << endl << "k3 " << newPop.size() << " " << vehicleRouteStart + i; // lll
+                        newPop.insert(newPop.begin() + vehicleRouteStart + i, notVisited[choosen]);
                         visited[notVisited[choosen]] = true;
                         
                         // updating partial route
@@ -385,7 +386,7 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
                         // updating not visited nodes
                         notVisited.erase(notVisited.begin() + choosen);
                         usedNode.erase(usedNode.begin() + choosen);
-                        k--;
+                        j--;
 
                     }
 
