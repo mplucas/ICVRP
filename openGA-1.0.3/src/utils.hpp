@@ -288,10 +288,11 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
             double pf = newBegin - oldBegin;
             // cout << endl << newBegin << " " << oldBegin << " " << destinyNode; //lll
             if( pf <= 0 ){ // success
+                cout << "\ns" << oldBegin << " " << pf << " " << problem.dueTime[destinyNode]; //lll
                 break;
             }else if( oldBegin + pf > problem.dueTime[destinyNode] ){ // fail
                 isFeasible = false;
-                // cout << endl << oldBegin << " " << pf << " " << problem.dueTime[destinyNode]; //lll
+                cout << "\nf" << oldBegin << " " << pf << " " << problem.dueTime[destinyNode]; //lll
                 break;
             }
 
@@ -301,6 +302,150 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
 
     return isFeasible;
 
+}
+
+// teste
+bool calculateFit(vector<int> route, vrp problem){
+    bool isFeasible = true; // if true accepts gene, if false rejects gene
+    double cost;
+    bool debug = true;
+
+	// VARIABLES TO CONTROL VEHICLE BEING USED
+	int choosenVehicle = 0; // vehicle wich route belongs to, if it turns equal to problem.numVehicles than its unfeasible
+	double vehicleTimer = 0;
+	int vehicleUsedCapacity = 0;
+	int originNode = 0;
+
+    // VARIABLES TO CALCULATE FIT ACCORDING TO FITCRITERION
+	// if problem.fitCriterion == 0 (Time)
+    double biggestTimer = 0; // biggest cost in all routes, since it determines the cost of whole operation
+
+    // if problem.fitCriterion == 1 (Distance)
+    double totalDistance = 0;
+
+	// VARIABLES TO DEBUG
+	vector<vehicle> vehicleDebugger(1);
+    
+	for(unsigned int i = 0; i < route.size(); i++){
+		
+		int destinyNode = route[i];
+
+		if( vehicleTimer + problem.cost[originNode][destinyNode] <= problem.dueTime[destinyNode]
+			&& vehicleUsedCapacity + problem.demand[destinyNode] <= problem.capacity )
+		{
+			// add cost and demand to vehicle
+			vehicleUsedCapacity += problem.demand[destinyNode];
+			vehicleTimer += problem.cost[originNode][destinyNode];
+
+			// if vehicle arrives earlier than start of TW, it waits until the start
+			if( vehicleTimer < problem.readyTime[destinyNode] ){
+				vehicleTimer = problem.readyTime[destinyNode];
+			}
+
+			// adds service time
+			vehicleTimer += problem.serviceTime[destinyNode];
+
+			if(problem.fitCriterion == 0){
+                // save fit if it is bigger
+                if( vehicleTimer > biggestTimer ){
+                    biggestTimer = vehicleTimer;
+                }
+            }else if(problem.fitCriterion == 1){
+				// add distance
+                totalDistance += problem.cost[originNode][destinyNode];
+            }
+
+			if(debug){
+
+				vehicleDebugger[choosenVehicle].distance += problem.cost[originNode][destinyNode];
+				vehicleDebugger[choosenVehicle].route.push_back(destinyNode);
+			}
+
+			// update next origin
+			originNode = destinyNode;
+		}
+		else
+		{   
+			// send vehicle back to depot
+			vehicleTimer += problem.cost[originNode][0];
+
+			if(problem.fitCriterion == 0){
+                // save fit if it is bigger
+                if( vehicleTimer > biggestTimer ){
+                    biggestTimer = vehicleTimer;
+                }
+            }else if(problem.fitCriterion == 1){
+				totalDistance += problem.cost[originNode][0];
+			}
+
+			if(debug){
+
+				vehicleDebugger[choosenVehicle].timer = vehicleTimer;
+				vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
+				vehicle newVehicle;
+				vehicleDebugger.push_back(newVehicle);
+			}
+
+            // try to assign this node to the next vehicle route
+            choosenVehicle++;
+            
+			if(choosenVehicle == problem.numVehicles){
+				isFeasible = false;
+				break;
+			}
+
+            // resets variables of vehicle
+			vehicleTimer = 0;
+			vehicleUsedCapacity = 0;
+			originNode = 0;
+
+			// returns to same client
+			i--;
+		}
+	}
+
+	// finalizing fit
+    if(problem.fitCriterion == 0){
+
+		// send vehicle back to depot
+		vehicleTimer += problem.cost[originNode][0];
+
+		// save fit if it is bigger
+		if( vehicleTimer > biggestTimer ){
+			biggestTimer = vehicleTimer;
+		}
+        
+        cost = biggestTimer;
+    
+    }else if(problem.fitCriterion == 1){
+        
+        // Adding distance to return to depot of the last vehicle
+        cost = totalDistance + problem.cost[originNode][0];
+    }
+
+	if(debug){
+		vehicleDebugger.back().timer += problem.cost[originNode][0];
+		vehicleDebugger.back().distance += problem.cost[originNode][0];
+
+		for(unsigned int i = 0; i < vehicleDebugger.size(); i++){
+			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
+		}
+        // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
+	}
+
+    if(isFeasible) cout << "FEASIBLE " << endl; //lll
+	else cout << "NOT FEASIBLE " << endl; //lll
+    cout << cost << endl;
+
+	return isFeasible;
+}
+
+void printRoute(vector<int> route){
+    cout << "{";
+    for(int i = 0; i < (int)route.size(); i++){
+        cout << ( i?",":"" ) << std::setprecision(10) << route[i];
+    }
+	cout << "}";
 }
 
 // Population functions
@@ -333,9 +478,15 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
         // if insertion is not feasible, injects feasible nodes in the partial route
         if(addIsFeasible( testRoute, choosen, (int)testRoute.size(), problem )){
-            
+            cout << endl;
+            printRoute(newPop);
+            cout << "\ntest route:\n";
+            printRoute(testRoute);
+            cout << "\ninsert " << choosen << " before " << (int)newPop.size() << endl;
             newPop.push_back(choosen);
 		    visited[choosen] = true;
+            printRoute(newPop);
+            calculateFit(newPop, problem);
 
         }else{
 
@@ -375,8 +526,14 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
                         // inserting node
                         // cout << endl << "k3 " << newPop.size() << " " << vehicleRouteStart + i; // lll
+                        cout << endl;
+                        printRoute(newPop);
+                        cout << "\ntest route:\n";
+                        printRoute(testRoute);
+                        cout << "\ninsert " << notVisited[choosen] << " before " << vehicleRouteStart + i << endl;
                         newPop.insert(newPop.begin() + vehicleRouteStart + i, notVisited[choosen]);
                         visited[notVisited[choosen]] = true;
+                        printRoute(newPop);
                         
                         // updating partial route
                         first = newPop.begin() + vehicleRouteStart;
@@ -386,7 +543,9 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
                         // updating not visited nodes
                         notVisited.erase(notVisited.begin() + choosen);
                         usedNode.erase(usedNode.begin() + choosen);
-                        j--;
+                        j-=2;
+
+                        calculateFit(newPop, problem);
 
                     }
 

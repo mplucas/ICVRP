@@ -9,7 +9,7 @@ vrp problem;
 bool debug = false;
 
 // variables to control pop creation
-int popSize = 100;
+int popSize = 5;
 int popCount = 0;
 std::vector<std::vector<double>> nnPopParameters{
     {0.4, 0.4, 0.2},
@@ -21,7 +21,6 @@ std::vector<std::vector<double>> nnPopParameters{
 struct MySolution
 {
 	std::vector<int> route;
-
 	std::string to_string() const
 	{
 		std::ostringstream out;
@@ -42,12 +41,14 @@ struct MyMiddleCost
 
 typedef EA::Genetic<MySolution,MyMiddleCost> GA_Type;
 typedef EA::GenerationType<MySolution,MyMiddleCost> Generation_Type;
-
+bool eval_solution(
+	const MySolution& p,
+	MyMiddleCost &c);
 void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
 	int nnPopSize = (int)nnPopParameters.size();
 
-    // cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
+    cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
     if (popCount < nnPopSize) {
 
         int currentPopCount = popCount;
@@ -67,19 +68,13 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
                     popCount = nnPopSize;
                     break;
                 }
-
             }
-
         }
-
     } else {
-
         p.route = randomPop( problem, rnd01 );
         popCount++;
-    
     }
-    // cout << "pop " << p.to_string() << endl; // lll
-
+    cout << "pop " << p.to_string() << endl; // lll
 }
 
 bool eval_solution(
@@ -143,8 +138,7 @@ bool eval_solution(
 			originNode = destinyNode;
 		}
 		else
-		{
-            
+		{   
 			// send vehicle back to depot
 			vehicleTimer += problem.cost[originNode][0];
 
@@ -203,18 +197,17 @@ bool eval_solution(
     }
 
 	if(debug){
-
 		vehicleDebugger.back().timer += problem.cost[originNode][0];
 		vehicleDebugger.back().distance += problem.cost[originNode][0];
 
 		for(unsigned int i = 0; i < vehicleDebugger.size(); i++){
 			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
 		}
-
         // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
 	}
 
-    // if(isFeasible) cout << "FEASIBLE " << popCount << endl;
+    // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
+	// else cout << "NOT FEASIBLE " << popCount << endl; //lll
 
 	return isFeasible;
 }
@@ -227,7 +220,7 @@ MySolution mutate(
 	MySolution mutatedGene = baseGene;
 
 	if( rnd01() < shrink_scale ){
-		
+
 		unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
 		unsigned int choosenNode2;
 
@@ -237,7 +230,6 @@ MySolution mutate(
 
 		mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
 		mutatedGene.route[choosenNode2] = baseGene.route[choosenNode1];
-
         // cout << "\nMutation " << choosenNode1 << " " << choosenNode2 << "\nBase: " << baseGene.to_string();// lll
 	    // cout << "\n Mut: " << mutatedGene.to_string() << endl;// lll
 	}    
