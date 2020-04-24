@@ -448,9 +448,9 @@ bool calculateFit(vector<int> route, vrp problem){
         // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
 	}
 
-    // if(isFeasible) cout << "FEASIBLE " << endl; //lll
-	// else cout << "NOT FEASIBLE " << endl; //lll
-    cout << cost << endl;
+    if(isFeasible) cout << "FEASIBLE " << endl; //lll
+	else cout << "NOT FEASIBLE " << endl; //lll
+    cout << cost << endl; // lll
 
 	return isFeasible;
 }
@@ -466,6 +466,7 @@ void printRoute(vector<int> route){
 // Population functions
 vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
+    // cout << "\na"; //lll
     vector<int> newPop;
     vector<bool> visited(problem.numNodes, false);
     int vehicleRouteStart = 0;
@@ -493,7 +494,6 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
         // if insertion is not feasible, injects feasible nodes in the partial route
         if(addIsFeasible( testRoute, choosenToAdd, (int)testRoute.size(), problem )){
-            
             // cout << endl;//lll
             // printRoute(newPop); //lll
             // cout << "\ntest route:\n"; //lll
@@ -505,9 +505,7 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
             // printRoute(newPop);//lll
             // calculateFit(newPop, problem); //lll
-
         }else{
-
             // getting not visited nodes
             vector<int> notVisited;
 

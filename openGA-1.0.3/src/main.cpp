@@ -9,7 +9,7 @@ vrp problem;
 bool debug = false;
 
 // variables to control pop creation
-int popSize = 5;
+int popSize = 100;
 int popCount = 0;
 std::vector<std::vector<double>> nnPopParameters{
     {0.4, 0.4, 0.2},
@@ -48,7 +48,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
 	int nnPopSize = (int)nnPopParameters.size();
 
-    cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
+    // cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
     if (popCount < nnPopSize) {
 
         int currentPopCount = popCount;
@@ -74,7 +74,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
         p.route = randomPop( problem, rnd01 );
         popCount++;
     }
-    cout << "pop " << p.to_string() << endl; // lll
+    // cout << "pop " << p.to_string() << endl; // lll
 }
 
 bool eval_solution(
@@ -82,6 +82,7 @@ bool eval_solution(
 	MyMiddleCost &c)
 {
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
+	// cout << "\na\n"; // lll
 
 	// VARIABLES TO CONTROL VEHICLE BEING USED
 	int choosenVehicle = 0; // vehicle wich route belongs to, if it turns equal to problem.numVehicles than its unfeasible
@@ -129,7 +130,8 @@ bool eval_solution(
             }
 
 			if(debug){
-
+                vehicleDebugger[choosenVehicle].timer = vehicleTimer;
+                vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
 				vehicleDebugger[choosenVehicle].distance += problem.cost[originNode][destinyNode];
 				vehicleDebugger[choosenVehicle].route.push_back(destinyNode);
 			}
@@ -217,6 +219,7 @@ MySolution mutate(
 	const std::function<double(void)> &rnd01,
 	double shrink_scale)
 {
+	// cout << "\nc\n"; // lll
 	MySolution mutatedGene = baseGene;
 
 	if( rnd01() < shrink_scale ){
@@ -242,6 +245,7 @@ MySolution crossover(
 	const MySolution& gene2,
 	const std::function<double(void)> &rnd01)
 {
+	// cout << "\nb\n"; // lll
 	MySolution newGene;
 	
 	unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)gene1.route.size()) % gene1.route.size());
@@ -347,6 +351,7 @@ MySolution crossover(
 double calculate_SO_total_fitness(const GA_Type::thisChromosomeType &X)
 {
 	// finalize the cost
+	// cout << "\ne\n"; // lll
 	return X.middle_costs.cost;
 }
 
@@ -357,6 +362,7 @@ void SO_report_generation(
 	const EA::GenerationType<MySolution,MyMiddleCost> &last_generation,
 	const MySolution& best_genes)
 {
+	// cout << "\nf\n"; // lll
 	std::cout
 		<<"Generation ["<<generation_number<<"], "
 		<<"Best="<<last_generation.best_total_cost<<", "
