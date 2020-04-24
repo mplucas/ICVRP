@@ -1,6 +1,4 @@
 #include <bits/stdc++.h>
-#include <cfloat>
-#include <vector>
 
 using namespace std;
 
@@ -206,10 +204,28 @@ void printVrp(vrp problem, bool nodesDetails, bool matrix){
 
 bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp problem ){
 
+    // cout << "\nd " << nodeToAdd  << " " << addBeforeThisNode; //lll
     bool isFeasible = true;
-    double oldBegin = 0;
-    int oldOriginNode = 0;
 
+    // VARIABLES TO CHECK CAPACITY
+    int routeUsedCapacity = 0;
+    
+    // CHECKING CAPACITY
+    for(int node : route){
+        routeUsedCapacity += problem.demand[node];
+    }
+
+    if(problem.demand[nodeToAdd] + routeUsedCapacity > problem.capacity){
+        // cout << "\nc"; //lll
+        isFeasible = false;
+        return isFeasible;
+    }
+
+    // VARIABLES TO CHECK TIME
+    double oldBeginOfNext = 0;
+    int oldOriginNode = 0;
+    
+    // CHECKING TIME
     // adding return no depot to verify feasibility
     route.push_back(0);
 
@@ -218,90 +234,79 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
 
         int destinyNode = route[i];
 
-        oldBegin += problem.cost[oldOriginNode][destinyNode];
-
+        oldBeginOfNext += problem.cost[oldOriginNode][destinyNode];
         // if vehicle arrives earlier than start of TW, it waits until the start
-        if( oldBegin < problem.readyTime[destinyNode] ){
-            oldBegin = problem.readyTime[destinyNode];
+        if( oldBeginOfNext < problem.readyTime[destinyNode] ){
+            oldBeginOfNext = problem.readyTime[destinyNode];
         }
-
         // adds service time
-        oldBegin += problem.serviceTime[destinyNode];
+        oldBeginOfNext += problem.serviceTime[destinyNode];
 
         // update next origin
     	oldOriginNode = destinyNode;
-
     }
 
     // calculate begin of service service in nodeToAdd
-    double newBegin = oldBegin;
+    double newBeginOfNext = oldBeginOfNext;
 
-    newBegin += problem.cost[oldOriginNode][nodeToAdd];
-
+    newBeginOfNext += problem.cost[oldOriginNode][nodeToAdd];
     // if vehicle arrives earlier than start of TW, it waits until the start
-    if( newBegin < problem.readyTime[nodeToAdd] ){
-        newBegin = problem.readyTime[nodeToAdd];
+    if( newBeginOfNext < problem.readyTime[nodeToAdd] ){
+        newBeginOfNext = problem.readyTime[nodeToAdd];
+    }else if( newBeginOfNext > problem.dueTime[nodeToAdd] ){
+        isFeasible = false;
+        return isFeasible;
     }
+    // adds service time
+    newBeginOfNext += problem.serviceTime[nodeToAdd];
 
     // saves origin of new partial path
     int newOriginNode = nodeToAdd;
 
-    if( newBegin > problem.dueTime[nodeToAdd] ){ // fail
+    for( int i = addBeforeThisNode; i < (int)route.size(); i++ ){
+    
+        int destinyNode = route[i];
 
-        isFeasible = false;
-
-    }else{
-        
-        for( int i = addBeforeThisNode; i < (int)route.size(); i++ ){
-        
-            int destinyNode = route[i];
-
-            // CALCULATING OLDBEGIN
-            oldBegin += problem.cost[oldOriginNode][destinyNode];
-
-            // if vehicle arrives earlier than start of TW, it waits until the start
-            if( oldBegin < problem.readyTime[destinyNode] ){
-                oldBegin = problem.readyTime[destinyNode];
-            }
-
-            // adds service time
-            oldBegin += problem.serviceTime[destinyNode];
-
-            // update next origin
-            oldOriginNode = destinyNode;
-
-            // CALCULATING NEWBEGIN
-            newBegin += problem.cost[newOriginNode][destinyNode];
-
-            // if vehicle arrives earlier than start of TW, it waits until the start
-            if( newBegin < problem.readyTime[destinyNode] ){
-                newBegin = problem.readyTime[destinyNode];
-            }
-
-            // adds service time
-            newBegin += problem.serviceTime[destinyNode];
-
-            // update next origin (newOrigin and oldOrigin stays the same after the first iteration, it's better to understand like this)
-            newOriginNode = destinyNode;
-            
-            // CALCULATING PUSH-FOWARD
-            double pf = newBegin - oldBegin;
-            // cout << endl << newBegin << " " << oldBegin << " " << destinyNode; //lll
-            if( pf <= 0 ){ // success
-                cout << "\ns" << oldBegin << " " << pf << " " << problem.dueTime[destinyNode]; //lll
-                break;
-            }else if( oldBegin + pf > problem.dueTime[destinyNode] ){ // fail
-                isFeasible = false;
-                cout << "\nf" << oldBegin << " " << pf << " " << problem.dueTime[destinyNode]; //lll
-                break;
-            }
-
+        // CALCULATING OLDBEGIN
+        oldBeginOfNext += problem.cost[oldOriginNode][destinyNode];
+        // if vehicle arrives earlier than start of TW, it waits until the start
+        if( oldBeginOfNext < problem.readyTime[destinyNode] ){
+            oldBeginOfNext = problem.readyTime[destinyNode];
         }
 
+        // CALCULATING NEWBEGIN
+        newBeginOfNext += problem.cost[newOriginNode][destinyNode];
+        // if vehicle arrives earlier than start of TW, it waits until the start
+        if( newBeginOfNext < problem.readyTime[destinyNode] ){
+            newBeginOfNext = problem.readyTime[destinyNode];
+        }
+        
+        // CALCULATING PUSH-FOWARD
+        double pf = newBeginOfNext - oldBeginOfNext;
+        // cout << endl << newBeginOfNext << " " << oldBeginOfNext << " " << destinyNode; //lll
+        if( pf <= 0 ){ // success
+            // cout << "\ns" << oldBeginOfNext << " " << pf << " " << problem.dueTime[destinyNode]; //lll
+            break;
+        }else if( oldBeginOfNext + pf > problem.dueTime[destinyNode] ){ // fail
+            // cout << "\nf" << oldBeginOfNext << " " << pf << " " << problem.dueTime[destinyNode]; //lll
+            isFeasible = false;
+            break;
+        }
+
+        // adds service time
+        oldBeginOfNext += problem.serviceTime[destinyNode];
+
+        // update next origin
+        oldOriginNode = destinyNode;
+
+        // adds service time
+        newBeginOfNext += problem.serviceTime[destinyNode];
+
+        // update next origin (newOrigin and oldOrigin stays the same after the first iteration, it's better to understand like this)
+        newOriginNode = destinyNode;
     }
 
     return isFeasible;
-
 }
 
 // teste
@@ -356,7 +361,8 @@ bool calculateFit(vector<int> route, vrp problem){
             }
 
 			if(debug){
-
+                vehicleDebugger[choosenVehicle].timer = vehicleTimer;
+                vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
 				vehicleDebugger[choosenVehicle].distance += problem.cost[originNode][destinyNode];
 				vehicleDebugger[choosenVehicle].route.push_back(destinyNode);
 			}
@@ -384,6 +390,15 @@ bool calculateFit(vector<int> route, vrp problem){
 				vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
 				vehicle newVehicle;
 				vehicleDebugger.push_back(newVehicle);
+
+                // cout << "\nQuebra por: "; //lll
+                // if(vehicleTimer + problem.cost[originNode][destinyNode] > problem.dueTime[destinyNode]){
+                //     cout << "Time "; //lll
+                // }
+                // if(vehicleUsedCapacity + problem.demand[destinyNode] > problem.capacity){
+                //     cout << "Capacity"; // lll
+                // }
+                // cout << endl;
 			}
 
             // try to assign this node to the next vehicle route
@@ -433,8 +448,8 @@ bool calculateFit(vector<int> route, vrp problem){
         // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
 	}
 
-    if(isFeasible) cout << "FEASIBLE " << endl; //lll
-	else cout << "NOT FEASIBLE " << endl; //lll
+    // if(isFeasible) cout << "FEASIBLE " << endl; //lll
+	// else cout << "NOT FEASIBLE " << endl; //lll
     cout << cost << endl;
 
 	return isFeasible;
@@ -460,33 +475,36 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 	
 	while( (int)newPop.size() < problem.numNodes - 1){
 
-        // cout << endl << "i " << (int)newPop.size() << " " << problem.numNodes;// lll
+        // cout << endl << "a " << (int)newPop.size() << " " << problem.numNodes;// lll
 		
-		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
+		int choosenToAdd = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 
-		// cout << choosen << " ";
+		// cout << choosenToAdd << " ";
 
-		while(visited[choosen]){
-			choosen++;
-			choosen %= problem.numNodes;
+		while(visited[choosenToAdd]){
+			choosenToAdd++;
+			choosenToAdd %= problem.numNodes;
 		}
-        // cout << endl << choosen;// lll
+        // cout << endl << choosenToAdd;// lll
 
         vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
         vector<int> :: const_iterator last = newPop.end();
         vector<int> testRoute(first, last);
 
         // if insertion is not feasible, injects feasible nodes in the partial route
-        if(addIsFeasible( testRoute, choosen, (int)testRoute.size(), problem )){
-            cout << endl;
-            printRoute(newPop);
-            cout << "\ntest route:\n";
-            printRoute(testRoute);
-            cout << "\ninsert " << choosen << " before " << (int)newPop.size() << endl;
-            newPop.push_back(choosen);
-		    visited[choosen] = true;
-            printRoute(newPop);
-            calculateFit(newPop, problem);
+        if(addIsFeasible( testRoute, choosenToAdd, (int)testRoute.size(), problem )){
+            
+            // cout << endl;//lll
+            // printRoute(newPop); //lll
+            // cout << "\ntest route:\n"; //lll
+            // printRoute(testRoute); //lll
+            // cout << "\ninsert " << choosenToAdd << " in the back" << endl; //lll
+
+            newPop.push_back(choosenToAdd);
+		    visited[choosenToAdd] = true;
+
+            // printRoute(newPop);//lll
+            // calculateFit(newPop, problem); //lll
 
         }else{
 
@@ -500,60 +518,54 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
             }
 
             // assigning not visited nodes to partial route
-            for(int i = 0; i < (int)testRoute.size(); i++){
+            while(notVisited.size() > 0){
 
-                // cout << endl << "i " << i << " " << (int)testRoute.size();// lll
+                choosenToAdd = (int)((int)(rnd01() * (double)notVisited.size()) % notVisited.size());
+                // cout << endl << "b " << (int)notVisited.size() << " " << choosenToAdd;// lll
 
-                vector<bool> usedNode(notVisited.size(), false);
-                
-                for(int j = 0; j < (int)notVisited.size(); j++){
+                vector<bool> testedNodes((int)testRoute.size() + 1, false);
 
-                    choosen = (int)((int)(rnd01() * (double)notVisited.size()) % notVisited.size());
+                for(int i = 0; i <= (int)testRoute.size(); i++){
 
-                    // cout << endl << "j " << j << " " << choosen << " " << (int)notVisited.size() << " " << (int)usedNode.size();// lll
+                    int choosenToTest = (int)((int)(rnd01() * ((int)testRoute.size() + 1)) % ((int)testRoute.size() + 1));
 
-                    while(usedNode[choosen]){
-                        choosen++;
-			            choosen %= (int)notVisited.size();
-                        // cout << endl << choosen;// lll
+                    // cout << choosenToTest << " ";
+
+                    while(testedNodes[choosenToTest]){
+                        choosenToTest++;
+                        choosenToTest %= ((int)testRoute.size() + 1);
                     }
 
-                    usedNode[choosen] = true;
-
-                    // cout << endl << "k2 " << testRoute.size() << " " << vehicleRouteStart << "+" << i;// lll
-
-                    if(addIsFeasible( testRoute, notVisited[choosen], i, problem )){
+                    testedNodes[choosenToTest] = true;
+                    
+                    if(addIsFeasible( testRoute, notVisited[choosenToAdd], i, problem )){
 
                         // inserting node
-                        // cout << endl << "k3 " << newPop.size() << " " << vehicleRouteStart + i; // lll
-                        cout << endl;
-                        printRoute(newPop);
-                        cout << "\ntest route:\n";
-                        printRoute(testRoute);
-                        cout << "\ninsert " << notVisited[choosen] << " before " << vehicleRouteStart + i << endl;
-                        newPop.insert(newPop.begin() + vehicleRouteStart + i, notVisited[choosen]);
-                        visited[notVisited[choosen]] = true;
-                        printRoute(newPop);
-                        
+
+                        // printRoute(newPop);//lll
+                        // cout << "\ntest route:\n";//lll
+                        // printRoute(testRoute);//lll
+                        // cout << "\ninsert " << notVisited[choosenToAdd] << " before " << newPop[vehicleRouteStart + i] << endl;//lll
+
+                        newPop.insert(newPop.begin() + vehicleRouteStart + i, notVisited[choosenToAdd]);
+                        visited[notVisited[choosenToAdd]] = true;
+
                         // updating partial route
                         first = newPop.begin() + vehicleRouteStart;
                         last = newPop.end();
                         testRoute = vector<int>(first, last);
 
-                        // updating not visited nodes
-                        notVisited.erase(notVisited.begin() + choosen);
-                        usedNode.erase(usedNode.begin() + choosen);
-                        j-=2;
-
-                        calculateFit(newPop, problem);
-
+                        // printRoute(newPop); //lll
+                        // calculateFit(newPop, problem); //lll
+                        break;
                     }
-
                 }
+
+                // updating not visited nodes
+                notVisited.erase(notVisited.begin() + choosenToAdd);
             }
-
+            // updating partial route start
             vehicleRouteStart = (int)newPop.size();
-
         }
 	}
 
