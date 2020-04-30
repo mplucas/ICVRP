@@ -508,7 +508,6 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
         }else{
             // getting not visited nodes
             vector<int> notVisited;
-
             for(int i = 0; i < problem.numNodes; i++){
                 if(!visited[i]){
                     notVisited.push_back(i);
@@ -613,7 +612,7 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
 
             newPop.push_back( destinationIndex );
             routedNodes[destinationIndex] = true;
-            timer = max( timer + problem.cost[originNode][destinationIndex] + problem.serviceTime[destinationIndex], problem.readyTime[destinationIndex] );
+            timer = max( timer + problem.cost[originNode][destinationIndex], problem.readyTime[destinationIndex] ) + problem.serviceTime[destinationIndex];
             originNode = destinationIndex;
 
         }else{
@@ -632,6 +631,154 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
             i--;
         }
 
+    }    
+
+    return isFeasible;
+}
+
+void solomonInsertion1Injection( vector<int> &newPop, int vehicleRouteStart, vector<bool> &routedNodes, vrp problem, double mi, double lambda, double a1, double a2 ){
+        
+    int previousNode;
+    int nextNode;
+    double timer = 0;
+
+    for( int i = vehicleRouteStart; i <= (int)newPop.size(); i++ ){
+        
+        double minCost = DBL_MAX;
+        int choosenToAdd = -1;
+        if( i == vehicleRouteStart ){
+            previousNode = 0;
+        }else{
+            previousNode = newPop[i-1];
+        }
+        if( i == (int)newPop.size() ){
+            nextNode = 0;
+        }else{
+            nextNode = newPop[i];
+        }
+
+        vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
+        vector<int> :: const_iterator last = newPop.end();
+        vector<int> testRoute(first, last);
+        // finding node to add
+        for( int j = 1; j < problem.numNodes; j++ ){
+        
+            if( !routedNodes[j] && addIsFeasible( testRoute, j, i - vehicleRouteStart, problem ) ){
+                
+                double oldBegin = timer + max(problem.cost[previousNode][nextNode], problem.readyTime[nextNode]);
+                double newBegin = timer + max(problem.cost[previousNode][j], problem.readyTime[j]);
+                newBegin = newBegin + max(problem.cost[j][nextNode], problem.readyTime[nextNode]);
+                double c1 = a1 * (problem.cost[previousNode][j] + problem.cost[j][nextNode] - mi * problem.cost[previousNode][nextNode])
+                            + a2 * (newBegin - oldBegin);
+
+                if( c1 < minCost ){
+                    choosenToAdd = j;
+                    minCost = c1;
+                }
+
+                double c2 = lambda * problem.cost[0][j] - c1;
+
+                if( c2 < minCost ){
+                    choosenToAdd = j;
+                    minCost = c2;
+                }
+            }
+        }
+
+        if( choosenToAdd != -1 ){ // if found a node to add
+
+            // inserting node
+            newPop.insert(newPop.begin() + i, choosenToAdd);
+            routedNodes[choosenToAdd] = true;
+        
+            // updating timer
+            timer = max( timer + problem.serviceTime[previousNode] + problem.cost[previousNode][newPop[i]], problem.readyTime[newPop[i]] );
+            // returning i to test insertion before node added
+            i--;
+        }else{
+            // updating timer
+            timer = max( timer + problem.serviceTime[previousNode] + problem.cost[previousNode][nextNode], problem.readyTime[nextNode] );
+        }
+    }
+}
+
+bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double mi, double lambda, double a1, double a2 ){
+
+    bool isFeasible = true;
+    vector<bool> routedNodes( problem.numNodes, false );
+    int originNode = 0;
+    int destinationIndex;
+    int vehicleRouteStart = 0;
+    int vehiclesUsed = 1;
+
+    routedNodes[0] = true;
+
+    while( (int)newPop.size() < problem.numNodes ){
+        
+        vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
+        vector<int> :: const_iterator last = newPop.end();
+        vector<int> testRoute(first, last);
+        
+        // creating initial partial route based on initType (0 - farthest unrouted customer | 1 - earliest deadline unrouted customer)
+        if(initType == 0){
+
+            double maxDistance = 0;
+
+            for( int i = 1; i < problem.numNodes; i++ ){
+        
+                if( !routedNodes[i] && addIsFeasible( testRoute, i, (int)testRoute.size(), problem ) && problem.cost[originNode][i] > maxDistance){
+                    maxDistance = problem.cost[originNode][i];
+                    destinationIndex = i;
+                }
+            }
+
+            if( maxDistance != 0 ){ // if found a node to add
+
+                newPop.push_back( destinationIndex );
+                routedNodes[destinationIndex] = true;
+                originNode = destinationIndex;
+            }else{
+
+                solomonInsertion1Injection(newPop, vehicleRouteStart, routedNodes, problem, mi, lambda, a1, a2);
+                vehicleRouteStart = (int)newPop.size();
+                originNode = 0;
+
+                vehiclesUsed++;
+                if(vehiclesUsed > problem.numVehicles){
+                    isFeasible = false;
+                    break;
+                }
+            }
+        }else{
+
+            double earliestDeadline = DBL_MAX; // infinity
+
+            for( int i = 1; i < problem.numNodes; i++ ){
+        
+                if( !routedNodes[i] && addIsFeasible( testRoute, i, (int)testRoute.size(), problem ) && problem.dueTime[i] < earliestDeadline ){
+                    earliestDeadline = problem.dueTime[i];
+                    destinationIndex = i;
+                }
+            }
+
+            if( earliestDeadline != DBL_MAX ){ // if found a node to add
+
+                newPop.push_back( destinationIndex );
+                routedNodes[destinationIndex] = true;
+                originNode = destinationIndex;
+            }else{
+
+                solomonInsertion1Injection(newPop, vehicleRouteStart, routedNodes, problem, mi, lambda, a1, a2);
+                vehicleRouteStart = (int)newPop.size();
+                originNode = 0;
+
+                vehiclesUsed++;
+                if(vehiclesUsed > problem.numVehicles){
+                    isFeasible = false;
+                    break;
+                }
+            }
+        }
     }    
 
     return isFeasible;
