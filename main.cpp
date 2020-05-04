@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
-#include "openga.hpp"
-#include "utils.hpp"
+#include "openGA/src/openga.hpp"
+#include "openGA/src/utils.hpp"
 
 // global vrp problem variable
 vrp problem;
@@ -427,4 +427,4 @@ int main()
 	output_file.close();
 	return 0;
 }
-// g++ -O3 -s -DNDEBUG -std=c++11 -pthread -I./src -Wall -Wconversion -Wfatal-errors -Wextra main.cpp
+// g++ -O3 -s -DNDEBUG -std=c++11 -pthread -I/openGA/src -Wall -Wconversion -Wfatal-errors -Wextra main.cpp
