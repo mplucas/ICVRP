@@ -17,6 +17,16 @@ std::vector<std::vector<double>> nnPopParameters{
     {0.5, 0.5, 0},
     {0.3, 0.3, 0.4}
 };
+std::vector<std::vector<double>> si1PopParameters{
+    {0, 1, 1, 1, 0},
+	{0, 1, 2, 1, 0},
+	{0, 1, 1, 0, 1},
+	{0, 1, 2, 0, 1},
+	{1, 1, 1, 1, 0},
+	{1, 1, 2, 1, 0},
+	{1, 1, 1, 0, 1},
+	{1, 1, 2, 0, 1}
+};
 
 struct MySolution
 {
@@ -46,34 +56,25 @@ bool eval_solution(
 	MyMiddleCost &c);
 void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
-	int nnPopSize = (int)nnPopParameters.size();
 
-    // cout << "\n\n chosens: " << popCount << " " << nnPopSize << "\n"; // lll
-    if (popCount < nnPopSize) {
-
-        int currentPopCount = popCount;
-
-        while(currentPopCount == popCount){
-
-            int choosenParameters = popCount % (int)nnPopParameters.size();
-
-            if (nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2])){
-                popCount++;
-            }else{
-                
-                p.route.clear();
-                nnPopParameters.erase(nnPopParameters.begin() + choosenParameters);
-                
-                if(nnPopParameters.size() == 0){
-                    popCount = nnPopSize;
-                    break;
-                }
-            }
-        }
-    } else {
+    // cout << "\n\n chosens: " << popCount << "\n"; // lll
+    if ((int)nnPopParameters.size() > 0) {
+		cout << "\na"; //lll
+		int choosenParameters = (int)nnPopParameters.size() - 1;
+		nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2] );
+		nnPopParameters.pop_back();
+            
+    } else if((int)si1PopParameters.size() > 0){
+		cout << "\nb"; //lll
+		int choosenParameters = (int)si1PopParameters.size() - 1;
+        solomonInsertion1( p.route, problem, (int)si1PopParameters[choosenParameters][0], si1PopParameters[choosenParameters][1], si1PopParameters[choosenParameters][2], si1PopParameters[choosenParameters][3], si1PopParameters[choosenParameters][4]);
+		si1PopParameters.pop_back();
+        
+	}else {
+		cout << "\nc"; //lll
         p.route = randomPop( problem, rnd01 );
-        popCount++;
     }
+    popCount++;
     // cout << "pop " << p.to_string() << endl; // lll
 }
 
@@ -81,6 +82,17 @@ bool eval_solution(
 	const MySolution& p,
 	MyMiddleCost &c)
 {
+	// cout << "\n"; //lll
+	// printRoute(p.route); // lll
+	if((int)p.route.size() != problem.numNodes - 1) // lll
+		cout << "\ntamanho diferente " << (int)p.route.size(); // lll
+	// for(int i = 0; i < (int)p.route.size(); i++){
+	// 	for(int j = i+1; j < (int)p.route.size(); j++){
+	// 		if(p.route[i] == p.route[j]){
+	// 			cout << "\nigual: " << p.route[i] << " [" << i << "] e [" << j << "]";
+	// 		}
+	// 	}
+	// }
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
 	// cout << "\na\n"; // lll
 
@@ -245,7 +257,6 @@ MySolution crossover(
 	const MySolution& gene2,
 	const std::function<double(void)> &rnd01)
 {
-	// cout << "\nb\n"; // lll
 	MySolution newGene;
 	
 	unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)gene1.route.size()) % gene1.route.size());
@@ -267,15 +278,18 @@ MySolution crossover(
 		smallerIndex = choosenNode1;
 	}
 
-	// cout << "\nCrossOver " << smallerIndex << " " << biggerIndex << "\n G1: " << gene1.to_string() << "\n G2: " << gene2.to_string();// lll
+	// cout << "\nCrossOver " << smallerIndex << " " << biggerIndex << "\n G1: " << gene1.to_string() << " [" << gene1.route.size() << "]\n G2: " << gene2.to_string() << " [" << gene1.route.size() << "]\n";// lll
 
 	for(int i = 0; i < smallerIndex; i++){
+		// cout << "\n 1 pushando " << gene1.route[i] << " " << i << " " << gene1.route.size(); // lll
 		newGene.route.push_back( gene1.route[i] );
 	}
 	for(int i = smallerIndex; i < biggerIndex; i++){
+		// cout << "\n 2 pushando " << gene2.route[i] << " " << i << " " << gene2.route.size(); // lll
 		newGene.route.push_back( gene2.route[i] );
 	}
 	for(int i = biggerIndex; i < (int)gene1.route.size(); i++){
+		// cout << "\n 3 pushando " << gene1.route[i] << " " << i << " " << gene1.route.size(); // lll
 		newGene.route.push_back( gene1.route[i] );
 	}
 
@@ -321,6 +335,7 @@ MySolution crossover(
         if( itDuplicatedNodes != duplicatedNodes.end() ){
             
             vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
+			// cout << "\ntroca " << newGene.route[i] << " por " << *itMissingNodes; //lll
             newGene.route[i] = *itMissingNodes;
             duplicatedNodes.erase( itDuplicatedNodes );
             missingNodes.erase( itMissingNodes );
@@ -336,6 +351,7 @@ MySolution crossover(
         if( itDuplicatedNodes != duplicatedNodes.end() ){
             
             vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
+			// cout << "\ntroca " << newGene.route[i] << " por " << *itMissingNodes; //lll
             newGene.route[i] = *itMissingNodes;
             duplicatedNodes.erase( itDuplicatedNodes );
             missingNodes.erase( itMissingNodes );
@@ -397,8 +413,8 @@ int main()
 
 	GA_Type ga_obj;
 	ga_obj.problem_mode=EA::GA_MODE::SOGA;
-	ga_obj.multi_threading=true;
-	ga_obj.dynamic_threading=true;
+	ga_obj.multi_threading=false;
+	ga_obj.dynamic_threading=false;
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;
 	ga_obj.population=popSize;
