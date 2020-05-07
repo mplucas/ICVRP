@@ -921,7 +921,7 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
                 vehiclesUsed++;
                 if(vehiclesUsed > problem.numVehicles){
                     isFeasible = false;
-                    cout << "\nx"; // lll
+                    cout << " - reject"; // lll
                     break;
                 }
             }
@@ -952,7 +952,7 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
                 vehiclesUsed++;
                 if(vehiclesUsed > problem.numVehicles){
                     isFeasible = false;
-                    cout << "\ny"; // lll
+                    cout << " - reject"; // lll
                     break;
                 }
             }
