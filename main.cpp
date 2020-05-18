@@ -1,5 +1,4 @@
 #include <bits/stdc++.h>
-#include "src/openga.hpp"
 #include "src/utils.hpp"
 
 // global vrp problem variable
@@ -28,29 +27,6 @@ std::vector<std::vector<double>> si1PopParameters{
 	{1, 1, 2, 0, 1}
 };
 
-struct MySolution
-{
-	std::vector<int> route;
-	std::string to_string() const
-	{
-		std::ostringstream out;
-		out << "{";
-		for(unsigned long i = 0;i < route.size(); i++)
-			out << ( i?",":"" ) << std::setprecision(10) << route[i];
-		out << "}";
-		return out.str();
-	}
-};
-
-struct MyMiddleCost
-{
-	// This is where the results of simulation
-	// is stored but not yet finalized.
-	double cost;
-};
-
-typedef EA::Genetic<MySolution,MyMiddleCost> GA_Type;
-typedef EA::GenerationType<MySolution,MyMiddleCost> Generation_Type;
 bool eval_solution(
 	const MySolution& p,
 	MyMiddleCost &c);
@@ -59,19 +35,19 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 
     // cout << "\n\n chosens: " << popCount << "\n"; // lll
     if ((int)nnPopParameters.size() > 0) {
-		cout << "\na"; //lll
+		// cout << "\na"; //lll
 		int choosenParameters = (int)nnPopParameters.size() - 1;
 		nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2] );
 		nnPopParameters.pop_back();
             
     } else if((int)si1PopParameters.size() > 0){
-		cout << "\nb"; //lll
+		// cout << "\nb"; //lll
 		int choosenParameters = (int)si1PopParameters.size() - 1;
         solomonInsertion1( p.route, problem, (int)si1PopParameters[choosenParameters][0], si1PopParameters[choosenParameters][1], si1PopParameters[choosenParameters][2], si1PopParameters[choosenParameters][3], si1PopParameters[choosenParameters][4]);
 		si1PopParameters.pop_back();
         
 	}else {
-		cout << "\nc"; //lll
+		// cout << "\nc"; //lll
         p.route = randomPop( problem, rnd01 );
     }
     popCount++;
@@ -371,7 +347,7 @@ double calculate_SO_total_fitness(const GA_Type::thisChromosomeType &X)
 	return X.middle_costs.cost;
 }
 
-std::ofstream output_file;
+// std::ofstream output_file;
 
 void SO_report_generation(
 	int generation_number,
@@ -379,37 +355,53 @@ void SO_report_generation(
 	const MySolution& best_genes)
 {
 	// cout << "\nf\n"; // lll
-	std::cout
-		<<"Generation ["<<generation_number<<"], "
-		<<"Best="<<last_generation.best_total_cost<<", "
-		<<"Average="<<last_generation.average_cost<<", "
-		<<"Best genes=("<<best_genes.to_string()<<")"<<", "
-		<<"Exe_time="<<last_generation.exe_time
-		<<std::endl;
+	// std::cout
+	// 	<<"Generation ["<<generation_number<<"], "
+	// 	<<"Best="<<last_generation.best_total_cost<<", "
+	// 	<<"Average="<<last_generation.average_cost<<", "
+	// 	<<"Best genes=("<<best_genes.to_string()<<")"<<", "
+	// 	<<"Exe_time="<<last_generation.exe_time
+	// 	<<std::endl;
 
-	output_file
-		<<generation_number<<"\t"
-		<<last_generation.average_cost<<"\t"
-		<<last_generation.best_total_cost
-		<<"\n";
+	// output_file
+	// 	<<generation_number<<"\t"
+	// 	<<last_generation.average_cost<<"\t"
+	// 	<<last_generation.best_total_cost
+	// 	<<"\n";
+}
+
+void resetGlobals(){
+	// variables to control pop creation
+	popSize = 100;
+	popCount = 0;
+	nnPopParameters = {
+		{0.4, 0.4, 0.2},
+		{0, 1, 0},
+		{0.5, 0.5, 0},
+		{0.3, 0.3, 0.4}
+	};
+	si1PopParameters = {
+		{0, 1, 1, 1, 0},
+		{0, 1, 2, 1, 0},
+		{0, 1, 1, 0, 1},
+		{0, 1, 2, 0, 1},
+		{1, 1, 1, 1, 0},
+		{1, 1, 2, 1, 0},
+		{1, 1, 1, 0, 1},
+		{1, 1, 2, 0, 1}
+	};
 }
 
 int main()
 {
     setbuf(stdout, NULL);
 
-	problem = readFile("entrada.txt");
-    problem.fitCriterion = 1; // Distance
-
-	output_file.open("./bin/result_.txt");
-	output_file
-		<<"step"<<"\t"
-		<<"cost_avg"<<"\t"
-		<<"cost_best"
-		<<"\n";
-
-	EA::Chronometer timer;
-	timer.tic();
+	// output_file.open("./bin/result_.txt");
+	// output_file
+	// 	<<"step"<<"\t"
+	// 	<<"cost_avg"<<"\t"
+	// 	<<"cost_best"
+	// 	<<"\n";
 
 	GA_Type ga_obj;
 	ga_obj.problem_mode=EA::GA_MODE::SOGA;
@@ -432,15 +424,38 @@ int main()
 	ga_obj.elite_count=10;
 	ga_obj.crossover_fraction=0.7;
 	ga_obj.mutation_rate=0.1;
-	ga_obj.solve();
 
-	std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
 
-    debug = true;
-	MyMiddleCost c;
-    ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
+	// ### BEGIN CLASSIC TEST
 
-	output_file.close();
+	// problem = readFile("entrada.txt");
+    // problem.fitCriterion = 1; // Distance
+
+	// EA::Chronometer timer;
+	// timer.tic();
+
+	// ga_obj.solve();
+
+	// std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
+
+    // debug = true;
+	// MyMiddleCost c;
+    // ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
+	// ### END CLASSIC TEST
+
+	ofstream outputTests;
+	outputTests.open("results.txt");
+
+	batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", 5, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", 5, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", 5, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", 5, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", 5, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", 5, 1, resetGlobals, outputTests);
+
+	outputTests.close();
+
+	// output_file.close();
 	return 0;
 }
 // g++ -O3 -s -DNDEBUG -std=c++11 -pthread -I/src -Wall -Wconversion -Wfatal-errors -Wextra main.cpp

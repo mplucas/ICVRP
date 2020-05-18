@@ -1,4 +1,29 @@
 #include <bits/stdc++.h>
+#include "openga.hpp"
+
+struct MySolution
+{
+	std::vector<int> route;
+	std::string to_string() const
+	{
+		std::ostringstream out;
+		out << "{";
+		for(unsigned long i = 0;i < route.size(); i++)
+			out << ( i?",":"" ) << std::setprecision(10) << route[i];
+		out << "}";
+		return out.str();
+	}
+};
+
+struct MyMiddleCost
+{
+	// This is where the results of simulation
+	// is stored but not yet finalized.
+	double cost;
+};
+
+typedef EA::Genetic<MySolution,MyMiddleCost> GA_Type;
+typedef EA::GenerationType<MySolution,MyMiddleCost> Generation_Type;
 
 using namespace std;
 
@@ -919,7 +944,7 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
                 vehiclesUsed++;
                 if(vehiclesUsed > problem.numVehicles){
                     isFeasible = false;
-                    cout << " - reject"; // lll
+                    // cout << " - reject"; // lll
                     break;
                 }
             }
@@ -950,7 +975,7 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
                 vehiclesUsed++;
                 if(vehiclesUsed > problem.numVehicles){
                     isFeasible = false;
-                    cout << " - reject"; // lll
+                    // cout << " - reject"; // lll
                     break;
                 }
             }
@@ -959,4 +984,79 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
 
     // cout << "\ntoma " << newPop.size(); //lll
     return isFeasible;
+}
+
+void batteryTests(GA_Type ga_obj, vrp &problem, string entry, int timesToRepeat, int fitCriterion, void (*resetGlobals)(), ofstream &output){
+
+    double avgTime = 0;
+    double bestTime = DBL_MAX; // infinity
+    double avgValue = 0;
+    double bestValue = DBL_MAX;
+    MySolution bestSolution;
+    double samples[timesToRepeat];
+
+    for(int i = 0; i < timesToRepeat; i++){
+    
+        problem = readFile(entry);
+        problem.fitCriterion = fitCriterion;
+
+        EA::Chronometer timer;
+        timer.tic();
+        
+        ga_obj.solve();
+
+        // std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
+        double currentTime = timer.toc();
+        
+        avgTime += currentTime;
+        
+        bestTime = min(currentTime, bestTime);
+
+        avgValue += ga_obj.last_generation.best_total_cost;
+
+        if(ga_obj.last_generation.best_total_cost < bestValue){
+            bestValue = ga_obj.last_generation.best_total_cost;
+            bestSolution = ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes;
+        }
+
+        samples[i] = ga_obj.last_generation.best_total_cost;
+
+        // reseting global variables
+        (*resetGlobals)();
+    }
+
+    avgTime /= timesToRepeat;
+
+    avgValue /= timesToRepeat;
+
+    // calculating standard error
+    double stdDeviation = 0;
+    double stdError;
+	
+	for( int i = 0; i < timesToRepeat; i++ ){
+		stdDeviation += pow( samples[i] - avgValue, 2 );
+	}
+
+	stdDeviation = sqrt( stdDeviation / (timesToRepeat - 1) );
+	stdError = stdDeviation / sqrt(timesToRepeat);
+
+    // printf("\nAfter %d executions using %s:\n", timesToRepeat, entry.c_str());
+	// printf("Average Time: %.2f seconds\n", avgTime);
+	// printf("Best Time: %.2f seconds\n", bestTime);
+	// printf("Average Value: %.2f\n", avgValue);
+	// printf("Best Value: %.2f\n", bestValue);
+	// printf("Standard Error: %.2f\n", stdError);
+	// printf("Exiting code\n");
+
+    string results;
+    results = "\nAfter " + to_string(timesToRepeat) + " executions using " + entry + ":\n";
+	results += "Average Time: " + to_string(avgTime) + " seconds\n";
+	results += "Best Time: " + to_string(bestTime) + " seconds\n";
+	results += "Average Value: " + to_string(avgValue) + "\n";
+	results += "Best Value: " + to_string(bestValue) + "\n";
+	results += "Standard Error: " + to_string(stdError) + "\n";
+	results += "Best Solution:\n" + bestSolution.to_string() + "\n";
+
+    cout << results;
+    output << results;
 }
