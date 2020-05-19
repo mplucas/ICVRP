@@ -16,16 +16,16 @@ std::vector<std::vector<double>> nnPopParameters{
     {0.5, 0.5, 0},
     {0.3, 0.3, 0.4}
 };
-std::vector<std::vector<double>> si1PopParameters{
-    {0, 1, 1, 1, 0},
-	{0, 1, 2, 1, 0},
-	{0, 1, 1, 0, 1},
-	{0, 1, 2, 0, 1},
-	{1, 1, 1, 1, 0},
-	{1, 1, 2, 1, 0},
-	{1, 1, 1, 0, 1},
-	{1, 1, 2, 0, 1}
-};
+// std::vector<std::vector<double>> si1PopParameters{
+//     {0, 1, 1, 1, 0},
+// 	{0, 1, 2, 1, 0},
+// 	{0, 1, 1, 0, 1},
+// 	{0, 1, 2, 0, 1},
+// 	{1, 1, 1, 1, 0},
+// 	{1, 1, 2, 1, 0},
+// 	{1, 1, 1, 0, 1},
+// 	{1, 1, 2, 0, 1}
+// };
 
 bool eval_solution(
 	const MySolution& p,
@@ -40,11 +40,11 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 		nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2] );
 		nnPopParameters.pop_back();
             
-    } else if((int)si1PopParameters.size() > 0){
-		// cout << "\nb"; //lll
-		int choosenParameters = (int)si1PopParameters.size() - 1;
-        solomonInsertion1( p.route, problem, (int)si1PopParameters[choosenParameters][0], si1PopParameters[choosenParameters][1], si1PopParameters[choosenParameters][2], si1PopParameters[choosenParameters][3], si1PopParameters[choosenParameters][4]);
-		si1PopParameters.pop_back();
+    // } else if((int)si1PopParameters.size() > 0){
+	// 	// cout << "\nb"; //lll
+	// 	int choosenParameters = (int)si1PopParameters.size() - 1;
+    //     solomonInsertion1( p.route, problem, (int)si1PopParameters[choosenParameters][0], si1PopParameters[choosenParameters][1], si1PopParameters[choosenParameters][2], si1PopParameters[choosenParameters][3], si1PopParameters[choosenParameters][4]);
+	// 	si1PopParameters.pop_back();
         
 	}else {
 		// cout << "\nc"; //lll
@@ -380,16 +380,16 @@ void resetGlobals(){
 		{0.5, 0.5, 0},
 		{0.3, 0.3, 0.4}
 	};
-	si1PopParameters = {
-		{0, 1, 1, 1, 0},
-		{0, 1, 2, 1, 0},
-		{0, 1, 1, 0, 1},
-		{0, 1, 2, 0, 1},
-		{1, 1, 1, 1, 0},
-		{1, 1, 2, 1, 0},
-		{1, 1, 1, 0, 1},
-		{1, 1, 2, 0, 1}
-	};
+	// si1PopParameters = {
+	// 	{0, 1, 1, 1, 0},
+	// 	{0, 1, 2, 1, 0},
+	// 	{0, 1, 1, 0, 1},
+	// 	{0, 1, 2, 0, 1},
+	// 	{1, 1, 1, 1, 0},
+	// 	{1, 1, 2, 1, 0},
+	// 	{1, 1, 1, 0, 1},
+	// 	{1, 1, 2, 0, 1}
+	// };
 }
 
 int main()
@@ -446,12 +446,12 @@ int main()
 	ofstream outputTests;
 	outputTests.open("results.txt");
 
-	batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", 5, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", 5, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", 5, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", 5, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", 5, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", 5, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", 10, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", 10, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", 10, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", 10, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", 10, 1, resetGlobals, outputTests);
+	batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", 10, 1, resetGlobals, outputTests);
 
 	outputTests.close();
 
