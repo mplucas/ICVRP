@@ -7,6 +7,9 @@ vrp problem;
 // easy debug variable
 bool debug = false;
 
+// variable to generate tests
+bool test = false;
+
 // variables to control pop creation
 int popSize = 100;
 int popCount = 0;
@@ -46,11 +49,37 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
     //     solomonInsertion1( p.route, problem, (int)si1PopParameters[choosenParameters][0], si1PopParameters[choosenParameters][1], si1PopParameters[choosenParameters][2], si1PopParameters[choosenParameters][3], si1PopParameters[choosenParameters][4]);
 	// 	si1PopParameters.pop_back();
         
-	}else {
+	}else if(popCount < popSize / 2){
 		// cout << "\nc"; //lll
-        p.route = randomPop( problem, rnd01 );
+		double parameters[3] = {
+			-1, -1, -1
+		};
+		double remnant = 1;
+		int parametersPopulated = 0;
+
+		while(parametersPopulated < 3){
+			
+			int parameterIndex = (int)((int)(3 * rnd01()) % 3);
+			if(parameters[parameterIndex] != -1){
+				continue;
+			}
+			if(parametersPopulated == 2){
+				parameters[parameterIndex] = remnant;
+			}else{
+				parameters[parameterIndex] = min(rnd01(), remnant);
+				remnant -= parameters[parameterIndex];
+			}
+			parametersPopulated++;
+		}
+        if(nearestNeighborPop( p.route, problem, parameters[0], parameters[1], parameters[2] )){
+			popCount++;
+		}
+    }else {
+		// cout << "\n0"; //lll
+        // p.route = randomPopImproved( problem, rnd01 );
+		p.route = randomPop( problem, rnd01 );
+    	popCount++;
     }
-    popCount++;
     // cout << "pop " << p.to_string() << endl; // lll
 }
 
@@ -58,10 +87,18 @@ bool eval_solution(
 	const MySolution& p,
 	MyMiddleCost &c)
 {
+	// cout << "\na\n"; // lll
+	bool isFeasible = true; // if true accepts gene, if false rejects gene
+	
 	// cout << "\n"; //lll
 	// printRoute(p.route); // lll
-	if((int)p.route.size() != problem.numNodes - 1) // lll
-		cout << "\ntamanho diferente " << (int)p.route.size(); // lll
+	if((int)p.route.size() != problem.numNodes - 1){
+		// cout << "\ntamanho diferente " << (int)p.route.size() << endl; // lll
+		isFeasible = false;
+		return isFeasible;
+	}else{
+		// cout << "aceito " << popCount << endl; // lll
+	}
 	// for(int i = 0; i < (int)p.route.size(); i++){
 	// 	for(int j = i+1; j < (int)p.route.size(); j++){
 	// 		if(p.route[i] == p.route[j]){
@@ -69,8 +106,6 @@ bool eval_solution(
 	// 		}
 	// 	}
 	// }
-	bool isFeasible = true; // if true accepts gene, if false rejects gene
-	// cout << "\na\n"; // lll
 
 	// VARIABLES TO CONTROL VEHICLE BEING USED
 	int choosenVehicle = 0; // vehicle wich route belongs to, if it turns equal to problem.numVehicles than its unfeasible
@@ -196,7 +231,7 @@ bool eval_solution(
         // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
 	}
 
-    // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
+    if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
 	// else cout << "NOT FEASIBLE " << popCount << endl; //lll
 
 	return isFeasible;
@@ -355,14 +390,15 @@ void SO_report_generation(
 	const MySolution& best_genes)
 {
 	// cout << "\nf\n"; // lll
-	// std::cout
-	// 	<<"Generation ["<<generation_number<<"], "
-	// 	<<"Best="<<last_generation.best_total_cost<<", "
-	// 	<<"Average="<<last_generation.average_cost<<", "
-	// 	<<"Best genes=("<<best_genes.to_string()<<")"<<", "
-	// 	<<"Exe_time="<<last_generation.exe_time
-	// 	<<std::endl;
-
+	if(!test){
+		std::cout
+		<<"Generation ["<<generation_number<<"], "
+		<<"Best="<<last_generation.best_total_cost<<", "
+		<<"Average="<<last_generation.average_cost<<", "
+		<<"Best genes=("<<best_genes.to_string()<<")"<<", "
+		<<"Exe_time="<<last_generation.exe_time
+		<<std::endl;
+	}
 	// output_file
 	// 	<<generation_number<<"\t"
 	// 	<<last_generation.average_cost<<"\t"
@@ -425,35 +461,38 @@ int main()
 	ga_obj.crossover_fraction=0.7;
 	ga_obj.mutation_rate=0.1;
 
+	if(!test){
 
-	// ### BEGIN CLASSIC TEST
+		// ### BEGIN CLASSIC TEST
 
-	// problem = readFile("entrada.txt");
-    // problem.fitCriterion = 1; // Distance
+		problem = readFile("entrada.txt");
+		problem.fitCriterion = 1; // Distance
 
-	// EA::Chronometer timer;
-	// timer.tic();
+		EA::Chronometer timer;
+		timer.tic();
 
-	// ga_obj.solve();
+		ga_obj.solve();
 
-	// std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
+		std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
 
-    // debug = true;
-	// MyMiddleCost c;
-    // ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
-	// ### END CLASSIC TEST
+		debug = true;
+		MyMiddleCost c;
+		ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
+		// ### END CLASSIC TEST
+	}else{
 
-	ofstream outputTests;
-	outputTests.open("results.txt");
+		ofstream outputTests;
+		outputTests.open("results.txt");
 
-	batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", 10, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", 10, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", 10, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", 10, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", 10, 1, resetGlobals, outputTests);
-	batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", 10, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", 10, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", 10, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", 10, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", 10, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", 10, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", 10, 1, resetGlobals, outputTests);
 
-	outputTests.close();
+		outputTests.close();
+	}
 
 	// output_file.close();
 	return 0;

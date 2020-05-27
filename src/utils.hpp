@@ -489,7 +489,37 @@ void printRoute(vector<int> route){
 }
 
 // Population functions
+// classic random generation
 vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
+
+    vector<int> newPop;
+    vector<bool> visited(problem.numNodes, false);
+
+	// marking depot as visited because it do not enter de solution
+	visited[0] = true;
+
+	for(int i = 1; i < problem.numNodes; i++){
+
+		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
+
+		// cout << choosen << " ";
+
+		while(visited[choosen]){
+            // cout << "a " << i << endl; //lll
+			choosen++;
+			choosen %= problem.numNodes;
+		}
+
+		newPop.push_back(choosen);
+		visited[choosen] = true;
+	}
+    // cout << "pronto" << endl; //lll
+
+    return newPop;
+}
+
+// this random generation always generate feasible solutions
+vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &rnd01 ){
 
     // cout << "\na"; //lll
     vector<int> newPop;
@@ -592,7 +622,6 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 	}
 
     return newPop;
-
 }
 
 bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight, double timeWeight, double urgencyWeight ){
