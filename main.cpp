@@ -8,7 +8,7 @@ vrp problem;
 bool debug = false;
 
 // variable to generate tests
-bool test = false;
+bool test = true;
 
 // variables to control pop creation
 int popSize = 100;
@@ -42,6 +42,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 		int choosenParameters = (int)nnPopParameters.size() - 1;
 		nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2] );
 		nnPopParameters.pop_back();
+		popCount++;
             
     // } else if((int)si1PopParameters.size() > 0){
 	// 	// cout << "\nb"; //lll
@@ -76,8 +77,8 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 		}
     }else {
 		// cout << "\n0"; //lll
-        // p.route = randomPopImproved( problem, rnd01 );
-		p.route = randomPop( problem, rnd01 );
+        p.route = randomPopImproved( problem, rnd01 );
+		// p.route = randomPop( problem, rnd01 );
     	popCount++;
     }
     // cout << "pop " << p.to_string() << endl; // lll
@@ -96,13 +97,17 @@ bool eval_solution(
 		// cout << "\ntamanho diferente " << (int)p.route.size() << endl; // lll
 		isFeasible = false;
 		return isFeasible;
-	}else{
-		// cout << "aceito " << popCount << endl; // lll
 	}
+	// else{
+	// 	// cout << "aceito " << popCount << endl; // lll
+	// }
 	// for(int i = 0; i < (int)p.route.size(); i++){
 	// 	for(int j = i+1; j < (int)p.route.size(); j++){
 	// 		if(p.route[i] == p.route[j]){
 	// 			cout << "\nigual: " << p.route[i] << " [" << i << "] e [" << j << "]";
+	// 		}
+	// 		if(p.route[i] < 1 || p.route[i] > (int)p.route.size()){
+	// 			cout << "inconsistente " << p.route[i];
 	// 		}
 	// 	}
 	// }
@@ -231,8 +236,8 @@ bool eval_solution(
         // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
 	}
 
-    if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
-	// else cout << "NOT FEASIBLE " << popCount << endl; //lll
+    // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
+	// else cout << "NOT FEASIBLE " << popCount << " " << p.route.size() << " " << endl; //lll
 
 	return isFeasible;
 }

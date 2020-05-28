@@ -506,8 +506,7 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
 		while(visited[choosen]){
             // cout << "a " << i << endl; //lll
-			choosen++;
-			choosen %= problem.numNodes;
+			choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 		}
 
 		newPop.push_back(choosen);
