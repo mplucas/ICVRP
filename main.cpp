@@ -35,7 +35,6 @@ bool eval_solution(
 	MyMiddleCost &c);
 void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
-
     // cout << "\n\n chosens: " << popCount << "\n"; // lll
     if ((int)nnPopParameters.size() > 0) {
 		// cout << "\na"; //lll
@@ -249,20 +248,26 @@ MySolution mutate(
 {
 	// cout << "\nc\n"; // lll
 	MySolution mutatedGene = baseGene;
+	int possibleNumMutation = 4;
+	int i = 0;
 
-	if( rnd01() < shrink_scale ){
+	while(i < possibleNumMutation){
+		
+		if( rnd01() < shrink_scale ){
 
-		unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
-		unsigned int choosenNode2;
+			unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
+			unsigned int choosenNode2;
 
-		do{
-			choosenNode2 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
-		}while(choosenNode2 == choosenNode1);
+			do{
+				choosenNode2 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
+			}while(choosenNode2 == choosenNode1);
 
-		mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
-		mutatedGene.route[choosenNode2] = baseGene.route[choosenNode1];
-        // cout << "\nMutation " << choosenNode1 << " " << choosenNode2 << "\nBase: " << baseGene.to_string();// lll
-	    // cout << "\n Mut: " << mutatedGene.to_string() << endl;// lll
+			mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
+			mutatedGene.route[choosenNode2] = baseGene.route[choosenNode1];
+			// cout << "\nMutation " << choosenNode1 << " " << choosenNode2 << "\nBase: " << baseGene.to_string();// lll
+			// cout << "\n Mut: " << mutatedGene.to_string() << endl;// lll
+		}
+		i++;
 	}    
 
 	return mutatedGene;
@@ -458,12 +463,12 @@ int main()
 	ga_obj.mutate=mutate;
 	ga_obj.crossover=crossover;
 	ga_obj.SO_report_generation=SO_report_generation;
-	ga_obj.best_stall_max=20;
-	ga_obj.average_stall_max=20;
+	ga_obj.best_stall_max=1000;
+	ga_obj.average_stall_max=1000;
 	ga_obj.tol_stall_best=1e-6;
 	ga_obj.tol_stall_average=1e-6;
-	ga_obj.elite_count=10;
-	ga_obj.crossover_fraction=0.7;
+	ga_obj.elite_count=popSize*0.1;
+	ga_obj.crossover_fraction=0.9;
 	ga_obj.mutation_rate=0.1;
 
 	if(!test){
@@ -485,16 +490,16 @@ int main()
 		ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
 		// ### END CLASSIC TEST
 	}else{
-
+		int timesToTest = 10;
 		ofstream outputTests;
 		outputTests.open("results.txt");
 
-		batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", 10, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", 10, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", 10, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", 10, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", 10, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", 10, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", timesToTest, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", timesToTest, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", timesToTest, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
+		batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
 
 		outputTests.close();
 	}
