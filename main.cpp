@@ -8,7 +8,7 @@ vrp problem;
 bool debug = false;
 
 // variable to generate tests
-bool test = true;
+bool test = false;
 
 // variables to control pop creation
 int popSize = 100;
@@ -49,7 +49,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
     //     solomonInsertion1( p.route, problem, (int)si1PopParameters[choosenParameters][0], si1PopParameters[choosenParameters][1], si1PopParameters[choosenParameters][2], si1PopParameters[choosenParameters][3], si1PopParameters[choosenParameters][4]);
 	// 	si1PopParameters.pop_back();
         
-	}else if(popCount < popSize / 2){
+	}else if(popCount < (int)(popSize * 0.35)){
 		// cout << "\nc"; //lll
 		double parameters[3] = {
 			-1, -1, -1
@@ -74,13 +74,16 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
         if(nearestNeighborPop( p.route, problem, parameters[0], parameters[1], parameters[2] )){
 			popCount++;
 		}
+    }else if(popCount < (int)(popSize * 0.7)){
+		cout << "\n0"; //lll
+        p.route = k_means( problem, (int)(popSize*0.05) + (int)(rnd01() * (popSize*0.11)) );
+    	popCount++;
+		cout << "\n1"; //lll
     }else {
-		// cout << "\n0"; //lll
         p.route = randomPopImproved( problem, rnd01 );
 		// p.route = randomPop( problem, rnd01 );
-    	popCount++;
     }
-    // cout << "pop " << p.to_string() << endl; // lll
+    cout << "pop " << p.to_string() << endl; // lll
 }
 
 bool eval_solution(
@@ -467,8 +470,8 @@ int main()
 	ga_obj.average_stall_max=1000;
 	ga_obj.tol_stall_best=1e-6;
 	ga_obj.tol_stall_average=1e-6;
-	ga_obj.elite_count=popSize*0.1;
-	ga_obj.crossover_fraction=0.9;
+	ga_obj.elite_count=(int)(popSize*0.1);
+	ga_obj.crossover_fraction=0.8;
 	ga_obj.mutation_rate=0.1;
 
 	if(!test){
