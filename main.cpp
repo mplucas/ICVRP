@@ -10,6 +10,10 @@ bool debug = false;
 // variable to generate tests
 bool test = false;
 
+// variables to control generation
+int generationSize = 1000;
+int generationCount = 0;
+
 // variables to control pop creation
 int popSize = 100;
 int popCount = 0;
@@ -76,7 +80,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 		}
     }else if(popCount < (int)(popSize * 0.7)){
 		cout << "\n0"; //lll
-        p.route = k_means( problem, (int)(popSize*0.05) + (int)(rnd01() * (popSize*0.11)) );
+        p.route = k_means( problem, (int)(popSize*0.05) + (int)(rnd01() * (popSize*0.08)) );
     	popCount++;
 		cout << "\n1"; //lll
     }else {
@@ -210,28 +214,33 @@ bool eval_solution(
 	}
 
 	// finalizing fit
-    if(problem.fitCriterion == 0){
+	if(originNode != 0){
+		if(problem.fitCriterion == 0){
 
-		// send vehicle back to depot
-		vehicleTimer += problem.cost[originNode][0];
+			// send vehicle back to depot
+			vehicleTimer += problem.cost[originNode][0];
 
-		// save fit if it is bigger
-		if( vehicleTimer > biggestTimer ){
-			biggestTimer = vehicleTimer;
+			// save fit if it is bigger
+			if( vehicleTimer > biggestTimer ){
+				biggestTimer = vehicleTimer;
+			}
+			
+			c.cost = biggestTimer;
+		
+		}else if(problem.fitCriterion == 1){
+			
+			// Adding distance to return to depot of the last vehicle
+			c.cost = totalDistance + problem.cost[originNode][0];
 		}
-        
-        c.cost = biggestTimer;
-    
-    }else if(problem.fitCriterion == 1){
-        
-        // Adding distance to return to depot of the last vehicle
-        c.cost = totalDistance + problem.cost[originNode][0];
-    }
+	}
 
 	if(debug){
-		vehicleDebugger.back().timer += problem.cost[originNode][0];
-		vehicleDebugger.back().distance += problem.cost[originNode][0];
 
+		if(originNode != 0){
+			vehicleDebugger.back().timer += problem.cost[originNode][0];
+			vehicleDebugger.back().distance += problem.cost[originNode][0];
+		}
+		
 		for(unsigned int i = 0; i < vehicleDebugger.size(); i++){
 			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
 		}
@@ -249,14 +258,15 @@ MySolution mutate(
 	const std::function<double(void)> &rnd01,
 	double shrink_scale)
 {
-	// cout << "\nc\n"; // lll
+	cout << "\nshrink_scale " << shrink_scale + (0.07 * (double)((double)generationCount/(double)generationSize)) << endl; // lll
 	MySolution mutatedGene = baseGene;
-	int possibleNumMutation = 4;
+	int possibleNumMutation = 1 + (int)(4 * (double)((double)generationCount/(double)generationSize));
 	int i = 0;
 
 	while(i < possibleNumMutation){
 		
-		if( rnd01() < shrink_scale ){
+		if( rnd01() < (shrink_scale + (0.07 * (double)((double)generationCount/(double)generationSize)) )){
+			cout << "foi mut\n";
 
 			unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
 			unsigned int choosenNode2;
@@ -412,6 +422,7 @@ void SO_report_generation(
 		<<"Exe_time="<<last_generation.exe_time
 		<<std::endl;
 	}
+	generationCount++;
 	// output_file
 	// 	<<generation_number<<"\t"
 	// 	<<last_generation.average_cost<<"\t"
@@ -421,7 +432,6 @@ void SO_report_generation(
 
 void resetGlobals(){
 	// variables to control pop creation
-	popSize = 100;
 	popCount = 0;
 	nnPopParameters = {
 		{0.4, 0.4, 0.2},
@@ -429,6 +439,7 @@ void resetGlobals(){
 		{0.5, 0.5, 0},
 		{0.3, 0.3, 0.4}
 	};
+	generationCount = 0;
 	// si1PopParameters = {
 	// 	{0, 1, 1, 1, 0},
 	// 	{0, 1, 2, 1, 0},
@@ -459,15 +470,15 @@ int main()
 	ga_obj.idle_delay_us=0; // switch between threads quickly
 	ga_obj.verbose=false;
 	ga_obj.population=popSize;
-	ga_obj.generation_max=1000;
+	ga_obj.generation_max=generationSize;
 	ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
 	ga_obj.init_genes=init_genes;
 	ga_obj.eval_solution=eval_solution;
 	ga_obj.mutate=mutate;
 	ga_obj.crossover=crossover;
 	ga_obj.SO_report_generation=SO_report_generation;
-	ga_obj.best_stall_max=1000;
-	ga_obj.average_stall_max=1000;
+	ga_obj.best_stall_max=generationSize;
+	ga_obj.average_stall_max=generationSize;
 	ga_obj.tol_stall_best=1e-6;
 	ga_obj.tol_stall_average=1e-6;
 	ga_obj.elite_count=(int)(popSize*0.1);
