@@ -91,23 +91,23 @@ bool eval_solution(
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
 	
 	if((int)p.route.size() != problem.numNodes - 1){
-		// cout << "\ntamanho diferente " << (int)p.route.size() << endl; // 
+		cout << "\ntamanho diferente " << (int)p.route.size() << endl; // 
 		isFeasible = false;
 		return isFeasible;
 	}
-	// else{
-	// 	// cout << "aceito " << popCount << endl; // lll
-	// }
-	// for(int i = 0; i < (int)p.route.size(); i++){
-	// 	for(int j = i+1; j < (int)p.route.size(); j++){
-	// 		if(p.route[i] == p.route[j]){
-	// 			cout << "\nigual: " << p.route[i] << " [" << i << "] e [" << j << "]";
-	// 		}
-	// 		if(p.route[i] < 1 || p.route[i] > (int)p.route.size()){
-	// 			cout << "inconsistente " << p.route[i];
-	// 		}
-	// 	}
-	// }
+	else{
+		// cout << "aceito " << popCount << endl; // lll
+	}
+	for(int i = 0; i < (int)p.route.size(); i++){
+		for(int j = i+1; j < (int)p.route.size(); j++){
+			if(p.route[i] == p.route[j]){
+				cout << "\nigual: " << p.route[i] << " [" << i << "] e [" << j << "]";
+			}
+			if(p.route[i] < 1 || p.route[i] > (int)p.route.size()){
+				cout << "inconsistente " << p.route[i];
+			}
+		}
+	}
 
 	// VARIABLES TO CONTROL VEHICLE BEING USED
 	int choosenVehicle = 0; // vehicle wich route belongs to, if it turns equal to problem.numVehicles than its unfeasible
@@ -278,34 +278,38 @@ MySolution crossover(
 	const std::function<double(void)> &rnd01)
 {
 	MySolution newGene;
+
+	// chance to do crossover caon drop to (1 - (0.2 * (double)((double)generationCount/(double)generationSize)))
+	if( rnd01() > (1 - (0.2 * (double)((double)generationCount/(double)generationSize))) ){
+		return gene1;
+	}
 	
-	unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)gene1.route.size()) % gene1.route.size());
-	unsigned int choosenNode2;
+	int possibleNumCuts = (1 + (int)(3 * rnd01())) * 2; // 2 to 8
+
+	vector<int> cuts;
 
 	do{
-		choosenNode2 = (unsigned int)((int)(rnd01() * (double)gene1.route.size()) % gene1.route.size());
-	}while(choosenNode2 == choosenNode1);
+		int choosenNode = (int)((int)(rnd01() * (double)gene1.route.size()) % gene1.route.size());
+		// if is not the same
+		if(find(cuts.begin(), cuts.end(), choosenNode) == cuts.end()){
+			cuts.push_back( choosenNode );
+		}
+	}while((int)cuts.size() < possibleNumCuts);
 	
-	int smallerIndex, biggerIndex;
+	sort(cuts.begin(), cuts.end());
 
-	if( choosenNode1 > choosenNode2 ){
-		
-		biggerIndex  = choosenNode1;
-		smallerIndex = choosenNode2;
-	}else{
-
-		biggerIndex  = choosenNode2;
-		smallerIndex = choosenNode1;
-	}
-
-	for(int i = 0; i < smallerIndex; i++){
-		newGene.route.push_back( gene1.route[i] );
-	}
-	for(int i = smallerIndex; i < biggerIndex; i++){
-		newGene.route.push_back( gene2.route[i] );
-	}
-	for(int i = biggerIndex; i < (int)gene1.route.size(); i++){
-		newGene.route.push_back( gene1.route[i] );
+	int iCut = 0;
+	for(int i = 0; i < (int)gene1.route.size(); i++){
+		int choosenNode;
+		if(i >= cuts[iCut] && i < cuts[iCut + 1]){
+			choosenNode =  gene2.route[i];
+		}else{
+			choosenNode = gene1.route[i];
+		}
+		newGene.route.push_back(choosenNode);
+		if(iCut + 1 < (int)cuts.size() - 1 && i >= cuts[iCut + 1]){
+			iCut += 2;
+		}
 	}
 
     // Correcting cross over
@@ -313,63 +317,63 @@ MySolution crossover(
     vector<int> duplicatedNodes;
     vector<int> missingNodes;
 
-    for(int i = smallerIndex; i < biggerIndex; i++){
-        
-        bool isDuplicated = true;
-        bool isMissing = true;
-		
-        for(int j = smallerIndex; j < biggerIndex; j++){
-        
-            // if not found in gene1 than it is duplicated in newGene
-            if(gene2.route[i] == gene1.route[j]){
-                isDuplicated = false;
-            }
-            // if not found in gene2 than it is missing in newGene
-            if(gene1.route[i] == gene2.route[j]){
-                isMissing = false;
-            }
-        }
+	for(int i = 0; i < (int)cuts.size(); i += 2){
 
-        if(isDuplicated){
-            duplicatedNodes.push_back(gene2.route[i]);
-        }
-        if(isMissing){
-            missingNodes.push_back(gene1.route[i]);
-        }
+		int smallerIndex = cuts[i];
+		int biggerIndex = cuts[i + 1];
+		for(int i = smallerIndex; i < biggerIndex; i++){
+        
+			bool isDuplicated = true;
+			bool isMissing = true;
+			
+			for(int j = smallerIndex; j < biggerIndex; j++){
+			
+				// if not found in gene1 than it is duplicated in newGene
+				if(gene2.route[i] == gene1.route[j]){
+					isDuplicated = false;
+				}
+				// if not found in gene2 than it is missing in newGene
+				if(gene1.route[i] == gene2.route[j]){
+					isMissing = false;
+				}
+			}
 
+			if(isDuplicated){
+				duplicatedNodes.push_back(gene2.route[i]);
+			}
+			if(isMissing){
+				missingNodes.push_back(gene1.route[i]);
+			}
+
+		}
 	}
 
     // Correcting duplicated nodes
-    for(int i = 0; i < smallerIndex; i++){
+	vector<int> reverseCuts = cuts;
+	reverseCuts.insert(reverseCuts.begin(), 0);
+	reverseCuts.push_back((int)gene1.route.size());
 
-        // if node is duplicated, replace it with a missing one
-        vector<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
-        
-        if( itDuplicatedNodes != duplicatedNodes.end() ){
-            
-            vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
-            newGene.route[i] = *itMissingNodes;
-            duplicatedNodes.erase( itDuplicatedNodes );
-            missingNodes.erase( itMissingNodes );
-        }
+	for(int i = 0; i < (int)reverseCuts.size(); i += 2){
+		
+		int smallerIndex = reverseCuts[i];
+		int biggerIndex = reverseCuts[i + 1];
 
-    }
+		for(int i = smallerIndex; i < biggerIndex; i++){
 
-    for(unsigned int i = biggerIndex; i < newGene.route.size(); i++){
+			// if node is duplicated, replace it with a missing one
+			vector<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
+			
+			if( itDuplicatedNodes != duplicatedNodes.end() ){
+				
+				vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
+				newGene.route[i] = *itMissingNodes;
+				duplicatedNodes.erase( itDuplicatedNodes );
+				missingNodes.erase( itMissingNodes );
+			}
 
-        // if node is duplicated, replace it with a missing one
-        vector<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
-        
-        if( itDuplicatedNodes != duplicatedNodes.end() ){
-            
-            vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
-            newGene.route[i] = *itMissingNodes;
-            duplicatedNodes.erase( itDuplicatedNodes );
-            missingNodes.erase( itMissingNodes );
-        }
+		}
 
-    }
-
+	}
 	return newGene;
 }
 
