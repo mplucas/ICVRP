@@ -39,22 +39,18 @@ bool eval_solution(
 	MyMiddleCost &c);
 void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 {
-    // cout << "\n\n chosens: " << popCount << "\n"; // lll
     if ((int)nnPopParameters.size() > 0) {
-		// cout << "\na"; //lll
 		int choosenParameters = (int)nnPopParameters.size() - 1;
 		nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2] );
 		nnPopParameters.pop_back();
 		popCount++;
             
     // } else if((int)si1PopParameters.size() > 0){
-	// 	// cout << "\nb"; //lll
 	// 	int choosenParameters = (int)si1PopParameters.size() - 1;
     //     solomonInsertion1( p.route, problem, (int)si1PopParameters[choosenParameters][0], si1PopParameters[choosenParameters][1], si1PopParameters[choosenParameters][2], si1PopParameters[choosenParameters][3], si1PopParameters[choosenParameters][4]);
 	// 	si1PopParameters.pop_back();
         
 	}else if(popCount < (int)(popSize * 0.35)){
-		// cout << "\nc"; //lll
 		double parameters[3] = {
 			-1, -1, -1
 		};
@@ -79,28 +75,23 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 			popCount++;
 		}
     }else if(popCount < (int)(popSize * 0.7)){
-		cout << "\n0"; //lll
         p.route = k_means( problem, (int)(popSize*0.05) + (int)(rnd01() * (popSize*0.08)) );
     	popCount++;
-		cout << "\n1"; //lll
     }else {
         p.route = randomPopImproved( problem, rnd01 );
 		// p.route = randomPop( problem, rnd01 );
     }
-    cout << "pop " << p.to_string() << endl; // lll
+    // cout << "pop " << p.to_string() << endl; // lll
 }
 
 bool eval_solution(
 	const MySolution& p,
 	MyMiddleCost &c)
 {
-	// cout << "\na\n"; // lll
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
 	
-	// cout << "\n"; //lll
-	// printRoute(p.route); // lll
 	if((int)p.route.size() != problem.numNodes - 1){
-		// cout << "\ntamanho diferente " << (int)p.route.size() << endl; // lll
+		// cout << "\ntamanho diferente " << (int)p.route.size() << endl; // 
 		isFeasible = false;
 		return isFeasible;
 	}
@@ -244,7 +235,6 @@ bool eval_solution(
 		for(unsigned int i = 0; i < vehicleDebugger.size(); i++){
 			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
 		}
-        // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
 	}
 
     // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
@@ -258,7 +248,6 @@ MySolution mutate(
 	const std::function<double(void)> &rnd01,
 	double shrink_scale)
 {
-	cout << "\nshrink_scale " << shrink_scale + (0.07 * (double)((double)generationCount/(double)generationSize)) << endl; // lll
 	MySolution mutatedGene = baseGene;
 	int possibleNumMutation = 1 + (int)(4 * (double)((double)generationCount/(double)generationSize));
 	int i = 0;
@@ -266,7 +255,6 @@ MySolution mutate(
 	while(i < possibleNumMutation){
 		
 		if( rnd01() < (shrink_scale + (0.07 * (double)((double)generationCount/(double)generationSize)) )){
-			cout << "foi mut\n";
 
 			unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
 			unsigned int choosenNode2;
@@ -277,8 +265,6 @@ MySolution mutate(
 
 			mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
 			mutatedGene.route[choosenNode2] = baseGene.route[choosenNode1];
-			// cout << "\nMutation " << choosenNode1 << " " << choosenNode2 << "\nBase: " << baseGene.to_string();// lll
-			// cout << "\n Mut: " << mutatedGene.to_string() << endl;// lll
 		}
 		i++;
 	}    
@@ -312,18 +298,13 @@ MySolution crossover(
 		smallerIndex = choosenNode1;
 	}
 
-	// cout << "\nCrossOver " << smallerIndex << " " << biggerIndex << "\n G1: " << gene1.to_string() << " [" << gene1.route.size() << "]\n G2: " << gene2.to_string() << " [" << gene1.route.size() << "]\n";// lll
-
 	for(int i = 0; i < smallerIndex; i++){
-		// cout << "\n 1 pushando " << gene1.route[i] << " " << i << " " << gene1.route.size(); // lll
 		newGene.route.push_back( gene1.route[i] );
 	}
 	for(int i = smallerIndex; i < biggerIndex; i++){
-		// cout << "\n 2 pushando " << gene2.route[i] << " " << i << " " << gene2.route.size(); // lll
 		newGene.route.push_back( gene2.route[i] );
 	}
 	for(int i = biggerIndex; i < (int)gene1.route.size(); i++){
-		// cout << "\n 3 pushando " << gene1.route[i] << " " << i << " " << gene1.route.size(); // lll
 		newGene.route.push_back( gene1.route[i] );
 	}
 
@@ -358,8 +339,6 @@ MySolution crossover(
 
 	}
 
-    // cout << "\nSizes d:" << duplicatedNodes.size() << " m:" << missingNodes.size() << endl;
-
     // Correcting duplicated nodes
     for(int i = 0; i < smallerIndex; i++){
 
@@ -369,7 +348,6 @@ MySolution crossover(
         if( itDuplicatedNodes != duplicatedNodes.end() ){
             
             vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
-			// cout << "\ntroca " << newGene.route[i] << " por " << *itMissingNodes; //lll
             newGene.route[i] = *itMissingNodes;
             duplicatedNodes.erase( itDuplicatedNodes );
             missingNodes.erase( itMissingNodes );
@@ -385,7 +363,6 @@ MySolution crossover(
         if( itDuplicatedNodes != duplicatedNodes.end() ){
             
             vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
-			// cout << "\ntroca " << newGene.route[i] << " por " << *itMissingNodes; //lll
             newGene.route[i] = *itMissingNodes;
             duplicatedNodes.erase( itDuplicatedNodes );
             missingNodes.erase( itMissingNodes );
@@ -393,15 +370,12 @@ MySolution crossover(
 
     }
 
-	// cout << "\nRes: " << newGene.to_string() << endl;// lll
-
 	return newGene;
 }
 
 double calculate_SO_total_fitness(const GA_Type::thisChromosomeType &X)
 {
 	// finalize the cost
-	// cout << "\ne\n"; // lll
 	return X.middle_costs.cost;
 }
 
@@ -412,7 +386,6 @@ void SO_report_generation(
 	const EA::GenerationType<MySolution,MyMiddleCost> &last_generation,
 	const MySolution& best_genes)
 {
-	// cout << "\nf\n"; // lll
 	if(!test){
 		std::cout
 		<<"Generation ["<<generation_number<<"], "
@@ -481,7 +454,7 @@ int main()
 	ga_obj.average_stall_max=generationSize;
 	ga_obj.tol_stall_best=1e-6;
 	ga_obj.tol_stall_average=1e-6;
-	ga_obj.elite_count=(int)(popSize*0.1);
+	ga_obj.elite_count=(int)(popSize*0.05);
 	ga_obj.crossover_fraction=0.8;
 	ga_obj.mutation_rate=0.1;
 
@@ -518,7 +491,6 @@ int main()
 		outputTests.close();
 	}
 
-	// output_file.close();
 	return 0;
 }
 // g++ -O3 -s -DNDEBUG -std=c++11 -pthread -I/src -Wall -Wconversion -Wfatal-errors -Wextra main.cpp

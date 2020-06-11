@@ -251,7 +251,6 @@ void printVrp(vrp problem, bool nodesDetails, bool matrix){
 
 bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp problem ){
 
-    // cout << "\nd " << nodeToAdd  << " " << addBeforeThisNode; //lll
     bool isFeasible = true;
 
     // VARIABLES TO CHECK CAPACITY
@@ -263,7 +262,6 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
     }
 
     if(problem.demand[nodeToAdd] + routeUsedCapacity > problem.capacity){
-        // cout << "\nc"; //lll
         isFeasible = false;
         return isFeasible;
     }
@@ -330,12 +328,9 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
         
         // CALCULATING PUSH-FOWARD
         double pf = newBeginOfNext - oldBeginOfNext;
-        // cout << endl << newBeginOfNext << " " << oldBeginOfNext << " " << destinyNode; //lll
         if( pf <= 0 ){ // success
-            // cout << "\ns" << oldBeginOfNext << " " << pf << " " << problem.dueTime[destinyNode]; //lll
             break;
         }else if( oldBeginOfNext + pf > problem.dueTime[destinyNode] ){ // fail
-            // cout << "\nf" << oldBeginOfNext << " " << pf << " " << problem.dueTime[destinyNode]; //lll
             isFeasible = false;
             break;
         }
@@ -437,15 +432,6 @@ bool calculateFit(vector<int> route, vrp problem){
 				vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
 				vehicle newVehicle;
 				vehicleDebugger.push_back(newVehicle);
-
-                // cout << "\nQuebra por: "; //lll
-                // if(vehicleTimer + problem.cost[originNode][destinyNode] > problem.dueTime[destinyNode]){
-                //     cout << "Time "; //lll
-                // }
-                // if(vehicleUsedCapacity + problem.demand[destinyNode] > problem.capacity){
-                //     cout << "Capacity"; // lll
-                // }
-                // cout << endl;
 			}
 
             // try to assign this node to the next vehicle route
@@ -524,17 +510,13 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 
 		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 
-		// cout << choosen << " ";
-
 		while(visited[choosen]){
-            // cout << "a " << i << endl; //lll
 			choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 		}
 
 		newPop.push_back(choosen);
 		visited[choosen] = true;
 	}
-    // cout << "pronto" << endl; //lll
 
     return newPop;
 }
@@ -542,7 +524,6 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 // this random generation always generate feasible solutions
 vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &rnd01 ){
 
-    // cout << "\na"; //lll
     vector<int> newPop;
     vector<bool> visited(problem.numNodes, false);
     int vehicleRouteStart = 0;
@@ -552,17 +533,12 @@ vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &r
 	
 	while( (int)newPop.size() < problem.numNodes - 1){
 
-        // cout << endl << "a " << (int)newPop.size() << " " << problem.numNodes;// lll
-		
 		int choosenToAdd = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
-
-		// cout << choosenToAdd << " ";
 
 		while(visited[choosenToAdd]){
 			choosenToAdd++;
 			choosenToAdd %= problem.numNodes;
 		}
-        // cout << endl << choosenToAdd;// lll
 
         vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
         vector<int> :: const_iterator last = newPop.end();
@@ -570,17 +546,10 @@ vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &r
 
         // if insertion is not feasible, injects feasible nodes in the partial route
         if(addIsFeasible( testRoute, choosenToAdd, (int)testRoute.size(), problem )){
-            // cout << endl;//lll
-            // printRoute(newPop); //lll
-            // cout << "\ntest route:\n"; //lll
-            // printRoute(testRoute); //lll
-            // cout << "\ninsert " << choosenToAdd << " in the back" << endl; //lll
 
             newPop.push_back(choosenToAdd);
 		    visited[choosenToAdd] = true;
 
-            // printRoute(newPop);//lll
-            // calculateFit(newPop, problem); //lll
         }else{
             // getting not visited nodes
             vector<int> notVisited;
@@ -594,15 +563,12 @@ vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &r
             while(notVisited.size() > 0){
 
                 choosenToAdd = (int)((int)(rnd01() * (double)notVisited.size()) % notVisited.size());
-                // cout << endl << "b " << (int)notVisited.size() << " " << choosenToAdd;// lll
 
                 vector<bool> testedNodes((int)testRoute.size() + 1, false);
 
                 for(int i = 0; i <= (int)testRoute.size(); i++){
 
                     int choosenToTest = (int)((int)(rnd01() * ((int)testRoute.size() + 1)) % ((int)testRoute.size() + 1));
-
-                    // cout << choosenToTest << " ";
 
                     while(testedNodes[choosenToTest]){
                         choosenToTest++;
@@ -614,12 +580,6 @@ vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &r
                     if(addIsFeasible( testRoute, notVisited[choosenToAdd], i, problem )){
 
                         // inserting node
-
-                        // printRoute(newPop);//lll
-                        // cout << "\ntest route:\n";//lll
-                        // printRoute(testRoute);//lll
-                        // cout << "\ninsert " << notVisited[choosenToAdd] << " before " << newPop[vehicleRouteStart + i] << endl;//lll
-
                         newPop.insert(newPop.begin() + vehicleRouteStart + i, notVisited[choosenToAdd]);
                         visited[notVisited[choosenToAdd]] = true;
 
@@ -628,8 +588,6 @@ vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &r
                         last = newPop.end();
                         testRoute = vector<int>(first, last);
 
-                        // printRoute(newPop); //lll
-                        // calculateFit(newPop, problem); //lll
                         break;
                     }
                 }
@@ -968,7 +926,6 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
         
         // creating initial partial route based on initType (0 - farthest unrouted customer | 1 - earliest deadline unrouted customer)
         if(initType == 0){
-            // cout << "\na"; //lll
             double maxDistance = 0;
 
             for( int i = 1; i < problem.numNodes; i++ ){
@@ -985,8 +942,6 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
                 routedNodes[destinationIndex] = true;
                 originNode = destinationIndex;
             }else{
-                // cout << "\nera " << newPop.size() << endl; //lll
-                // printRoute(newPop); // lll
                 solomonInsertion1Injection(newPop, vehicleRouteStart, routedNodes, problem, mi, lambda, a1, a2);
                 vehicleRouteStart = (int)newPop.size();
                 originNode = 0;
@@ -994,12 +949,10 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
                 vehiclesUsed++;
                 if(vehiclesUsed > problem.numVehicles){
                     isFeasible = false;
-                    // cout << " - reject"; // lll
                     break;
                 }
             }
         }else{
-            // cout << "\nb"; //lll
             double earliestDeadline = DBL_MAX; // infinity
 
             for( int i = 1; i < problem.numNodes; i++ ){
@@ -1011,13 +964,10 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
             }
 
             if( earliestDeadline != DBL_MAX ){ // if found a node to add
-                // cout << "\nc"; //lll
                 newPop.push_back( destinationIndex );
                 routedNodes[destinationIndex] = true;
                 originNode = destinationIndex;
             }else{
-                // cout << "\nera " << newPop.size() << endl; //lll
-                // printRoute(newPop); //lll
                 solomonInsertion1Injection(newPop, vehicleRouteStart, routedNodes, problem, mi, lambda, a1, a2);
                 vehicleRouteStart = (int)newPop.size();
                 originNode = 0;
@@ -1025,14 +975,12 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
                 vehiclesUsed++;
                 if(vehiclesUsed > problem.numVehicles){
                     isFeasible = false;
-                    // cout << " - reject"; // lll
                     break;
                 }
             }
         }
     }    
 
-    // cout << "\ntoma " << newPop.size(); //lll
     return isFeasible;
 }
 
@@ -1081,19 +1029,15 @@ void plotKMeans( vector<k_cluster> clusters, vrp problem ){
 vector<int> k_means(vrp problem, int k){
 
 	vector<k_cluster> clusters(k);
-	// cout << "\n8 K: " << k; //lll
 	// starting variables
 	for( int i = 0; i < k; i++ ){
 		clusters[i].id = i;
 		clusters[i].x  = problem.minX + (rand() % (problem.maxX - problem.minX + 1));
 		clusters[i].y  = problem.minY + (rand() % (problem.maxY - problem.minY + 1));
 	}
-    // cout << "\n7"; //lll
 	// creating list of nodes to order by x position
 	vector<location> clusterClients = problem.locations;
-    // cout << "\n6"; //lll
 	sort(clusterClients.begin(), clusterClients.end(), xLocationComparator);
-    // cout << "\n5"; //lll
     double step = 0.00001;
     double errorMargin = step;
     double lastStdDeviation = 0;
@@ -1115,9 +1059,7 @@ vector<int> k_means(vrp problem, int k){
             // comparing node distance to all clusters centers
             for( int j = 0; j < k; j++ ){
                 
-                // cout << "\n3"; //lll
                 double current_distance = distanceAB( clusters[j].x, clusters[j].y, clusterClients[i].x, clusterClients[i].y );
-                // cout << "\n4"; //lll
                 if( current_distance < min_distance ){
                     min_distance = current_distance;
                     choosen_cluster_id = j;
@@ -1159,9 +1101,6 @@ vector<int> k_means(vrp problem, int k){
 		}
 	}
 
-	cout << endl << stdDeviation << " e " << lastStdDeviation << endl << endl; // lll
-	// plotKMeans( clusters, problem );
-	// printf("\n\n"); // lll
 	return kMeansRoute;
 }
 
