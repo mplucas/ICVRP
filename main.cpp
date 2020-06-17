@@ -304,7 +304,7 @@ MySolution crossover(
 	const std::function<double(void)> &rnd01)
 {
 	// cout << "\na";// lll
-	MySolution newGene;
+	MySolution newGene1, newGene2;
 
 	// chance to do crossover starts 100% and drops to 80%
 	if( rnd01() > (1 - (0.2 * (double)((double)generationCount/(double)generationSize))) ){
@@ -340,13 +340,16 @@ MySolution crossover(
 
 	int iCut = 0;
 	for(int i = 0; i < (int)gene1.route.size(); i++){
-		int choosenNode;
+		int choosenNode1, choosenNode2;
 		if(i >= cuts[iCut] && i < cuts[iCut + 1]){
-			choosenNode =  gene2.route[i];
+			choosenNode1 =  gene2.route[i];
+			choosenNode2 =  gene1.route[i];
 		}else{
-			choosenNode = gene1.route[i];
+			choosenNode1 = gene1.route[i];
+			choosenNode2 = gene2.route[i];
 		}
-		newGene.route.push_back(choosenNode);
+		newGene1.route.push_back(choosenNode1);
+		newGene2.route.push_back(choosenNode2);
 		if(iCut + 1 < (int)cuts.size() - 1 && i >= cuts[iCut + 1]){
 			iCut += 2;
 		}
@@ -378,11 +381,11 @@ MySolution crossover(
 		
 		for(int j = 0; j < (int)positionsToVerify.size(); j++){
 		
-			// if not found in gene1 than it is duplicated in newGene
+			// if not found gene 2 in gene1 than it is duplicated in newGene1 and missing in newGene2
 			if(gene2.route[positionsToVerify[i]] == gene1.route[positionsToVerify[j]]){
 				isDuplicated = false;
 			}
-			// if not found in gene2 than it is missing in newGene
+			// if not found gene1 in gene2 than it is missing in newGene1 and duplicated in newGene1
 			if(gene1.route[positionsToVerify[i]] == gene2.route[positionsToVerify[j]]){
 				isMissing = false;
 			}
@@ -409,44 +412,80 @@ MySolution crossover(
 	vector<int> reverseCuts = cuts;
 	reverseCuts.insert(reverseCuts.begin(), 0);
 	reverseCuts.push_back((int)gene1.route.size());
+	positionsToVerify.clear();
 
 	for(int i = 0; i < (int)reverseCuts.size(); i += 2){
-		
 		int smallerIndex = reverseCuts[i];
 		int biggerIndex = reverseCuts[i + 1];
-
 		for(int j = smallerIndex; j < biggerIndex; j++){
+			positionsToVerify.push_back(j);
+		}
+	}
 
-			// if node is duplicated, replace it with a missing one
-			vector<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[j]);
-			
-			if( itDuplicatedNodes != duplicatedNodes.end() ){
-				
-				vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
-				newGene.route[j] = *itMissingNodes;
-				duplicatedNodes.erase( itDuplicatedNodes );
-				missingNodes.erase( itMissingNodes );
-			}
+	for(int i = 0; i < (int)positionsToVerify.size(); i++){
 
+		vector<int> :: iterator itDuplicatedNodes;
+		vector<int> :: iterator itMissingNodes;
+		// if node is duplicated in newGene1, replace it with a missing one
+		itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene1.route[positionsToVerify[i]]);
+
+		if( itDuplicatedNodes != duplicatedNodes.end() ){
+			itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
+			newGene1.route[positionsToVerify[i]] = *itMissingNodes;
+		}
+
+		// the reverse is done in newGene2
+		itMissingNodes = find(missingNodes.begin(), missingNodes.end(), newGene2.route[positionsToVerify[i]]);
+		
+		if( itMissingNodes != missingNodes.end() ){
+			itDuplicatedNodes = duplicatedNodes.begin() + (itMissingNodes - missingNodes.begin());
+			newGene2.route[positionsToVerify[i]] = *itDuplicatedNodes;
 		}
 
 	}
 
+	MySolution newGene;
+	MyMiddleCost c1, c2;
+
+	if(!eval_solution( newGene1, c1 )){
+		newGene = newGene2;
+	}else if(!eval_solution( newGene2, c2 )){
+		newGene = newGene1;
+	}else{
+		if(c1.cost < c2.cost){
+			newGene = newGene1;
+		}else{
+			newGene = newGene2;
+		}
+	}
+
 	// lll
-	// cout << endl << "G3 after correction: ";
-	// cout << endl << "G3 : ";
-	// printRoute(newGene.route);
-	// cout << endl;
-	// for(int i = 0; i < (int)newGene.route.size(); i++){
-	// 	for(int j = i+1; j < (int)newGene.route.size(); j++){
-	// 		if(newGene.route[i] == newGene.route[j]){
-	// 			cout << "---------------------------------------------------------------------\nigual: " << newGene.route[i] << " [" << i << "] e [" << j << "]";
-	// 		}
-	// 		if(newGene.route[i] < 1 || newGene.route[i] > (int)newGene.route.size()){
-	// 			cout << "---------------------------------------------------------------------\ninconsistente " << newGene.route[i];
-	// 		}
-	// 	}
-	// }
+	bool error = false;
+	for(int i = 0; i < (int)newGene.route.size(); i++){
+		for(int j = i+1; j < (int)newGene.route.size(); j++){
+			if(newGene.route[i] == newGene.route[j]){
+				cout << "\nigual: "
+				<< newGene.route[i] << " [" << i << "] e [" << j << "]";
+				error = true;
+			}
+			if(newGene.route[i] < 1 || newGene.route[i] > (int)newGene.route.size()){
+				cout << "\ninconsistente "
+				<< newGene.route[i];
+				error = true;
+			}
+		}
+	}
+	if(error){
+		cout << endl
+		<< "cuts"
+		<< endl;
+		printRoute(cuts);
+		cout << endl
+		<< "route"
+		<< endl;
+		printRoute(newGene.route);
+		cout << endl << endl;
+	}
 
 	crossCount++;
 
