@@ -9,9 +9,11 @@ bool debug = false;
 
 // variable to generate tests
 bool test = false;
+int mutCount = 0;
+int crossCount = 0;
 
 // variables to control generation
-int generationSize = 1000;
+int generationSize = 100;
 int generationCount = 0;
 
 // variables to control pop creation
@@ -253,14 +255,16 @@ MySolution mutate(
 	const std::function<double(void)> &rnd01,
 	double shrink_scale)
 {
+	// cout << "\nb";// lll
 	MySolution mutatedGene = baseGene;
-	// possibleNumMutation from 10% of popSize to 20%
-	int possibleNumMutation = (int)(popSize*0.1) + (int)((double)((double)popSize*0.1) * (double)((double)generationCount/(double)generationSize));
+	// possibleNumMutation from 10% of popSize to 40%
+	int possibleNumMutation = (int)(popSize*0.1) + (int)((double)((double)popSize*0.3) * (double)((double)generationCount/(double)generationSize));
 	int i = 0;
 
 	while(i < possibleNumMutation){
 		
-		if( rnd01() < (shrink_scale + (0.07 * (double)((double)generationCount/(double)generationSize)) )){
+		// chance of mutation starts at 0% and increases to 5%
+		if( rnd01() < (0.05 * (double)((double)generationCount/(double)generationSize)) ){
 
 			unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
 			unsigned int choosenNode2;
@@ -272,11 +276,14 @@ MySolution mutate(
 			int auxNode = mutatedGene.route[choosenNode1];
 			mutatedGene.route[choosenNode1] = mutatedGene.route[choosenNode2];
 			mutatedGene.route[choosenNode2] = auxNode;
+
+			mutCount++;
 		}
 		i++;
 	}
 
 	//lll
+	// cout << endl << shrink_scale << " " << (shrink_scale + (0.07 * (double)((double)generationCount/(double)generationSize)) );
 	// for(int i = 0; i < (int)mutatedGene.route.size(); i++){
 	// 	for(int j = i+1; j < (int)mutatedGene.route.size(); j++){
 	// 		if(mutatedGene.route[i] == mutatedGene.route[j]){
@@ -296,18 +303,19 @@ MySolution crossover(
 	const MySolution& gene2,
 	const std::function<double(void)> &rnd01)
 {
+	// cout << "\na";// lll
 	MySolution newGene;
 
-	// chance to do crossover can drop to (1 - (0.1 * (double)((double)generationCount/(double)generationSize)))
-	if( rnd01() > (1 - (0.1 * (double)((double)generationCount/(double)generationSize))) ){
+	// chance to do crossover starts 100% and drops to 80%
+	if( rnd01() > (1 - (0.2 * (double)((double)generationCount/(double)generationSize))) ){
 		if(rnd01() >= 0.5)
 			return gene2;
 		else
 			return gene1;
 	}
 
-	// possibleNumCuts from 10% of popSize to 20%
-	int possibleNumCuts = (int)(popSize*0.1) + (int)((double)((double)popSize*0.1) * (double)((double)generationCount/(double)generationSize));
+	// possibleNumCuts from 30% of popSize to 10%
+	int possibleNumCuts = ((int)(popSize*0.15) - (int)((double)((double)popSize*0.1) * (double)((double)generationCount/(double)generationSize))) * 2;
 
 	vector<int> cuts;
 
@@ -440,6 +448,8 @@ MySolution crossover(
 	// 	}
 	// }
 
+	crossCount++;
+
 	return newGene;
 }
 
@@ -464,6 +474,16 @@ void SO_report_generation(
 		<<"Best genes=("<<best_genes.to_string()<<")"<<", "
 		<<"Exe_time="<<last_generation.exe_time
 		<<std::endl;
+		
+		cout << "Cross chance: " << (1 - (0.2 * (double)((double)generationCount/(double)generationSize)))
+		<< " numCuts: " << ((int)(popSize*0.15) - (int)((double)((double)popSize*0.1) * (double)((double)generationCount/(double)generationSize))) * 2
+		<< " Cross count: " << crossCount
+		<< endl;
+
+		cout << "Mut chance: " << (0.05 * (double)((double)generationCount/(double)generationSize))
+		<< " numMut: " << (int)(popSize*0.1) + (int)((double)((double)popSize*0.3) * (double)((double)generationCount/(double)generationSize))
+		<< " Mut count: " << mutCount
+		<< endl << endl;
 	}
 	generationCount++;
 	// output_file
@@ -483,6 +503,8 @@ void resetGlobals(){
 		{0.3, 0.3, 0.4}
 	};
 	generationCount = 0;
+	mutCount = 0;
+	crossCount = 0;
 	// si1PopParameters = {
 	// 	{0, 1, 1, 1, 0},
 	// 	{0, 1, 2, 1, 0},
@@ -520,13 +542,13 @@ int main()
 	ga_obj.mutate=mutate;
 	ga_obj.crossover=crossover;
 	ga_obj.SO_report_generation=SO_report_generation;
-	ga_obj.best_stall_max=generationSize;
-	ga_obj.average_stall_max=generationSize;
+	ga_obj.best_stall_max=(int)((double)generationSize);
+	ga_obj.average_stall_max=(int)((double)generationSize);
 	ga_obj.tol_stall_best=1e-6;
 	ga_obj.tol_stall_average=1e-6;
 	ga_obj.elite_count=(int)(popSize*0.05);
-	ga_obj.crossover_fraction=0.8;
-	ga_obj.mutation_rate=0.1;
+	ga_obj.crossover_fraction=1; // keep 100% because it is controlled from function
+	ga_obj.mutation_rate=1; // keep 100% because it is controlled from function
 
 	if(!test){
 
