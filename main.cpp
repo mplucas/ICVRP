@@ -90,24 +90,29 @@ bool eval_solution(
 {
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
 	
-	if((int)p.route.size() != problem.numNodes - 1){
-		cout << "\ntamanho diferente " << (int)p.route.size() << endl; // 
-		isFeasible = false;
-		return isFeasible;
-	}
-	else{
-		// cout << "aceito " << popCount << endl; // lll
-	}
-	for(int i = 0; i < (int)p.route.size(); i++){
-		for(int j = i+1; j < (int)p.route.size(); j++){
-			if(p.route[i] == p.route[j]){
-				cout << "\nigual: " << p.route[i] << " [" << i << "] e [" << j << "]";
-			}
-			if(p.route[i] < 1 || p.route[i] > (int)p.route.size()){
-				cout << "inconsistente " << p.route[i];
-			}
-		}
-	}
+	// lll
+	// if((int)p.route.size() != problem.numNodes - 1){
+	// 	cout << "\ntamanho diferente " << (int)p.route.size() << endl;
+	// 	isFeasible = false;
+	// 	return isFeasible;
+	// }
+	// else{
+	// 	// cout << "aceito " << popCount << endl;
+	// }
+	// for(int i = 0; i < (int)p.route.size(); i++){
+	// 	for(int j = i+1; j < (int)p.route.size(); j++){
+	// 		if(p.route[i] == p.route[j]){
+	// 			cout << "\nigual: " << p.route[i] << " [" << i << "] e [" << j << "]";
+	// 			isFeasible = false;
+	// 			return isFeasible;
+	// 		}
+	// 		if(p.route[i] < 1 || p.route[i] > (int)p.route.size()){
+	// 			cout << "inconsistente " << p.route[i];
+	// 			isFeasible = false;
+	// 			return isFeasible;
+	// 		}
+	// 	}
+	// }
 
 	// VARIABLES TO CONTROL VEHICLE BEING USED
 	int choosenVehicle = 0; // vehicle wich route belongs to, if it turns equal to problem.numVehicles than its unfeasible
@@ -249,7 +254,8 @@ MySolution mutate(
 	double shrink_scale)
 {
 	MySolution mutatedGene = baseGene;
-	int possibleNumMutation = 1 + (int)(4 * (double)((double)generationCount/(double)generationSize));
+	// possibleNumMutation from 10% of popSize to 20%
+	int possibleNumMutation = (int)(popSize*0.1) + (int)((double)((double)popSize*0.1) * (double)((double)generationCount/(double)generationSize));
 	int i = 0;
 
 	while(i < possibleNumMutation){
@@ -262,12 +268,25 @@ MySolution mutate(
 			do{
 				choosenNode2 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
 			}while(choosenNode2 == choosenNode1);
-
-			mutatedGene.route[choosenNode1] = baseGene.route[choosenNode2];
-			mutatedGene.route[choosenNode2] = baseGene.route[choosenNode1];
+			
+			int auxNode = mutatedGene.route[choosenNode1];
+			mutatedGene.route[choosenNode1] = mutatedGene.route[choosenNode2];
+			mutatedGene.route[choosenNode2] = auxNode;
 		}
 		i++;
-	}    
+	}
+
+	//lll
+	// for(int i = 0; i < (int)mutatedGene.route.size(); i++){
+	// 	for(int j = i+1; j < (int)mutatedGene.route.size(); j++){
+	// 		if(mutatedGene.route[i] == mutatedGene.route[j]){
+	// 			cout << "---------------------------------------------------------------------\nigual: " << mutatedGene.route[i] << " [" << i << "] e [" << j << "]";
+	// 		}
+	// 		if(mutatedGene.route[i] < 1 || mutatedGene.route[i] > (int)mutatedGene.route.size()){
+	// 			cout << "---------------------------------------------------------------------\ninconsistente " << mutatedGene.route[i];
+	// 		}
+	// 	}
+	// }
 
 	return mutatedGene;
 }
@@ -279,12 +298,16 @@ MySolution crossover(
 {
 	MySolution newGene;
 
-	// chance to do crossover caon drop to (1 - (0.2 * (double)((double)generationCount/(double)generationSize)))
-	if( rnd01() > (1 - (0.2 * (double)((double)generationCount/(double)generationSize))) ){
-		return gene1;
+	// chance to do crossover can drop to (1 - (0.1 * (double)((double)generationCount/(double)generationSize)))
+	if( rnd01() > (1 - (0.1 * (double)((double)generationCount/(double)generationSize))) ){
+		if(rnd01() >= 0.5)
+			return gene2;
+		else
+			return gene1;
 	}
-	
-	int possibleNumCuts = (1 + (int)(3 * rnd01())) * 2; // 2 to 8
+
+	// possibleNumCuts from 10% of popSize to 20%
+	int possibleNumCuts = (int)(popSize*0.1) + (int)((double)((double)popSize*0.1) * (double)((double)generationCount/(double)generationSize));
 
 	vector<int> cuts;
 
@@ -297,6 +320,15 @@ MySolution crossover(
 	}while((int)cuts.size() < possibleNumCuts);
 	
 	sort(cuts.begin(), cuts.end());
+	
+	// lll
+	// cout << endl << "Cross:" << endl;
+	// cout << endl << "Cuts: ";
+	// printRoute(cuts);
+	// cout << endl << "G1 : ";
+	// printRoute(gene1.route);
+	// cout << endl << "G2 : ";
+	// printRoute(gene2.route);
 
 	int iCut = 0;
 	for(int i = 0; i < (int)gene1.route.size(); i++){
@@ -312,41 +344,58 @@ MySolution crossover(
 		}
 	}
 
+	// lll
+	// cout << endl << "G3 before correction: ";
+	// cout << endl << "G3 : ";
+	// printRoute(newGene.route);
+
     // Correcting cross over
     // Finding duplicated and missing nodes
     vector<int> duplicatedNodes;
     vector<int> missingNodes;
+	vector<int> positionsToVerify;
 
 	for(int i = 0; i < (int)cuts.size(); i += 2){
-
 		int smallerIndex = cuts[i];
 		int biggerIndex = cuts[i + 1];
-		for(int i = smallerIndex; i < biggerIndex; i++){
-        
-			bool isDuplicated = true;
-			bool isMissing = true;
-			
-			for(int j = smallerIndex; j < biggerIndex; j++){
-			
-				// if not found in gene1 than it is duplicated in newGene
-				if(gene2.route[i] == gene1.route[j]){
-					isDuplicated = false;
-				}
-				// if not found in gene2 than it is missing in newGene
-				if(gene1.route[i] == gene2.route[j]){
-					isMissing = false;
-				}
-			}
-
-			if(isDuplicated){
-				duplicatedNodes.push_back(gene2.route[i]);
-			}
-			if(isMissing){
-				missingNodes.push_back(gene1.route[i]);
-			}
-
+		for(int j = smallerIndex; j < biggerIndex; j++){
+			positionsToVerify.push_back(j);
 		}
 	}
+
+	for(int i = 0; i < (int)positionsToVerify.size(); i++){
+	
+		bool isDuplicated = true;
+		bool isMissing = true;
+		
+		for(int j = 0; j < (int)positionsToVerify.size(); j++){
+		
+			// if not found in gene1 than it is duplicated in newGene
+			if(gene2.route[positionsToVerify[i]] == gene1.route[positionsToVerify[j]]){
+				isDuplicated = false;
+			}
+			// if not found in gene2 than it is missing in newGene
+			if(gene1.route[positionsToVerify[i]] == gene2.route[positionsToVerify[j]]){
+				isMissing = false;
+			}
+		}
+
+		if(isDuplicated){
+			duplicatedNodes.push_back(gene2.route[positionsToVerify[i]]);
+		}
+		if(isMissing){
+			missingNodes.push_back(gene1.route[positionsToVerify[i]]);
+		}
+
+	}
+
+	// lll
+	// cout << endl << "G3 duplicated nodes: ";
+	// cout << endl << "G3 : ";
+	// printRoute(duplicatedNodes);
+	// cout << endl << "G3 missing nodes: ";
+	// cout << endl << "G3 : ";
+	// printRoute(missingNodes);
 
     // Correcting duplicated nodes
 	vector<int> reverseCuts = cuts;
@@ -358,15 +407,15 @@ MySolution crossover(
 		int smallerIndex = reverseCuts[i];
 		int biggerIndex = reverseCuts[i + 1];
 
-		for(int i = smallerIndex; i < biggerIndex; i++){
+		for(int j = smallerIndex; j < biggerIndex; j++){
 
 			// if node is duplicated, replace it with a missing one
-			vector<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[i]);
+			vector<int> :: iterator itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene.route[j]);
 			
 			if( itDuplicatedNodes != duplicatedNodes.end() ){
 				
 				vector<int> :: iterator itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
-				newGene.route[i] = *itMissingNodes;
+				newGene.route[j] = *itMissingNodes;
 				duplicatedNodes.erase( itDuplicatedNodes );
 				missingNodes.erase( itMissingNodes );
 			}
@@ -374,6 +423,23 @@ MySolution crossover(
 		}
 
 	}
+
+	// lll
+	// cout << endl << "G3 after correction: ";
+	// cout << endl << "G3 : ";
+	// printRoute(newGene.route);
+	// cout << endl;
+	// for(int i = 0; i < (int)newGene.route.size(); i++){
+	// 	for(int j = i+1; j < (int)newGene.route.size(); j++){
+	// 		if(newGene.route[i] == newGene.route[j]){
+	// 			cout << "---------------------------------------------------------------------\nigual: " << newGene.route[i] << " [" << i << "] e [" << j << "]";
+	// 		}
+	// 		if(newGene.route[i] < 1 || newGene.route[i] > (int)newGene.route.size()){
+	// 			cout << "---------------------------------------------------------------------\ninconsistente " << newGene.route[i];
+	// 		}
+	// 	}
+	// }
+
 	return newGene;
 }
 
@@ -479,6 +545,12 @@ int main()
 		debug = true;
 		MyMiddleCost c;
 		ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
+
+		// lll
+		// MySolution perfectTest;
+		// perfectTest.route = {81, 78, 76, 71, 70, 73, 77, 79, 80,57, 55, 54, 53, 56, 58, 60, 59,98, 96, 95, 94, 92, 93, 97, 100, 99,32, 33, 31, 35, 37, 38, 39, 36, 34,13, 17, 18, 19, 15, 16, 14, 12,90, 87, 86, 83, 82, 84, 85, 88, 89, 91,43, 42, 41, 40, 44, 46, 45, 48, 51, 50, 52, 49, 47,67, 65, 63, 62, 74, 72, 61, 64, 68, 66, 69,5, 3, 7, 8, 10, 11, 9, 6, 4, 2, 1, 75,20, 24, 25, 27, 29, 30, 28, 26, 23, 22, 21};
+		// ga_obj.eval_solution( perfectTest , c );
+		// cout << endl << c.cost << endl;
 		// ### END CLASSIC TEST
 	}else{
 		int timesToTest = 10;
