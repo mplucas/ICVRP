@@ -658,10 +658,12 @@ int main()
 		int timesToTest = 10;
 		vector<vector<double>> testParameters{
 			//numCuts, initialProbCross, finalProbCross, numPoints, initialProbMut, finalProbMut
-			{(popSize*0.1) * 2,  0.8, 1,   (popSize*0.1) * 2,  0.1,  0.05},
-			{(popSize*0.1) * 2,  1,   0.8, (popSize*0.1) * 2,  0.05, 0.1},
-			{(popSize*0.05) * 2, 0.8, 1,   (popSize*0.05) * 2, 0.1,  0.05},
-			{(popSize*0.05) * 2, 1,   0.8, (popSize*0.05) * 2, 0.05, 0.1},
+			{(popSize*0.1) * 2,  0.9, 1,   (popSize*0.1) * 2,  0.05, 0},
+			{(popSize*0.1) * 2,  1,   0.9, (popSize*0.1) * 2,  0,    0.05},
+			{(popSize*0.05) * 2, 0.9, 1,   (popSize*0.05) * 2, 0.05, 0},
+			{(popSize*0.05) * 2, 1,   0.9, (popSize*0.05) * 2, 0,    0.05},
+			{(popSize*0.15) * 2, 0.9, 1,   (popSize*0.05) * 2, 0.05, 0},
+			{(popSize*0.15) * 2, 1,   0.9, (popSize*0.05) * 2, 0,    0.05}
 		};
 
 		for(int i = 0; i < (int)testParameters.size(); i++){
@@ -676,10 +678,18 @@ int main()
 			initialProbMut = testParameters[i][4];
 			finalProbMut = testParameters[i][5];
 
-			string fileName = "results";
+			string fileName = "results/results";
 			fileName.append(to_string(i)).append(".txt");
 			ofstream outputTests;
 			outputTests.open(fileName);
+
+			string results;
+			results = "\nInitiating tests:\n";
+			results += "numCuts: " + to_string(numCuts) + ", initialProbCross: " + to_string(initialProbCross) + ", finalProbCross: " + to_string(finalProbCross) + "\n";
+			results += "numPoints: " + to_string(numPoints) + ", initialProbMut: " + to_string(initialProbMut) + ", finalProbMut: : " + to_string(finalProbMut) + "\n";
+
+			cout << results;
+			outputTests << results;
 
 			batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", timesToTest, 1, resetGlobals, outputTests);
 			batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", timesToTest, 1, resetGlobals, outputTests);
