@@ -5,19 +5,29 @@
 vrp problem;
 
 // easy debug variable
-bool debug = false;
+bool debug;
 
 // variable to generate tests
-bool test = false;
+bool test;
 int mutCount = 0;
 int crossCount = 0;
 
+// variables to control crossover
+int numCuts;
+double initialProbCross;
+double finalProbCross;
+
+// variables to control mutation
+int numPoints;
+double initialProbMut;
+double finalProbMut;
+
 // variables to control generation
-int generationSize = 100;
+int generationSize;
 int generationCount = 0;
 
 // variables to control pop creation
-int popSize = 100;
+int popSize;
 int popCount = 0;
 std::vector<std::vector<double>> nnPopParameters{
     {0.4, 0.4, 0.2},
@@ -81,6 +91,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
     	popCount++;
     }else {
         p.route = randomPopImproved( problem, rnd01 );
+		popCount++;
 		// p.route = randomPop( problem, rnd01 );
     }
     // cout << "pop " << p.to_string() << endl; // lll
@@ -257,31 +268,46 @@ MySolution mutate(
 {
 	// cout << "\nb";// lll
 	MySolution mutatedGene = baseGene;
-	// possibleNumMutation from 10% of popSize to 40%
-	int possibleNumMutation = (int)(popSize*0.1) + (int)((double)((double)popSize*0.3) * (double)((double)generationCount/(double)generationSize));
-	int i = 0;
 
-	while(i < possibleNumMutation){
-		
-		// chance of mutation starts at 0% and increases to 5%
-		if( rnd01() < (0.05 * (double)((double)generationCount/(double)generationSize)) ){
-
-			unsigned int choosenNode1 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
-			unsigned int choosenNode2;
-
-			do{
-				choosenNode2 = (unsigned int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
-			}while(choosenNode2 == choosenNode1);
-			
-			int auxNode = mutatedGene.route[choosenNode1];
-			mutatedGene.route[choosenNode1] = mutatedGene.route[choosenNode2];
-			mutatedGene.route[choosenNode2] = auxNode;
-
-			mutCount++;
-		}
-		i++;
+	if( rnd01() > (initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)generationCount/(double)generationSize))) ){
+		return mutatedGene;
 	}
 
+	vector<int> points;
+
+	do{
+		int choosenNode = (int)((int)(rnd01() * (double)baseGene.route.size()) % baseGene.route.size());
+		// if is not the same
+		if(find(points.begin(), points.end(), choosenNode) == points.end()){
+			points.push_back( choosenNode );
+		}
+	}while((int)points.size() < numPoints);
+
+	int i = 0;
+	vector<bool> usedPoints((int)points.size(), false);
+		
+	while(i < numPoints){
+
+		unsigned int iPoint1;
+		do{
+			iPoint1 = (unsigned int)((int)(rnd01() * (double)points.size()) % points.size());
+		}while(usedPoints[iPoint1]);
+
+		unsigned int iPoint2;
+		do{
+			iPoint2 = (unsigned int)((int)(rnd01() * (double)points.size()) % points.size());
+		}while(usedPoints[iPoint2] && iPoint2 == iPoint1);
+		
+		int auxNode = mutatedGene.route[points[iPoint1]];
+		mutatedGene.route[points[iPoint1]] = mutatedGene.route[points[iPoint2]];
+		mutatedGene.route[points[iPoint2]] = auxNode;
+
+		usedPoints[iPoint1] = true;
+		usedPoints[iPoint2] = true;
+
+		i += 2;
+	}
+	
 	//lll
 	// cout << endl << shrink_scale << " " << (shrink_scale + (0.07 * (double)((double)generationCount/(double)generationSize)) );
 	// for(int i = 0; i < (int)mutatedGene.route.size(); i++){
@@ -295,6 +321,8 @@ MySolution mutate(
 	// 	}
 	// }
 
+	mutCount++;
+
 	return mutatedGene;
 }
 
@@ -306,16 +334,13 @@ MySolution crossover(
 	// cout << "\na";// lll
 	MySolution newGene1, newGene2;
 
-	// chance to do crossover starts 100% and drops to 80%
-	if( rnd01() > (1 - (0.2 * (double)((double)generationCount/(double)generationSize))) ){
+	// chance to do crossover starts 80% and rises to 100%
+	if( rnd01() > (initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)generationCount/(double)generationSize))) ){
 		if(rnd01() >= 0.5)
 			return gene2;
 		else
 			return gene1;
 	}
-
-	// possibleNumCuts from 30% of popSize to 10%
-	int possibleNumCuts = ((int)(popSize*0.15) - (int)((double)((double)popSize*0.1) * (double)((double)generationCount/(double)generationSize))) * 2;
 
 	vector<int> cuts;
 
@@ -325,7 +350,7 @@ MySolution crossover(
 		if(find(cuts.begin(), cuts.end(), choosenNode) == cuts.end()){
 			cuts.push_back( choosenNode );
 		}
-	}while((int)cuts.size() < possibleNumCuts);
+	}while((int)cuts.size() < numCuts);
 	
 	sort(cuts.begin(), cuts.end());
 	
@@ -460,32 +485,32 @@ MySolution crossover(
 	}
 
 	// lll
-	bool error = false;
-	for(int i = 0; i < (int)newGene.route.size(); i++){
-		for(int j = i+1; j < (int)newGene.route.size(); j++){
-			if(newGene.route[i] == newGene.route[j]){
-				cout << "\nigual: "
-				<< newGene.route[i] << " [" << i << "] e [" << j << "]";
-				error = true;
-			}
-			if(newGene.route[i] < 1 || newGene.route[i] > (int)newGene.route.size()){
-				cout << "\ninconsistente "
-				<< newGene.route[i];
-				error = true;
-			}
-		}
-	}
-	if(error){
-		cout << endl
-		<< "cuts"
-		<< endl;
-		printRoute(cuts);
-		cout << endl
-		<< "route"
-		<< endl;
-		printRoute(newGene.route);
-		cout << endl << endl;
-	}
+	// bool error = false;
+	// for(int i = 0; i < (int)newGene.route.size(); i++){
+	// 	for(int j = i+1; j < (int)newGene.route.size(); j++){
+	// 		if(newGene.route[i] == newGene.route[j]){
+	// 			cout << "\nigual: "
+	// 			<< newGene.route[i] << " [" << i << "] e [" << j << "]";
+	// 			error = true;
+	// 		}
+	// 		if(newGene.route[i] < 1 || newGene.route[i] > (int)newGene.route.size()){
+	// 			cout << "\ninconsistente "
+	// 			<< newGene.route[i];
+	// 			error = true;
+	// 		}
+	// 	}
+	// }
+	// if(error){
+	// 	cout << endl
+	// 	<< "cuts"
+	// 	<< endl;
+	// 	printRoute(cuts);
+	// 	cout << endl
+	// 	<< "route"
+	// 	<< endl;
+	// 	printRoute(newGene.route);
+	// 	cout << endl << endl;
+	// }
 
 	crossCount++;
 
@@ -514,17 +539,19 @@ void SO_report_generation(
 		<<"Exe_time="<<last_generation.exe_time
 		<<std::endl;
 		
-		cout << "Cross chance: " << (1 - (0.2 * (double)((double)generationCount/(double)generationSize)))
-		<< " numCuts: " << ((int)(popSize*0.15) - (int)((double)((double)popSize*0.1) * (double)((double)generationCount/(double)generationSize))) * 2
+		cout << "Cross chance: " << (initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)generationCount/(double)generationSize)))
+		<< " numCuts: " << numCuts
 		<< " Cross count: " << crossCount
 		<< endl;
 
-		cout << "Mut chance: " << (0.05 * (double)((double)generationCount/(double)generationSize))
-		<< " numMut: " << (int)(popSize*0.1) + (int)((double)((double)popSize*0.3) * (double)((double)generationCount/(double)generationSize))
+		cout << "Mut chance: " << (initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)generationCount/(double)generationSize)))
+		<< " numMut: " << numPoints
 		<< " Mut count: " << mutCount
 		<< endl << endl;
 	}
 	generationCount++;
+	mutCount = 0;
+	crossCount = 0;
 	// output_file
 	// 	<<generation_number<<"\t"
 	// 	<<last_generation.average_cost<<"\t"
@@ -567,6 +594,11 @@ int main()
 	// 	<<"cost_best"
 	// 	<<"\n";
 
+	debug = false;
+	test = true;
+	generationSize = 100;
+	popSize = 100;
+
 	GA_Type ga_obj;
 	ga_obj.problem_mode=EA::GA_MODE::SOGA;
 	ga_obj.multi_threading=false;
@@ -592,6 +624,15 @@ int main()
 	if(!test){
 
 		// ### BEGIN CLASSIC TEST
+		// variables to control crossover
+		numCuts = (int)(popSize*0.1) * 2;
+		initialProbCross = 0.8;
+		finalProbCross = 1;
+
+		// variables to control mutation
+		numPoints = (int)(popSize*0.1) * 2;
+		initialProbMut = 0.1;
+		finalProbMut = 0.05;
 
 		problem = readFile("entrada.txt");
 		problem.fitCriterion = 1; // Distance
@@ -615,17 +656,41 @@ int main()
 		// ### END CLASSIC TEST
 	}else{
 		int timesToTest = 10;
-		ofstream outputTests;
-		outputTests.open("results.txt");
+		vector<vector<double>> testParameters{
+			//numCuts, initialProbCross, finalProbCross, numPoints, initialProbMut, finalProbMut
+			{(popSize*0.1) * 2,  0.8, 1,   (popSize*0.1) * 2,  0.1,  0.05},
+			{(popSize*0.1) * 2,  1,   0.8, (popSize*0.1) * 2,  0.05, 0.1},
+			{(popSize*0.05) * 2, 0.8, 1,   (popSize*0.05) * 2, 0.1,  0.05},
+			{(popSize*0.05) * 2, 1,   0.8, (popSize*0.05) * 2, 0.05, 0.1},
+		};
 
-		batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", timesToTest, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", timesToTest, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", timesToTest, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
-		batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
+		for(int i = 0; i < (int)testParameters.size(); i++){
 
-		outputTests.close();
+			// variables to control crossover
+			numCuts = (int)testParameters[i][0];
+			initialProbCross = testParameters[i][1];
+			finalProbCross = testParameters[i][2];
+
+			// variables to control mutation
+			numPoints = (int)testParameters[i][3];
+			initialProbMut = testParameters[i][4];
+			finalProbMut = testParameters[i][5];
+
+			string fileName = "results";
+			fileName.append(to_string(i)).append(".txt");
+			ofstream outputTests;
+			outputTests.open(fileName);
+
+			batteryTests(ga_obj, problem, "instances/solomon100/c101.txt", timesToTest, 1, resetGlobals, outputTests);
+			batteryTests(ga_obj, problem, "instances/solomon100/rc101.txt", timesToTest, 1, resetGlobals, outputTests);
+			batteryTests(ga_obj, problem, "instances/solomon100/r101.txt", timesToTest, 1, resetGlobals, outputTests);
+			batteryTests(ga_obj, problem, "instances/homberger200/C1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
+			batteryTests(ga_obj, problem, "instances/homberger200/RC1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
+			batteryTests(ga_obj, problem, "instances/homberger200/R1_2_1.TXT", timesToTest, 1, resetGlobals, outputTests);
+
+			outputTests.close();
+		}
+
 	}
 
 	return 0;
