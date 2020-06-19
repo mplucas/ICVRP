@@ -671,13 +671,15 @@ int main()
 		srand(time(NULL));
 		for(int i = 0; i < 30; i++){
 			double randnumCuts, randInitialProbCross, randFinalProbCross, randNumPoints, randInitialProbMut, randFinalProbMut;
-			randnumCuts = (popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
+			randnumCuts = (int)(popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
 			randInitialProbCross = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
 			randFinalProbCross = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
-			randNumPoints = (popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
+			randNumPoints = (int)(popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
 			randInitialProbMut = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
 			randFinalProbMut = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
 			//numCuts, initialProbCross, finalProbCross, numPoints, initialProbMut, finalProbMut
+			cout << "generated parameters" << endl
+			<< randnumCuts<<" "<< randInitialProbCross<<" "<< randFinalProbCross<<" "<< randNumPoints<<" "<< randInitialProbMut<<" "<< randFinalProbMut << endl;
 			testParameters.push_back({ randnumCuts, randInitialProbCross, randFinalProbCross, randNumPoints, randInitialProbMut, randFinalProbMut });
 		}
 
