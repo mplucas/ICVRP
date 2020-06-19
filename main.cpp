@@ -656,15 +656,30 @@ int main()
 		// ### END CLASSIC TEST
 	}else{
 		int timesToTest = 10;
-		vector<vector<double>> testParameters{
+		// vector<vector<double>> testParameters{
+		// 	//numCuts, initialProbCross, finalProbCross, numPoints, initialProbMut, finalProbMut
+		// 	{(popSize*0.1) * 2,  0.9, 1,   (popSize*0.1) * 2,  0.05, 0},
+		// 	{(popSize*0.1) * 2,  1,   0.9, (popSize*0.1) * 2,  0,    0.05},
+		// 	{(popSize*0.05) * 2, 0.9, 1,   (popSize*0.05) * 2, 0.05, 0},
+		// 	{(popSize*0.05) * 2, 1,   0.9, (popSize*0.05) * 2, 0,    0.05},
+		// 	{(popSize*0.15) * 2, 0.9, 1,   (popSize*0.15) * 2, 0.05, 0},
+		// 	{(popSize*0.15) * 2, 1,   0.9, (popSize*0.15) * 2, 0,    0.05}
+		// };
+
+		vector<vector<double>> testParameters;
+
+		srand(time(NULL));
+		for(int i = 0; i < 30; i++){
+			double randnumCuts, randInitialProbCross, randFinalProbCross, randNumPoints, randInitialProbMut, randFinalProbMut;
+			randnumCuts = (popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
+			randInitialProbCross = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
+			randFinalProbCross = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
+			randNumPoints = (popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
+			randInitialProbMut = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
+			randFinalProbMut = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
 			//numCuts, initialProbCross, finalProbCross, numPoints, initialProbMut, finalProbMut
-			{(popSize*0.1) * 2,  0.9, 1,   (popSize*0.1) * 2,  0.05, 0},
-			{(popSize*0.1) * 2,  1,   0.9, (popSize*0.1) * 2,  0,    0.05},
-			{(popSize*0.05) * 2, 0.9, 1,   (popSize*0.05) * 2, 0.05, 0},
-			{(popSize*0.05) * 2, 1,   0.9, (popSize*0.05) * 2, 0,    0.05},
-			{(popSize*0.15) * 2, 0.9, 1,   (popSize*0.05) * 2, 0.05, 0},
-			{(popSize*0.15) * 2, 1,   0.9, (popSize*0.05) * 2, 0,    0.05}
-		};
+			testParameters.push_back({ randnumCuts, randInitialProbCross, randFinalProbCross, randNumPoints, randInitialProbMut, randFinalProbMut });
+		}
 
 		for(int i = 0; i < (int)testParameters.size(); i++){
 
