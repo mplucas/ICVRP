@@ -595,7 +595,7 @@ int main()
 	// 	<<"\n";
 
 	debug = false;
-	test = true;
+	test = false;
 	generationSize = 100;
 	popSize = 100;
 
