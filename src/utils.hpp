@@ -215,7 +215,7 @@ vector<int> explodeFractionalDeliverNode(int demand, int limit){
         d1 = demand / 7;
         d2 = demand * 2 / 7;
         d3 = demand * 4 / 7;
-        d1 += demand - (d1 + d2 + d2);
+        d1 += demand - (d1 + d2 + d3);
 
         vector<int> aux = explodeFractionalDeliverNode(d1, limit);
         for(auto newDemand:aux){
@@ -267,22 +267,22 @@ vrp readFileFractionalDeliver(string fileName, double l){
 
         problem.numNodes = 0;
 
+        int aux_realNode;
+        // reading first node index
+        fileStream >> line;
+        aux_realNode = stoi(line);
+
         while (!fileStream.eof()) {
 
-            int aux_realNode;
             location aux_location;
-            int aux_maxX;
-            int aux_minX;
-            int aux_maxY;
-            int aux_minY;
+            int aux_maxX = 0;
+            int aux_minX = 0;
+            int aux_maxY = 0;
+            int aux_minY = 0;
             int aux_demand;
             double aux_readyTime;
             double aux_dueTime;
             double aux_serviceTime;
-
-            // reading node index
-            fileStream >> line;
-            aux_realNode = stoi(line);
 
             // reading x coord
             fileStream >> line;
@@ -315,8 +315,8 @@ vrp readFileFractionalDeliver(string fileName, double l){
             aux_serviceTime = stoi(line);
 
             // fractional delivery tratative
-            vector<int> auxDemands = explodeFractionalDeliverNode(aux_demand, l);
-            for(auto correctDemand:auxDemands){
+            vector<int> auxDemands = explodeFractionalDeliverNode(aux_demand, problem.capacity * l);
+            for(auto partialDemand:auxDemands){
 
                 problem.realNode.push_back(aux_realNode);
                 problem.locations.push_back(aux_location);
@@ -324,12 +324,16 @@ vrp readFileFractionalDeliver(string fileName, double l){
                 problem.minX = aux_minX;
                 problem.maxY = aux_maxY;
                 problem.minY = aux_minY;
-                problem.demand.push_back( correctDemand );
+                problem.demand.push_back( partialDemand );
                 problem.readyTime.push_back( aux_readyTime );
                 problem.dueTime.push_back( aux_dueTime );
                 problem.serviceTime.push_back( aux_serviceTime );
                 problem.numNodes++;
             }
+
+            // reading next node index
+            fileStream >> line;
+            aux_realNode = stoi(line);
         }
     }
 
@@ -367,18 +371,18 @@ string printVrpString(vrp problem, bool nodesDetails, bool matrix){
     string info;
 
     info = "\n\nSource: " + problem.sourceName;
-    info += "\nNum. vehicle: " + problem.numVehicles;
-    info += "\nCapacity: " + problem.capacity;
-    info += "\nNum. nodes: " + problem.numNodes;
+    info += "\nNum. vehicle: " + to_string( problem.numVehicles );
+    info += "\nCapacity: " + to_string( problem.capacity );
+    info += "\nNum. nodes: " + to_string( problem.numNodes );
 
     if(nodesDetails){
 
         for(int i = 0; i < problem.numNodes; i++){
 
-            info += "\n\nIndex: " + i;
-            info += "\nX: " + problem.locations[i].x;
-            info += "\nY: " + problem.locations[i].y;
-            info += "\nDemand: " + problem.demand[i];
+            info += "\n\nIndex: " + to_string( i );
+            info += "\nX: " + to_string( problem.locations[i].x );
+            info += "\nY: " + to_string( problem.locations[i].y );
+            info += "\nDemand: " + to_string( problem.demand[i] );
             info += "\nReady Time: " + to_string( problem.readyTime[i] );
             info += "\nDue Time: " + to_string( problem.dueTime[i] );
             info += "\nService Time: " + to_string( problem.serviceTime[i] );

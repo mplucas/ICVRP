@@ -625,28 +625,31 @@ int main()
 
 		// ### BEGIN CLASSIC TEST
 		// variables to control crossover
-		numCuts = (int)(popSize*0.1) * 2;
-		initialProbCross = 0.8;
-		finalProbCross = 1;
+		// numCuts = (int)(popSize*0.1) * 2;
+		// initialProbCross = 0.8;
+		// finalProbCross = 1;
 
-		// variables to control mutation
-		numPoints = (int)(popSize*0.1) * 2;
-		initialProbMut = 0.1;
-		finalProbMut = 0.05;
+		// // variables to control mutation
+		// numPoints = (int)(popSize*0.1) * 2;
+		// initialProbMut = 0.1;
+		// finalProbMut = 0.05;
 
-		problem = readFile("entrada.txt");
-		problem.fitCriterion = 1; // Distance
+		// problem = readFile("entrada.txt");
+		// problem.fitCriterion = 1; // Distance
 
-		EA::Chronometer timer;
-		timer.tic();
+		// EA::Chronometer timer;
+		// timer.tic();
 
-		ga_obj.solve();
+		// ga_obj.solve();
 
-		std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
+		// std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
 
-		debug = true;
-		MyMiddleCost c;
-		ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
+		// debug = true;
+		// MyMiddleCost c;
+		// ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
+
+		problem = readFileFractionalDeliver("entrada.txt", 0.5);
+		printVrp(problem, true, true);
 
 		// lll
 		// MySolution perfectTest;
