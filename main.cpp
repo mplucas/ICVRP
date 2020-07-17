@@ -648,7 +648,7 @@ int main()
 		// MyMiddleCost c;
 		// ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
 
-		problem = readFileFractionalDeliver("entrada.txt", 0.5);
+		problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
 		printVrp(problem, true, true);
 
 		// lll

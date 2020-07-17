@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <climits>
 #include "openga.hpp"
 
 struct MySolution
@@ -238,7 +239,69 @@ vector<int> explodeFractionalDeliverNode(int demand, int limit){
     return newDemands;
 }
 
-vrp readFileFractionalDeliver(string fileName, double l){
+vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, double u){
+    
+    vrp problem = readFile(fileName);
+    vrp fdProblem;
+
+    fdProblem.sourceName = problem.sourceName;
+    fdProblem.numVehicles = problem.numVehicles;
+    fdProblem.capacity = problem.capacity;
+    fdProblem.numNodes = 0;
+
+    int maxDemand = 0;
+    int minDemand = INT_MAX;
+
+    for(auto demand:problem.demand){
+        if(demand < minDemand) minDemand = demand;
+        if(demand > maxDemand) maxDemand = demand;
+    }
+
+    for(int i = 0; i < problem.numNodes; i++){
+        int demand = l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand);
+        vector<int> auxDemands = explodeFractionalDeliverNode(demand, problem.capacity * limit);
+        for(auto partialDemand:auxDemands){
+
+            fdProblem.realNode.push_back(i);
+            fdProblem.locations.push_back(problem.locations[i]);
+            fdProblem.maxX = problem.maxX;
+            fdProblem.minX = problem.minX;
+            fdProblem.maxY = problem.maxY;
+            fdProblem.minY = problem.minY;
+            fdProblem.demand.push_back( partialDemand );
+            fdProblem.readyTime.push_back( problem.readyTime[i] );
+            fdProblem.dueTime.push_back( problem.dueTime[i] );
+            fdProblem.serviceTime.push_back( problem.serviceTime[i] );
+            fdProblem.numNodes++;
+        }
+    }
+
+    // resizing matrix
+    fdProblem.cost.resize(fdProblem.numNodes);
+    for(int i = 0; i < fdProblem.numNodes; i++){
+        fdProblem.cost[i].resize(fdProblem.numNodes);
+    }
+
+    for(int i = 0; i < fdProblem.numNodes; i++){
+
+        for(int j = i; j < fdProblem.numNodes; j++){
+
+            if( j == i ){
+
+                fdProblem.cost[i][j] = 0;
+                continue;
+            }
+
+            double distance = distanceAB( fdProblem.locations[i].x, fdProblem.locations[i].y, fdProblem.locations[j].x, fdProblem.locations[j].y );
+            fdProblem.cost[i][j] = distance;
+            fdProblem.cost[j][i] = distance;
+        }
+    }
+
+    return fdProblem;
+}
+
+vrp readFileFractionalDeliver(string fileName, double limit){
     
     vrp problem;
     problem.sourceName = fileName;
@@ -315,7 +378,7 @@ vrp readFileFractionalDeliver(string fileName, double l){
             aux_serviceTime = stoi(line);
 
             // fractional delivery tratative
-            vector<int> auxDemands = explodeFractionalDeliverNode(aux_demand, problem.capacity * l);
+            vector<int> auxDemands = explodeFractionalDeliverNode(aux_demand, problem.capacity * limit);
             for(auto partialDemand:auxDemands){
 
                 problem.realNode.push_back(aux_realNode);
