@@ -4,6 +4,9 @@
 // global vrp problem variable
 vrp problem;
 
+// variable for fractional delivery
+bool isFractionalDelivery = false;
+
 // easy debug variable
 bool debug;
 
@@ -55,7 +58,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 		int choosenParameters = (int)nnPopParameters.size() - 1;
 		nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2] );
 		nnPopParameters.pop_back();
-		popCount++;
+		// popCount++;
             
     // } else if((int)si1PopParameters.size() > 0){
 	// 	int choosenParameters = (int)si1PopParameters.size() - 1;
@@ -84,16 +87,22 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 			parametersPopulated++;
 		}
         if(nearestNeighborPop( p.route, problem, parameters[0], parameters[1], parameters[2] )){
-			popCount++;
+			// popCount++;
 		}
     }else if(popCount < (int)(popSize * 0.7)){
         p.route = k_means( problem, (int)(popSize*0.05) + (int)(rnd01() * (popSize*0.08)) );
-    	popCount++;
+    	// popCount++;
     }else {
         p.route = randomPopImproved( problem, rnd01 );
-		popCount++;
+		// popCount++;
 		// p.route = randomPop( problem, rnd01 );
     }
+
+	if(isFractionalDelivery){
+		p.route = fixFDRoute(p.route, problem);
+	}
+	popCount++;
+	cout << endl << popCount; //lll
     // cout << "pop " << p.to_string() << endl; // lll
 }
 
@@ -323,6 +332,10 @@ MySolution mutate(
 
 	mutCount++;
 
+	if(isFractionalDelivery){
+		mutatedGene.route = fixFDRoute(mutatedGene.route, problem);
+	}
+
 	return mutatedGene;
 }
 
@@ -514,6 +527,10 @@ MySolution crossover(
 
 	crossCount++;
 
+	if(isFractionalDelivery){
+		newGene.route = fixFDRoute(newGene.route, problem);
+	}
+
 	return newGene;
 }
 
@@ -598,6 +615,7 @@ int main()
 	test = false;
 	generationSize = 100;
 	popSize = 100;
+	isFractionalDelivery = true;
 
 	GA_Type ga_obj;
 	ga_obj.problem_mode=EA::GA_MODE::SOGA;
@@ -625,37 +643,49 @@ int main()
 
 		// ### BEGIN CLASSIC TEST
 		// variables to control crossover
-		// numCuts = (int)(popSize*0.1) * 2;
-		// initialProbCross = 0.8;
-		// finalProbCross = 1;
+		numCuts = (int)(popSize*0.1) * 2;
+		initialProbCross = 0.8;
+		finalProbCross = 1;
 
-		// // variables to control mutation
-		// numPoints = (int)(popSize*0.1) * 2;
-		// initialProbMut = 0.1;
-		// finalProbMut = 0.05;
+		// variables to control mutation
+		numPoints = (int)(popSize*0.1) * 2;
+		initialProbMut = 0.1;
+		finalProbMut = 0.05;
 
-		// problem = readFile("entrada.txt");
-		// problem.fitCriterion = 1; // Distance
+		if(!isFractionalDelivery){
+			problem = readFile("entrada.txt");
+		}else{
+			problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
+		}
+		problem.fitCriterion = 1; // Distance
 
-		// EA::Chronometer timer;
-		// timer.tic();
+		EA::Chronometer timer;
+		timer.tic();
 
-		// ga_obj.solve();
+		ga_obj.solve();
 
-		// std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
+		std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
 
-		// debug = true;
-		// MyMiddleCost c;
-		// ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
-
-		problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
-		printVrp(problem, true, true);
+		debug = true;
+		MyMiddleCost c;
+		ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
+		
+		if(isFractionalDelivery){
+			cout << endl << "RealNodes:" << endl;
+			printRealRoute(ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes.route, problem);
+		}
 
 		// lll
+		// cout << endl << endl;
 		// MySolution perfectTest;
 		// perfectTest.route = {81, 78, 76, 71, 70, 73, 77, 79, 80,57, 55, 54, 53, 56, 58, 60, 59,98, 96, 95, 94, 92, 93, 97, 100, 99,32, 33, 31, 35, 37, 38, 39, 36, 34,13, 17, 18, 19, 15, 16, 14, 12,90, 87, 86, 83, 82, 84, 85, 88, 89, 91,43, 42, 41, 40, 44, 46, 45, 48, 51, 50, 52, 49, 47,67, 65, 63, 62, 74, 72, 61, 64, 68, 66, 69,5, 3, 7, 8, 10, 11, 9, 6, 4, 2, 1, 75,20, 24, 25, 27, 29, 30, 28, 26, 23, 22, 21};
 		// ga_obj.eval_solution( perfectTest , c );
 		// cout << endl << c.cost << endl;
+
+		// testAddIsFeasible(perfectTest.route, problem);
+
+		// problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
+		// printVrp(problem, true, true);
 		// ### END CLASSIC TEST
 	}else{
 		int timesToTest = 10;

@@ -103,6 +103,23 @@ double distanceAB(int x1, int y1, int x2, int y2){
     return sqrt(realX * realX + realY * realY);
 }
 
+
+void printRoute(vector<int> route){
+    cout << "{";
+    for(int i = 0; i < (int)route.size(); i++){
+        cout << ( i?",":"" ) << std::setprecision(10) << route[i];
+    }
+	cout << "}";
+}
+
+void printRealRoute(vector<int> route, vrp problem){
+    cout << "{";
+    for(int i = 0; i < (int)route.size(); i++){
+        cout << ( i?",":"" ) << std::setprecision(10) << problem.realNode[route[i]];
+    }
+	cout << "}";
+}
+
 vrp readFile(string fileName){
 
     vrp problem;
@@ -576,6 +593,75 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
     return isFeasible;
 }
 
+void testAddIsFeasible(vector<int> route, vrp problem){
+
+    vector<int> testRoute;
+    testRoute.push_back(route[0]);
+    int v = 0;
+
+    for(int i = 1; i < route.size(); i++){
+        
+        if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
+            cout << endl << v << ":" << endl;
+            printRoute(testRoute);
+            cout << endl;
+            v++;
+            testRoute.clear();
+            i--;
+        }else{
+            testRoute.push_back(route[i]);
+        }
+    }
+
+    if(testRoute.size() > 0){
+        cout << endl << v << ":" << endl;
+        printRoute(testRoute);
+        cout << endl;
+    }
+}
+
+vector<int> fixFDRoute(vector<int> route, vrp problem){
+
+    vector<int> fixedRoute;
+    vector<int> testRoute;
+    testRoute.push_back(route[0]);
+    bool fixed = false; //lll
+
+    for(int i = 1; i < route.size(); i++){
+        if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
+            // when found partial route, fix it
+            for(int j = testRoute.size() - 1; j >= 0; j--){
+                for(int k = j - 1; k >= 0; k--){
+                    if(problem.realNode[testRoute[j]] == problem.realNode[testRoute[k]]){
+                        fixed = true; //lll
+                        testRoute.insert(testRoute.begin() + j, testRoute[k]);
+                        testRoute.erase(testRoute.begin() + k);
+                    }
+                }
+            }
+            i--;
+            fixedRoute.insert(fixedRoute.end(), testRoute.begin(), testRoute.end());
+            testRoute.clear();
+        }else{
+            testRoute.push_back(route[i]);
+        }
+    }
+
+    if(testRoute.size() > 0){
+       fixedRoute.insert(fixedRoute.end(), testRoute.begin(), testRoute.end()); 
+    }
+
+    if(fixed){
+        cout << "Route before fix:"<<endl; //lll
+        printRealRoute(route, problem); //lll
+        cout << endl << "Route after fix:"<<endl; //lll
+        printRealRoute(fixedRoute, problem); //lll
+        cout << endl; //lll
+    }
+
+    return fixedRoute;
+}
+
 // teste
 bool calculateFit(vector<int> route, vrp problem){
     bool isFeasible = true; // if true accepts gene, if false rejects gene
@@ -711,14 +797,6 @@ bool calculateFit(vector<int> route, vrp problem){
     cout << cost << endl; // lll
 
 	return isFeasible;
-}
-
-void printRoute(vector<int> route){
-    cout << "{";
-    for(int i = 0; i < (int)route.size(); i++){
-        cout << ( i?",":"" ) << std::setprecision(10) << route[i];
-    }
-	cout << "}";
 }
 
 // Population functions
