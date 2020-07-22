@@ -102,7 +102,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 		p.route = fixFDRoute(p.route, problem);
 	}
 	popCount++;
-	cout << endl << popCount; //lll
+	// cout << endl << popCount; //lll
     // cout << "pop " << p.to_string() << endl; // lll
 }
 
@@ -232,24 +232,22 @@ bool eval_solution(
 	}
 
 	// finalizing fit
-	if(originNode != 0){
-		if(problem.fitCriterion == 0){
+	if(problem.fitCriterion == 0){
 
-			// send vehicle back to depot
-			vehicleTimer += problem.cost[originNode][0];
+		// send vehicle back to depot
+		vehicleTimer += problem.cost[originNode][0];
 
-			// save fit if it is bigger
-			if( vehicleTimer > biggestTimer ){
-				biggestTimer = vehicleTimer;
-			}
-			
-			c.cost = biggestTimer;
-		
-		}else if(problem.fitCriterion == 1){
-			
-			// Adding distance to return to depot of the last vehicle
-			c.cost = totalDistance + problem.cost[originNode][0];
+		// save fit if it is bigger
+		if( vehicleTimer > biggestTimer ){
+			biggestTimer = vehicleTimer;
 		}
+		
+		c.cost = biggestTimer;
+	
+	}else if(problem.fitCriterion == 1){
+		
+		// Adding distance to return to depot of the last vehicle
+		c.cost = totalDistance + problem.cost[originNode][0];
 	}
 
 	if(debug){
@@ -266,6 +264,7 @@ bool eval_solution(
 
     // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
 	// else cout << "NOT FEASIBLE " << popCount << " " << p.route.size() << " " << endl; //lll
+	// cout << c.cost << endl; //lll
 
 	return isFeasible;
 }
@@ -615,7 +614,7 @@ int main()
 	test = false;
 	generationSize = 100;
 	popSize = 100;
-	isFractionalDelivery = true;
+	isFractionalDelivery = false;
 
 	GA_Type ga_obj;
 	ga_obj.problem_mode=EA::GA_MODE::SOGA;
