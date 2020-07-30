@@ -1,3 +1,4 @@
+#include <algorithm>
 #include<bits/stdc++.h>
 #include "general.hpp"
 
@@ -25,7 +26,10 @@ class Genetic
         // Atributes    
         int populationSize;
         vector<thisChromosomeType> population;
+        double sumCosts;
+        double maxCost;
 
+        // Functions that the user will pass
         function<void(GeneType&)> init_genes;
         function<bool(const GeneType&, double &cost)> eval_solution;
 
@@ -33,13 +37,57 @@ class Genetic
         void populate()
         {
             population.clear();
-            for(int i = 0; i < populationSize; i++){
+            for(int i = 0; i < populationSize; i++)
+            {
                 thisChromosomeType chromosome;
                 init_genes(chromosome.genes);
-                while(!eval_solution(chromosome.genes, chromosome.cost)){
+                while(!eval_solution(chromosome.genes, chromosome.cost))
+                {
                     init_genes(chromosome.genes);
                 }
                 population.push_back(chromosome);
             }
+        }
+
+        void prepareRoulette()
+        {
+            maxCost = population[0].cost;
+
+            for(int i = 1; i < population.size(); i++)
+            {
+                if(population[i].cost > maxCost)
+                {
+                    maxCost = population[i].cost;
+                }
+            }
+
+            sumCosts = 0;
+            for(int i = 0; i < population.size(); i++)
+            {
+                sumCosts += (maxCost - population[i].cost);
+            }
+        }
+
+        thisChromosomeType selectParent()
+        {
+            double drawn = sumCosts * random01();
+            double rouletteProgress = 0;
+            int choosenParent;
+
+            for(int i = 0; i < population.size(); i++)
+            {
+                rouletteProgress += (maxCost - population[i].cost);
+                // cout << endl << rouletteProgress << " < " << drawn; // lll
+                
+                if(rouletteProgress > drawn)
+                {
+                    choosenParent = i;
+                    break;
+                }
+            }
+
+            // cout << endl << drawn << " " << choosenParent; // lll
+
+            return population[choosenParent];
         }
 };

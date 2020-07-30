@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <bits/stdc++.h>
 #include "src/utils.hpp"
 
@@ -232,7 +233,7 @@ bool eval_solution(const MySolution& p, double &cost)
 
     // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
 	// else cout << "NOT FEASIBLE " << popCount << " " << p.route.size() << " " << endl; //lll
-    cout << cost << endl; //lll
+    // cout << cost << endl; //lll
 
 	return isFeasible;
 }
@@ -254,11 +255,53 @@ int main()
     ga.init_genes = init_genes;
     ga.eval_solution = eval_solution;
 
+    // ### TEST POPULATE
     ga.populate();
 
-    for(int i = 0; i < popSize; i++){
-        cout << ga.population[i].genes.to_string() << endl << ga.population[i].cost << endl;
+    // for(int i = 0; i < popSize; i++)
+    // {
+    //     cout << ga.population[i].genes.to_string() << endl << ga.population[i].cost << endl;
+    // }
+    // cout << endl;
+    // ### END TEST POPULATE
+
+    // ### TEST SELECTION
+
+    ga.prepareRoulette();
+    vector<double> costsDrawed;
+
+    for(int i = 0; i < 100; i++)
+    {
+        costsDrawed.push_back( ga.selectParent().cost );
     }
+
+    vector<pair<double,int>> timesCostsDrawed;
+    sort(costsDrawed.begin(), costsDrawed.end());
+    pair<double,int> aux;
+    aux.first = costsDrawed[0];
+    aux.second = 1;
+    timesCostsDrawed.push_back(aux);
+
+    for(int i = 1; i < costsDrawed.size(); i++)
+    {
+        if(costsDrawed[i] == timesCostsDrawed.back().first)
+        {
+            timesCostsDrawed.back().second++;
+        }
+        else
+        {
+            pair<double,int> aux;
+            aux.first = costsDrawed[i];
+            aux.second = 1;
+            timesCostsDrawed.push_back(aux);
+        }
+    }
+
+    for(int i = 0; i < timesCostsDrawed.size(); i++)
+    {
+        cout << endl << timesCostsDrawed[i].first << ": " << timesCostsDrawed[i].second;
+    }
+    // ### END TEST SELECTION
 
     return 0;
 }
