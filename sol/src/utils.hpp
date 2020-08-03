@@ -574,7 +574,7 @@ void testAddIsFeasible(vector<int> route, vrp problem){
     testRoute.push_back(route[0]);
     int v = 0;
 
-    for(int i = 1; i < route.size(); i++){
+    for(int i = 1; i < (int)route.size(); i++){
         
         if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
             cout << endl << v << ":" << endl;
@@ -602,7 +602,7 @@ vector<int> fixFDRoute(vector<int> route, vrp problem){
     testRoute.push_back(route[0]);
     bool fixed = false; //lll
 
-    for(int i = 1; i < route.size(); i++){
+    for(int i = 1; i < (int)route.size(); i++){
         if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
             // when found partial route, fix it
             for(int j = testRoute.size() - 1; j >= 0; j--){

@@ -616,6 +616,10 @@ int main()
 	popSize = 100;
 	isFractionalDelivery = false;
 
+	// variables to control crossover and crossover
+	numCuts = 2;
+	numPoints = (int)(popSize*0.1);
+
 	GA_Type ga_obj;
 	ga_obj.problem_mode=EA::GA_MODE::SOGA;
 	ga_obj.multi_threading=false;
@@ -642,12 +646,10 @@ int main()
 
 		// ### BEGIN CLASSIC TEST
 		// variables to control crossover
-		numCuts = (int)(popSize*0.1) * 2;
 		initialProbCross = 0.8;
 		finalProbCross = 1;
 
 		// variables to control mutation
-		numPoints = (int)(popSize*0.1) * 2;
 		initialProbMut = 0.1;
 		finalProbMut = 0.05;
 
@@ -702,17 +704,18 @@ int main()
 
 		srand(time(NULL));
 		for(int i = 0; i < 30; i++){
-			double randnumCuts, randInitialProbCross, randFinalProbCross, randNumPoints, randInitialProbMut, randFinalProbMut;
-			randnumCuts = (int)(popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
+			// double randnumCuts,  randNumPoints;
+			double randInitialProbCross, randFinalProbCross, randInitialProbMut, randFinalProbMut;
+			// randnumCuts = (int)(popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
 			randInitialProbCross = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
 			randFinalProbCross = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
-			randNumPoints = (int)(popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
+			// randNumPoints = (int)(popSize * (0.025 + 0.25 * ((double) rand() / (RAND_MAX))) ) * 2; // 5% to 55%
 			randInitialProbMut = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
 			randFinalProbMut = 0.5 + 0.5 * ((double) rand() / (RAND_MAX)); // 50% to 100%
 			//numCuts, initialProbCross, finalProbCross, numPoints, initialProbMut, finalProbMut
 			cout << "generated parameters" << endl
-			<< randnumCuts<<" "<< randInitialProbCross<<" "<< randFinalProbCross<<" "<< randNumPoints<<" "<< randInitialProbMut<<" "<< randFinalProbMut << endl;
-			testParameters.push_back({ randnumCuts, randInitialProbCross, randFinalProbCross, randNumPoints, randInitialProbMut, randFinalProbMut });
+			<< numCuts<<" "<< randInitialProbCross<<" "<< randFinalProbCross<<" "<< numPoints<<" "<< randInitialProbMut<<" "<< randFinalProbMut << endl;
+			testParameters.push_back({ (double)numCuts, randInitialProbCross, randFinalProbCross, (double)numPoints, randInitialProbMut, randFinalProbMut });
 		}
 
 		for(int i = 0; i < (int)testParameters.size(); i++){

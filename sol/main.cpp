@@ -11,6 +11,25 @@ bool isFractionalDelivery;
 // easy debug variable
 bool debug;
 
+// variable to generate tests
+bool test;
+int mutCount = 0;
+int crossCount = 0;
+
+// variables to control crossover
+int numCuts;
+double initialProbCross;
+double finalProbCross;
+
+// variables to control mutation
+int numPoints;
+double initialProbMut;
+double finalProbMut;
+
+// variables to control generation
+int generationSize;
+int generationCount = 0;
+
 // variables to control pop creation
 int popSize;
 int popCount = 0;
@@ -238,6 +257,179 @@ bool eval_solution(const MySolution& p, double &cost)
 	return isFeasible;
 }
 
+MySolution crossover(const MySolution& gene1, const MySolution& gene2)
+{
+	// cout << "\na";// lll
+	MySolution newGene1, newGene2;
+
+	// chance to do crossover starts 80% and rises to 100%
+	if( random01() > (initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)generationCount/(double)generationSize))) ){
+		if(random01() >= 0.5)
+			return gene2;
+		else
+			return gene1;
+	}
+
+	vector<int> cuts;
+
+	do{
+		int choosenNode = (int)((int)(random01() * (double)gene1.route.size()) % gene1.route.size());
+		// if is not the same
+		if(find(cuts.begin(), cuts.end(), choosenNode) == cuts.end()){
+			cuts.push_back( choosenNode );
+		}
+	}while((int)cuts.size() < numCuts);
+	
+	sort(cuts.begin(), cuts.end());
+	
+	// lll
+	// cout << endl << "Cross:" << endl;
+	// cout << endl << "Cuts: ";
+	// printRoute(cuts);
+	// cout << endl << "G1 : ";
+	// printRoute(gene1.route);
+	// cout << endl << "G2 : ";
+	// printRoute(gene2.route);
+
+	int iCut = 0;
+	for(int i = 0; i < (int)gene1.route.size(); i++){
+		int choosenNode1, choosenNode2;
+		if(i >= cuts[iCut] && i < cuts[iCut + 1]){
+			choosenNode1 =  gene2.route[i];
+			choosenNode2 =  gene1.route[i];
+		}else{
+			choosenNode1 = gene1.route[i];
+			choosenNode2 = gene2.route[i];
+		}
+		newGene1.route.push_back(choosenNode1);
+		newGene2.route.push_back(choosenNode2);
+		if(iCut + 1 < (int)cuts.size() - 1 && i >= cuts[iCut + 1]){
+			iCut += 2;
+		}
+	}
+
+	// lll
+	// cout << endl << "G3 before correction: ";
+	// cout << endl << "G3 : ";
+	// printRoute(newGene.route);
+
+    // Correcting cross over
+    // Finding duplicated and missing nodes
+    vector<int> duplicatedNodes;
+    vector<int> missingNodes;
+	vector<int> positionsToVerify;
+
+	for(int i = 0; i < (int)cuts.size(); i += 2){
+		int smallerIndex = cuts[i];
+		int biggerIndex = cuts[i + 1];
+		for(int j = smallerIndex; j < biggerIndex; j++){
+			positionsToVerify.push_back(j);
+		}
+	}
+
+	for(int i = 0; i < (int)positionsToVerify.size(); i++){
+	
+		bool isDuplicated = true;
+		bool isMissing = true;
+		
+		for(int j = 0; j < (int)positionsToVerify.size(); j++){
+		
+			// if not found gene 2 in gene1 than it is duplicated in newGene1 and missing in newGene2
+			if(gene2.route[positionsToVerify[i]] == gene1.route[positionsToVerify[j]]){
+				isDuplicated = false;
+			}
+			// if not found gene1 in gene2 than it is missing in newGene1 and duplicated in newGene1
+			if(gene1.route[positionsToVerify[i]] == gene2.route[positionsToVerify[j]]){
+				isMissing = false;
+			}
+		}
+
+		if(isDuplicated){
+			duplicatedNodes.push_back(gene2.route[positionsToVerify[i]]);
+		}
+		if(isMissing){
+			missingNodes.push_back(gene1.route[positionsToVerify[i]]);
+		}
+
+	}
+
+	// lll
+	// cout << endl << "G3 duplicated nodes: ";
+	// cout << endl << "G3 : ";
+	// printRoute(duplicatedNodes);
+	// cout << endl << "G3 missing nodes: ";
+	// cout << endl << "G3 : ";
+	// printRoute(missingNodes);
+
+    // Correcting duplicated nodes
+	vector<int> reverseCuts = cuts;
+	reverseCuts.insert(reverseCuts.begin(), 0);
+	reverseCuts.push_back((int)gene1.route.size());
+	positionsToVerify.clear();
+
+	for(int i = 0; i < (int)reverseCuts.size(); i += 2){
+		int smallerIndex = reverseCuts[i];
+		int biggerIndex = reverseCuts[i + 1];
+		for(int j = smallerIndex; j < biggerIndex; j++){
+			positionsToVerify.push_back(j);
+		}
+	}
+
+	for(int i = 0; i < (int)positionsToVerify.size(); i++){
+
+		vector<int> :: iterator itDuplicatedNodes;
+		vector<int> :: iterator itMissingNodes;
+		// if node is duplicated in newGene1, replace it with a missing one
+		itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene1.route[positionsToVerify[i]]);
+
+		if( itDuplicatedNodes != duplicatedNodes.end() ){
+			itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
+			newGene1.route[positionsToVerify[i]] = *itMissingNodes;
+		}
+
+		// the reverse is done in newGene2
+		itMissingNodes = find(missingNodes.begin(), missingNodes.end(), newGene2.route[positionsToVerify[i]]);
+		
+		if( itMissingNodes != missingNodes.end() ){
+			itDuplicatedNodes = duplicatedNodes.begin() + (itMissingNodes - missingNodes.begin());
+			newGene2.route[positionsToVerify[i]] = *itDuplicatedNodes;
+		}
+
+	}
+
+	MySolution newGene;
+	double c1, c2;
+
+	if(!eval_solution( newGene1, c1 )){
+		newGene = newGene2;
+	}else if(!eval_solution( newGene2, c2 )){
+		newGene = newGene1;
+	}else{
+		if(c1 < c2){
+			newGene = newGene1;
+		}else{
+			newGene = newGene2;
+		}
+	}
+
+	cout<<endl<<"CUTS:"<<endl;
+	printRoute(cuts);
+	cout<<endl<<"g1:"<<endl;
+	printRoute(gene1.route);
+	cout<<endl<<"g2:"<<endl;
+	printRoute(gene2.route);
+	cout<<endl<<"new:"<<endl;
+	printRoute(newGene.route);
+
+	crossCount++;
+
+	if(isFractionalDelivery){
+		newGene.route = fixFDRoute(newGene.route, problem);
+	}
+
+	return newGene;
+}
+
 int main()
 {
     setbuf(stdout, NULL);
@@ -245,17 +437,22 @@ int main()
     // globals
     problem = readFile("entrada.txt");
     problem.fitCriterion = 1; // Distance
-    isFractionalDelivery = false;
     debug = false;
     popSize = 100;
+    isFractionalDelivery = false;
+
+	// variables to control crossover and crossover
+	numCuts = 2;
+	numPoints = (int)(popSize*0.1);
 
     //GA
     GA_Type ga;
     ga.populationSize = popSize;
     ga.init_genes = init_genes;
     ga.eval_solution = eval_solution;
+	ga.crossover = crossover;
 
-    // ### TEST POPULATE
+    // ### TEST POPULATE		###############################################################################################
     ga.populate();
 
     // for(int i = 0; i < popSize; i++)
@@ -263,45 +460,56 @@ int main()
     //     cout << ga.population[i].genes.to_string() << endl << ga.population[i].cost << endl;
     // }
     // cout << endl;
-    // ### END TEST POPULATE
+    // ### END TEST POPULATE	###############################################################################################
 
-    // ### TEST SELECTION
-
+    // ### TEST SELECTION		###############################################################################################
     ga.prepareRoulette();
-    vector<double> costsDrawed;
+    // vector<double> costsDrawed;
 
-    for(int i = 0; i < 100; i++)
-    {
-        costsDrawed.push_back( ga.selectParent().cost );
-    }
+    // for(int i = 0; i < 100; i++)
+    // {
+    //     costsDrawed.push_back( ga.selectParent().cost );
+    // }
 
-    vector<pair<double,int>> timesCostsDrawed;
-    sort(costsDrawed.begin(), costsDrawed.end());
-    pair<double,int> aux;
-    aux.first = costsDrawed[0];
-    aux.second = 1;
-    timesCostsDrawed.push_back(aux);
+    // vector<pair<double,int>> timesCostsDrawed;
+    // sort(costsDrawed.begin(), costsDrawed.end());
+    // pair<double,int> aux;
+    // aux.first = costsDrawed[0];
+    // aux.second = 1;
+    // timesCostsDrawed.push_back(aux);
 
-    for(int i = 1; i < costsDrawed.size(); i++)
-    {
-        if(costsDrawed[i] == timesCostsDrawed.back().first)
-        {
-            timesCostsDrawed.back().second++;
-        }
-        else
-        {
-            pair<double,int> aux;
-            aux.first = costsDrawed[i];
-            aux.second = 1;
-            timesCostsDrawed.push_back(aux);
-        }
-    }
+    // for(int i = 1; i < costsDrawed.size(); i++)
+    // {
+    //     if(costsDrawed[i] == timesCostsDrawed.back().first)
+    //     {
+    //         timesCostsDrawed.back().second++;
+    //     }
+    //     else
+    //     {
+    //         pair<double,int> aux;
+    //         aux.first = costsDrawed[i];
+    //         aux.second = 1;
+    //         timesCostsDrawed.push_back(aux);
+    //     }
+    // }
 
-    for(int i = 0; i < timesCostsDrawed.size(); i++)
-    {
-        cout << endl << timesCostsDrawed[i].first << ": " << timesCostsDrawed[i].second;
-    }
-    // ### END TEST SELECTION
+    // for(int i = 0; i < timesCostsDrawed.size(); i++)
+    // {
+    //     cout << endl << timesCostsDrawed[i].first << ": " << timesCostsDrawed[i].second;
+    // }
+    // ### END TEST SELECTION	###############################################################################################
+
+	// ### TEST CROSSOVER		###############################################################################################
+	ChromosomeType<MySolution> chromossome1, chromossome2;
+
+	chromossome1 = ga.selectParent();
+	
+	do{
+		chromossome2 = ga.selectParent();
+	}while(chromossome1.cost == chromossome2.cost);
+
+	ga.crossover(chromossome1.genes, chromossome2.genes);
+	// ### END TEST CROSSOVER	###############################################################################################
 
     return 0;
 }

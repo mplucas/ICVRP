@@ -31,7 +31,8 @@ class Genetic
 
         // Functions that the user will pass
         function<void(GeneType&)> init_genes;
-        function<bool(const GeneType&, double &cost)> eval_solution;
+        function<bool(const GeneType&, double&)> eval_solution;
+        function<GeneType(const GeneType&, const GeneType&)> crossover;
 
         // Methods
         void populate()
@@ -53,7 +54,7 @@ class Genetic
         {
             maxCost = population[0].cost;
 
-            for(int i = 1; i < population.size(); i++)
+            for(int i = 1; i < (int)population.size(); i++)
             {
                 if(population[i].cost > maxCost)
                 {
@@ -62,7 +63,7 @@ class Genetic
             }
 
             sumCosts = 0;
-            for(int i = 0; i < population.size(); i++)
+            for(int i = 0; i < (int)population.size(); i++)
             {
                 sumCosts += (maxCost - population[i].cost);
             }
@@ -72,9 +73,9 @@ class Genetic
         {
             double drawn = sumCosts * random01();
             double rouletteProgress = 0;
-            int choosenParent;
+            int choosenParent = 0;
 
-            for(int i = 0; i < population.size(); i++)
+            for(int i = 0; i < (int)population.size(); i++)
             {
                 rouletteProgress += (maxCost - population[i].cost);
                 // cout << endl << rouletteProgress << " < " << drawn; // lll
