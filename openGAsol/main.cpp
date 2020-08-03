@@ -646,12 +646,12 @@ int main()
 
 		// ### BEGIN CLASSIC TEST
 		// variables to control crossover
-		initialProbCross = 0.8;
-		finalProbCross = 1;
+		initialProbCross = 1;
+		finalProbCross = 0.8;
 
 		// variables to control mutation
-		initialProbMut = 0.1;
-		finalProbMut = 0.05;
+		initialProbMut = 0;
+		finalProbMut = 0.1;
 
 		if(!isFractionalDelivery){
 			problem = readFile("entrada.txt");

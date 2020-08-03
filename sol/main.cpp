@@ -441,9 +441,15 @@ int main()
     popSize = 100;
     isFractionalDelivery = false;
 
-	// variables to control crossover and crossover
+	// variables to control crossover
 	numCuts = 2;
+	initialProbCross = 1;
+	finalProbCross = 0.8;
+
+	// variables to control mutation
 	numPoints = (int)(popSize*0.1);
+	initialProbMut = 0;
+	finalProbMut = 0.1;
 
     //GA
     GA_Type ga;
