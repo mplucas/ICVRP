@@ -33,6 +33,7 @@ class Genetic
         function<void(GeneType&)> init_genes;
         function<bool(const GeneType&, double&)> eval_solution;
         function<GeneType(const GeneType&, const GeneType&)> crossover;
+        function<GeneType(const GeneType&)> mutate;
 
         // Methods
         void populate()

@@ -48,12 +48,6 @@ void init_genes(MySolution& p)
 		int choosenParameters = (int)nnPopParameters.size() - 1;
 		nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2] );
 		nnPopParameters.pop_back();
-		// popCount++;
-            
-    // } else if((int)si1PopParameters.size() > 0){
-	// 	int choosenParameters = (int)si1PopParameters.size() - 1;
-    //     solomonInsertion1( p.route, problem, (int)si1PopParameters[choosenParameters][0], si1PopParameters[choosenParameters][1], si1PopParameters[choosenParameters][2], si1PopParameters[choosenParameters][3], si1PopParameters[choosenParameters][4]);
-	// 	si1PopParameters.pop_back();
         
 	}else if(popCount < (int)(popSize * 0.35)){
 		double parameters[3] = {
@@ -76,53 +70,22 @@ void init_genes(MySolution& p)
 			}
 			parametersPopulated++;
 		}
-        if(nearestNeighborPop( p.route, problem, parameters[0], parameters[1], parameters[2] )){
-			// popCount++;
-		}
+		nearestNeighborPop( p.route, problem, parameters[0], parameters[1], parameters[2] );
     }else if(popCount < (int)(popSize * 0.7)){
         p.route = k_means( problem, (int)(popSize*0.05) + (int)(random01() * (popSize*0.08)) );
-    	// popCount++;
     }else {
         p.route = randomPopImproved( problem, random01 );
-		// popCount++;
-		// p.route = randomPop( problem, random01 );
     }
 
 	if(isFractionalDelivery){
 		p.route = fixFDRoute(p.route, problem);
 	}
 	popCount++;
-	// cout << endl << popCount; //lll
-    // cout << "pop " << p.to_string() << endl; // lll
 }
 
 bool eval_solution(const MySolution& p, double &cost)
 {
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
-	
-	// lll
-	// if((int)p.route.size() != problem.numNodes - 1){
-	// 	cout << "\ntamanho diferente " << (int)p.route.size() << endl;
-	// 	isFeasible = false;
-	// 	return isFeasible;
-	// }
-	// else{
-	// 	// cout << "aceito " << popCount << endl;
-	// }
-	// for(int i = 0; i < (int)p.route.size(); i++){
-	// 	for(int j = i+1; j < (int)p.route.size(); j++){
-	// 		if(p.route[i] == p.route[j]){
-	// 			cout << "\nigual: " << p.route[i] << " [" << i << "] e [" << j << "]";
-	// 			isFeasible = false;
-	// 			return isFeasible;
-	// 		}
-	// 		if(p.route[i] < 1 || p.route[i] > (int)p.route.size()){
-	// 			cout << "inconsistente " << p.route[i];
-	// 			isFeasible = false;
-	// 			return isFeasible;
-	// 		}
-	// 	}
-	// }
 
 	// VARIABLES TO CONTROL VEHICLE BEING USED
 	int choosenVehicle = 0; // vehicle wich route belongs to, if it turns equal to problem.numVehicles than its unfeasible
@@ -131,7 +94,6 @@ bool eval_solution(const MySolution& p, double &cost)
 	int originNode = 0;
 
     // VARIABLES TO CALCULATE FIT ACCORDING TO FITCRITERION
-	// if problem.fitCriterion == 0 (Time)
     double biggestTimer = 0; // biggest cost in all routes, since it determines the cost of whole operation
 
     // if problem.fitCriterion == 1 (Distance)
@@ -257,9 +219,67 @@ bool eval_solution(const MySolution& p, double &cost)
 	return isFeasible;
 }
 
+MySolution mutate(const MySolution& baseGene)
+{
+	MySolution mutatedGene = baseGene;
+
+	if( random01() > (initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)generationCount/(double)generationSize))) ){
+		return mutatedGene;
+	}
+
+	vector<int> points;
+
+	do{
+		int choosenNode = (int)(random01() * (double)baseGene.route.size());
+		// if is not the same
+		if(find(points.begin(), points.end(), choosenNode) == points.end()){
+			points.push_back( choosenNode );
+		}
+	}while((int)points.size() < numPoints);
+
+	int i = 0;
+	vector<bool> usedPoints((int)points.size(), false);
+		
+	while(i < numPoints){
+
+		unsigned int iPoint1;
+		do{
+			iPoint1 = (unsigned int)((int)(random01() * (double)points.size()) % points.size());
+		}while(usedPoints[iPoint1]);
+
+		unsigned int iPoint2;
+		do{
+			iPoint2 = (unsigned int)((int)(random01() * (double)points.size()) % points.size());
+		}while(usedPoints[iPoint2] && iPoint2 == iPoint1);
+		
+		int auxNode = mutatedGene.route[points[iPoint1]];
+		mutatedGene.route[points[iPoint1]] = mutatedGene.route[points[iPoint2]];
+		mutatedGene.route[points[iPoint2]] = auxNode;
+
+		usedPoints[iPoint1] = true;
+		usedPoints[iPoint2] = true;
+
+		i += 2;
+	}
+
+	mutCount++;
+
+	if(isFractionalDelivery){
+		mutatedGene.route = fixFDRoute(mutatedGene.route, problem);
+	}
+
+	// cout<<endl<<"Points:"<<endl;
+	// printRoute(points);
+	// cout<<endl<<"g:"<<endl;
+	// printRoute(baseGene.route);
+	// cout<<endl<<"new:"<<endl;
+	// printRoute(mutatedGene.route);
+
+	return mutatedGene;
+}
+
 MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 {
-	// cout << "\na";// lll
 	MySolution newGene1, newGene2;
 
 	// chance to do crossover starts 80% and rises to 100%
@@ -282,15 +302,6 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	
 	sort(cuts.begin(), cuts.end());
 	
-	// lll
-	// cout << endl << "Cross:" << endl;
-	// cout << endl << "Cuts: ";
-	// printRoute(cuts);
-	// cout << endl << "G1 : ";
-	// printRoute(gene1.route);
-	// cout << endl << "G2 : ";
-	// printRoute(gene2.route);
-
 	int iCut = 0;
 	for(int i = 0; i < (int)gene1.route.size(); i++){
 		int choosenNode1, choosenNode2;
@@ -307,11 +318,6 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 			iCut += 2;
 		}
 	}
-
-	// lll
-	// cout << endl << "G3 before correction: ";
-	// cout << endl << "G3 : ";
-	// printRoute(newGene.route);
 
     // Correcting cross over
     // Finding duplicated and missing nodes
@@ -352,14 +358,6 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 		}
 
 	}
-
-	// lll
-	// cout << endl << "G3 duplicated nodes: ";
-	// cout << endl << "G3 : ";
-	// printRoute(duplicatedNodes);
-	// cout << endl << "G3 missing nodes: ";
-	// cout << endl << "G3 : ";
-	// printRoute(missingNodes);
 
     // Correcting duplicated nodes
 	vector<int> reverseCuts = cuts;
@@ -412,20 +410,20 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 		}
 	}
 
-	cout<<endl<<"CUTS:"<<endl;
-	printRoute(cuts);
-	cout<<endl<<"g1:"<<endl;
-	printRoute(gene1.route);
-	cout<<endl<<"g2:"<<endl;
-	printRoute(gene2.route);
-	cout<<endl<<"new:"<<endl;
-	printRoute(newGene.route);
-
 	crossCount++;
 
 	if(isFractionalDelivery){
 		newGene.route = fixFDRoute(newGene.route, problem);
 	}
+
+	// cout<<endl<<"CUTS:"<<endl;
+	// printRoute(cuts);
+	// cout<<endl<<"g1:"<<endl;
+	// printRoute(gene1.route);
+	// cout<<endl<<"g2:"<<endl;
+	// printRoute(gene2.route);
+	// cout<<endl<<"new:"<<endl;
+	// printRoute(newGene.route);
 
 	return newGene;
 }
@@ -437,8 +435,10 @@ int main()
     // globals
     problem = readFile("entrada.txt");
     problem.fitCriterion = 1; // Distance
+
     debug = false;
     popSize = 100;
+	generationSize = 100;
     isFractionalDelivery = false;
 
 	// variables to control crossover
@@ -447,7 +447,7 @@ int main()
 	finalProbCross = 0.8;
 
 	// variables to control mutation
-	numPoints = (int)(popSize*0.1);
+	numPoints = (int)(popSize*0.05)*2;
 	initialProbMut = 0;
 	finalProbMut = 0.1;
 
@@ -457,11 +457,13 @@ int main()
     ga.init_genes = init_genes;
     ga.eval_solution = eval_solution;
 	ga.crossover = crossover;
+	ga.mutate = mutate;
 
     // ### TEST POPULATE		###############################################################################################
     ga.populate();
 
-    // for(int i = 0; i < popSize; i++)
+	// cout<<endl<<ga.population.size();
+    // for(int i = 0; i < ga.population.size(); i++)
     // {
     //     cout << ga.population[i].genes.to_string() << endl << ga.population[i].cost << endl;
     // }
@@ -513,8 +515,15 @@ int main()
 	do{
 		chromossome2 = ga.selectParent();
 	}while(chromossome1.cost == chromossome2.cost);
-
+	// cout<<endl;
+	// printRoute(chromossome1.genes.route);
+	// cout<<endl;
+	// printRoute(chromossome2.genes.route);
 	ga.crossover(chromossome1.genes, chromossome2.genes);
+	// ### END TEST CROSSOVER	###############################################################################################
+
+	// ### TEST CROSSOVER		###############################################################################################
+	ga.mutate(chromossome1.genes);
 	// ### END TEST CROSSOVER	###############################################################################################
 
     return 0;

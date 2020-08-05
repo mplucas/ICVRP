@@ -618,7 +618,7 @@ int main()
 
 	// variables to control crossover and crossover
 	numCuts = 2;
-	numPoints = (int)(popSize*0.1);
+	numPoints = (int)(popSize*0.05)*2;
 
 	GA_Type ga_obj;
 	ga_obj.problem_mode=EA::GA_MODE::SOGA;
