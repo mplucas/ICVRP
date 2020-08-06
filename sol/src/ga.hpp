@@ -6,6 +6,7 @@ using std::vector;
 using std::cout;
 using std::endl;
 using std::function;
+using namespace std::chrono;
 
 template<typename GeneType>
 struct ChromosomeType
@@ -150,15 +151,48 @@ class Genetic
             <<population.front().genes.to_string();
         }
 
+        void reportGeneration(int index, double time)
+        {
+            double average = 0;
+            thisChromosomeType best;
+            best.cost = DBL_MAX;
+
+            for(int i = 0; i < (int)population.size(); i++)
+            {
+                average += population[i].cost;
+                
+                if(population[i].cost < best.cost)
+                {
+                    best = population[i];
+                }
+            }
+            average /= (int)population.size();
+
+            cout
+            <<"Generation ["<<index<<"], "
+            <<"Best="<<best.cost<<", "
+            <<"Average="<<average<<", "
+            <<"Best genes=("<<best.genes.to_string()<<")"<<", "
+            <<"Exe_time="<<time<<"s"
+            <<endl;
+        }
+
         void solve()
         {
             generationCount = 0;
 
+            auto start = high_resolution_clock::now();
             populate();
+            auto stop = high_resolution_clock::now();
+            reportGeneration(generationCount, duration_cast<seconds>(stop - start).count());
+
             while (generationCount < generationSize)
             {
+                start = high_resolution_clock::now();
                 newGeneration();
+                stop = high_resolution_clock::now();
                 generationCount++;
+                reportGeneration(generationCount, duration_cast<seconds>(stop - start).count());
             }
             displayBest();
         }

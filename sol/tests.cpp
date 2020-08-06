@@ -464,12 +464,12 @@ int main()
     // ### TEST POPULATE		###############################################################################################
     ga.populate();
 
-	// cout<<endl<<ga.population.size();
-    // for(int i = 0; i < ga.population.size(); i++)
-    // {
-    //     cout << ga.population[i].genes.to_string() << endl << ga.population[i].cost << endl;
-    // }
-    // cout << endl;
+	cout<<endl<<ga.population.size();
+    for(int i = 0; i < ga.population.size(); i++)
+    {
+        cout << ga.population[i].genes.to_string() << endl << ga.population[i].cost << endl;
+    }
+    cout << endl;
     // ### END TEST POPULATE	###############################################################################################
 
     // ### TEST SELECTION		###############################################################################################
@@ -510,22 +510,22 @@ int main()
     // ### END TEST SELECTION	###############################################################################################
 
 	// ### TEST CROSSOVER		###############################################################################################
-	ChromosomeType<MySolution> chromossome1, chromossome2;
+	// ChromosomeType<MySolution> chromossome1, chromossome2;
 
-	chromossome1 = ga.selectParent();
+	// chromossome1 = ga.selectParent();
 	
-	do{
-		chromossome2 = ga.selectParent();
-	}while(chromossome1.cost == chromossome2.cost);
+	// do{
+	// 	chromossome2 = ga.selectParent();
+	// }while(chromossome1.cost == chromossome2.cost);
 	// cout<<endl;
 	// printRoute(chromossome1.genes.route);
 	// cout<<endl;
 	// printRoute(chromossome2.genes.route);
-	ga.crossover(chromossome1.genes, chromossome2.genes);
+	// ga.crossover(chromossome1.genes, chromossome2.genes);
 	// ### END TEST CROSSOVER	###############################################################################################
 
 	// ### TEST CROSSOVER		###############################################################################################
-	ga.mutate(chromossome1.genes);
+	// ga.mutate(chromossome1.genes);
 	// ### END TEST CROSSOVER	###############################################################################################
 
     return 0;
