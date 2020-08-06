@@ -12,6 +12,11 @@ struct ChromosomeType
 {
 	GeneType genes;
 	double cost;
+
+    bool operator < (const ChromosomeType& ct) const
+    {
+        return (cost < ct.cost);
+    }
 };
 
 template<typename GeneType>
@@ -28,6 +33,9 @@ class Genetic
         vector<thisChromosomeType> population;
         double sumCosts;
         double maxCost;
+        int generationSize;
+        int generationCount;
+        int eliteSize;
 
         // Functions that the user will pass
         function<void(GeneType&)> init_genes;
@@ -49,6 +57,8 @@ class Genetic
                 }
                 population.push_back(chromosome);
             }
+
+            prepareRoulette();
         }
 
         void prepareRoulette()
@@ -91,5 +101,65 @@ class Genetic
             // cout << endl << drawn << " " << choosenParent; // lll
 
             return population[choosenParent];
+        }
+
+        void newGeneration()
+        {
+            vector<thisChromosomeType> newPopulation;
+            
+            // transfering elite chromossomes
+            sort(population.begin(), population.end());
+            for(int i = 0; i < eliteSize; i++)
+            {
+                newPopulation.push_back(population[i]);
+            }
+
+            // filling the rest of new population with children of the current population
+            while((int)newPopulation.size() < populationSize)
+            {
+                thisChromosomeType c1 = selectParent();
+                thisChromosomeType c2 = selectParent();
+                thisChromosomeType newChromossome;
+                
+                newChromossome.genes = crossover(c1.genes,c2.genes);
+                if(!eval_solution(newChromossome.genes, newChromossome.cost))
+                {
+                    continue;
+                }
+
+                newChromossome.genes = mutate(newChromossome.genes);
+                if(!eval_solution(newChromossome.genes, newChromossome.cost))
+                {
+                    continue;
+                }
+
+                newPopulation.push_back(newChromossome);
+            }
+
+            population = newPopulation;
+
+            prepareRoulette();
+        }
+
+        void displayBest()
+        {
+            sort(population.begin(), population.end());
+            cout<<endl<<endl<<"Best solution:"<<endl
+            <<"\tCost: "<<population.front().cost<<endl
+            <<"\tChromossome:"<<endl
+            <<population.front().genes.to_string();
+        }
+
+        void solve()
+        {
+            generationCount = 0;
+
+            populate();
+            while (generationCount < generationSize)
+            {
+                newGeneration();
+                generationCount++;
+            }
+            displayBest();
         }
 };
