@@ -3,11 +3,13 @@
 
 using namespace std;
 
-typedef struct{
+typedef struct
+{
 	int x, y;
 }location;
 
-typedef struct Vehicle{
+typedef struct Vehicle
+{
 
 	double timer = 0;
     int usedCapacity = 0;
@@ -29,8 +31,8 @@ typedef struct Vehicle{
 
 }vehicle;
 
-typedef struct Vrp{
-
+typedef struct Vrp
+{
 	string sourceName;		        // sourcefile
 	int numVehicles;	            // number of vehicles
 	int numNodes;                   // number of nodes
@@ -55,8 +57,8 @@ typedef struct Vrp{
 	vector<location> locations;     // array with the location of each node:
 }vrp;
 
-typedef struct{
-	
+typedef struct
+{	
 	int id;
 	int x, y;
 	vector<int> assigneds;
@@ -68,8 +70,8 @@ bool xLocationComparator(location a, location b)
     return a.x > b.x; 
 }
 
-double distanceAB(int x1, int y1, int x2, int y2){
-
+double distanceAB(int x1, int y1, int x2, int y2)
+{
 	double realX, realY;
 	
     realX = (double)(x1 - x2);
@@ -79,9 +81,11 @@ double distanceAB(int x1, int y1, int x2, int y2){
 }
 
 
-void printRoute(vector<int> route){
+void printRoute(vector<int> route)
+{
     cout << "{";
-    for(int i = 0; i < (int)route.size(); i++){
+    for(int i = 0; i < (int)route.size(); i++)
+    {
         cout << ( i?",":"" ) << std::setprecision(10) << route[i];
     }
 	cout << "}";
@@ -103,8 +107,8 @@ void printRealRoute(vector<int> route, vrp problem, vector<int> breaks)
 	cout << "}";
 }
 
-vrp readFile(string fileName){
-
+vrp readFile(string fileName)
+{
     vrp problem;
     problem.sourceName = fileName;
     
@@ -112,8 +116,8 @@ vrp readFile(string fileName){
     fileStream.open(fileName);
     string line;
 
-    if (fileStream.is_open()) {
-        
+    if (fileStream.is_open()) 
+    {        
         // skipping 4 words
         for(int i = 0; i < 4; i++)
             fileStream >> line;
@@ -135,8 +139,8 @@ vrp readFile(string fileName){
         // skipping first node index
             fileStream >> line;
 
-        while (!fileStream.eof()) {
-
+        while (!fileStream.eof()) 
+        {
             location auxLocation;
 
             // reading x coord
@@ -183,16 +187,17 @@ vrp readFile(string fileName){
     
     // resizing matrix
     problem.cost.resize(problem.numNodes);
-    for(int i = 0; i < problem.numNodes; i++){
+    for(int i = 0; i < problem.numNodes; i++)
+    {
         problem.cost[i].resize(problem.numNodes);
     }
 
-    for(int i = 0; i < problem.numNodes; i++){
-
-        for(int j = i; j < problem.numNodes; j++){
-
-            if( j == i ){
-
+    for(int i = 0; i < problem.numNodes; i++)
+    {
+        for(int j = i; j < problem.numNodes; j++)
+        {
+            if( j == i )
+            {
                 problem.cost[i][j] = 0;
                 continue;
             }
@@ -206,12 +211,12 @@ vrp readFile(string fileName){
     return problem;
 }
 
-vector<int> explodeFractionalDeliverNode(int demand, int limit){
-    
+vector<int> explodeFractionalDeliverNode(int demand, int limit)
+{    
     vector<int> newDemands;
 
-    if(demand > limit){
-
+    if(demand > limit)
+    {
         int d1, d2, d3;
         d1 = demand / 7;
         d2 = demand * 2 / 7;
@@ -219,28 +224,33 @@ vector<int> explodeFractionalDeliverNode(int demand, int limit){
         d1 += demand - (d1 + d2 + d3);
 
         vector<int> aux = explodeFractionalDeliverNode(d1, limit);
-        for(auto newDemand:aux){
+        for(auto newDemand:aux)
+        {
             newDemands.push_back(newDemand);
         }
 
         aux = explodeFractionalDeliverNode(d2, limit);
-        for(auto newDemand:aux){
+        for(auto newDemand:aux)
+        {
             newDemands.push_back(newDemand);
         }
 
         aux = explodeFractionalDeliverNode(d3, limit);
-        for(auto newDemand:aux){
+        for(auto newDemand:aux)
+        {
             newDemands.push_back(newDemand);
         }
-    }else{
+    }
+    else
+    {
         newDemands.push_back(demand);
     }
 
     return newDemands;
 }
 
-vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, double u){
-    
+vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, double u)
+{    
     vrp problem = readFile(fileName);
     vrp fdProblem;
 
@@ -252,17 +262,19 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
     int maxDemand = 0;
     int minDemand = INT_MAX;
 
-    for(auto demand:problem.demand){
+    for(auto demand:problem.demand)
+    {
         if(demand < minDemand) minDemand = demand;
         if(demand > maxDemand) maxDemand = demand;
     }
 
-    for(int i = 0; i < problem.numNodes; i++){
+    for(int i = 0; i < problem.numNodes; i++)
+    {
         int demand = l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand);
         int totalServiceTime = 0;
         vector<int> auxDemands = explodeFractionalDeliverNode(demand, problem.capacity * limit);
-        for(auto partialDemand:auxDemands){
-
+        for(auto partialDemand:auxDemands)
+        {
             fdProblem.realNode.push_back(i);
             fdProblem.locations.push_back(problem.locations[i]);
             fdProblem.maxX = problem.maxX;
@@ -281,16 +293,17 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
 
     // resizing matrix
     fdProblem.cost.resize(fdProblem.numNodes);
-    for(int i = 0; i < fdProblem.numNodes; i++){
+    for(int i = 0; i < fdProblem.numNodes; i++)
+    {
         fdProblem.cost[i].resize(fdProblem.numNodes);
     }
 
-    for(int i = 0; i < fdProblem.numNodes; i++){
-
-        for(int j = i; j < fdProblem.numNodes; j++){
-
-            if( j == i ){
-
+    for(int i = 0; i < fdProblem.numNodes; i++)
+    {
+        for(int j = i; j < fdProblem.numNodes; j++)
+        {
+            if( j == i )
+            {
                 fdProblem.cost[i][j] = 0;
                 continue;
             }
@@ -304,8 +317,8 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
     return fdProblem;
 }
 
-string printVrpString(vrp problem, bool nodesDetails, bool matrix){
-
+string printVrpString(vrp problem, bool nodesDetails, bool matrix)
+{
     string info;
 
     info = "\n\nSource: " + problem.sourceName;
@@ -313,10 +326,10 @@ string printVrpString(vrp problem, bool nodesDetails, bool matrix){
     info += "\nCapacity: " + to_string( problem.capacity );
     info += "\nNum. nodes: " + to_string( problem.numNodes );
 
-    if(nodesDetails){
-
-        for(int i = 0; i < problem.numNodes; i++){
-
+    if(nodesDetails)
+    {
+        for(int i = 0; i < problem.numNodes; i++)
+        {
             info += "\n\nIndex: " + to_string( i );
             info += "\nX: " + to_string( problem.locations[i].x );
             info += "\nY: " + to_string( problem.locations[i].y );
@@ -327,15 +340,16 @@ string printVrpString(vrp problem, bool nodesDetails, bool matrix){
         }
     }
     
-    if(matrix){
-
+    if(matrix)
+    {
         info += "\n\nCost Matrix:\n";
 
-        for(int i = 0; i < problem.numNodes; i++){
-            
+        for(int i = 0; i < problem.numNodes; i++)
+        {            
             info += "\n";
             
-            for(int j = 0; j < problem.numNodes; j++){
+            for(int j = 0; j < problem.numNodes; j++)
+            {
                 info += to_string( problem.cost[i][j] ) + " ";
             }
         }
@@ -344,24 +358,26 @@ string printVrpString(vrp problem, bool nodesDetails, bool matrix){
     return info;
 }
 
-void printVrp(vrp problem, bool nodesDetails, bool matrix){
-
+void printVrp(vrp problem, bool nodesDetails, bool matrix)
+{
     cout << printVrpString(problem, nodesDetails, matrix);
 }
 
-bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp problem ){
-
+bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp problem )
+{
     bool isFeasible = true;
 
     // VARIABLES TO CHECK CAPACITY
     int routeUsedCapacity = 0;
     
     // CHECKING CAPACITY
-    for(int node : route){
+    for(int node : route)
+    {
         routeUsedCapacity += problem.demand[node];
     }
 
-    if(problem.demand[nodeToAdd] + routeUsedCapacity > problem.capacity){
+    if(problem.demand[nodeToAdd] + routeUsedCapacity > problem.capacity)
+    {
         isFeasible = false;
         return isFeasible;
     }
@@ -375,13 +391,14 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
     route.push_back(0);
 
     // calculating begin time of until the route reaches addBeforeThisNode
-    for( int i = 0; i < addBeforeThisNode; i++ ){
-
+    for( int i = 0; i < addBeforeThisNode; i++ )
+    {
         int destinyNode = route[i];
 
         oldBeginOfNext += problem.cost[oldOriginNode][destinyNode];
         // if vehicle arrives earlier than start of TW, it waits until the start
-        if( oldBeginOfNext < problem.readyTime[destinyNode] ){
+        if( oldBeginOfNext < problem.readyTime[destinyNode] )
+        {
             oldBeginOfNext = problem.readyTime[destinyNode];
         }
         // adds service time
@@ -396,9 +413,12 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
 
     newBeginOfNext += problem.cost[oldOriginNode][nodeToAdd];
     // if vehicle arrives earlier than start of TW, it waits until the start
-    if( newBeginOfNext < problem.readyTime[nodeToAdd] ){
+    if( newBeginOfNext < problem.readyTime[nodeToAdd] )
+    {
         newBeginOfNext = problem.readyTime[nodeToAdd];
-    }else if( newBeginOfNext > problem.dueTime[nodeToAdd] ){
+    }
+    else if( newBeginOfNext > problem.dueTime[nodeToAdd] )
+    {
         isFeasible = false;
         return isFeasible;
     }
@@ -408,29 +428,34 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
     // saves origin of new partial path
     int newOriginNode = nodeToAdd;
 
-    for( int i = addBeforeThisNode; i < (int)route.size(); i++ ){
-    
+    for( int i = addBeforeThisNode; i < (int)route.size(); i++ )
+    {    
         int destinyNode = route[i];
 
         // CALCULATING OLDBEGIN
         oldBeginOfNext += problem.cost[oldOriginNode][destinyNode];
         // if vehicle arrives earlier than start of TW, it waits until the start
-        if( oldBeginOfNext < problem.readyTime[destinyNode] ){
+        if( oldBeginOfNext < problem.readyTime[destinyNode] )
+        {
             oldBeginOfNext = problem.readyTime[destinyNode];
         }
 
         // CALCULATING NEWBEGIN
         newBeginOfNext += problem.cost[newOriginNode][destinyNode];
         // if vehicle arrives earlier than start of TW, it waits until the start
-        if( newBeginOfNext < problem.readyTime[destinyNode] ){
+        if( newBeginOfNext < problem.readyTime[destinyNode] )
+        {
             newBeginOfNext = problem.readyTime[destinyNode];
         }
         
         // CALCULATING PUSH-FOWARD
         double pf = newBeginOfNext - oldBeginOfNext;
-        if( pf <= 0 ){ // success
+        if( pf <= 0 ) // success
+        { 
             break;
-        }else if( oldBeginOfNext + pf > problem.dueTime[destinyNode] ){ // fail
+        }
+        else if( oldBeginOfNext + pf > problem.dueTime[destinyNode] ) // fail
+        { 
             isFeasible = false;
             break;
         }
@@ -451,52 +476,61 @@ bool addIsFeasible( vector<int> route, int nodeToAdd, int addBeforeThisNode, vrp
     return isFeasible;
 }
 
-void testAddIsFeasible(vector<int> route, vrp problem){
-
+void testAddIsFeasible(vector<int> route, vrp problem)
+{
     vector<int> testRoute;
     testRoute.push_back(route[0]);
     int v = 0;
 
-    for(int i = 1; i < (int)route.size(); i++){
-        
-        if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
+    for(int i = 1; i < (int)route.size(); i++)
+    {        
+        if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem ))
+        {
             cout << endl << v << ":" << endl;
             printRoute(testRoute);
             cout << endl;
             v++;
             testRoute.clear();
             i--;
-        }else{
+        }
+        else
+        {
             testRoute.push_back(route[i]);
         }
     }
 
-    if(testRoute.size() > 0){
+    if(testRoute.size() > 0)
+    {
         cout << endl << v << ":" << endl;
         printRoute(testRoute);
         cout << endl;
     }
 }
 
-vector<int> fixFDRoute(vector<int> route, vrp problem){
-
+vector<int> fixFDRoute(vector<int> route, vrp problem)
+{
     vector<int> fixedRoute;
     vector<int> testRoute;
     testRoute.push_back(route[0]);
-    bool fixed = false; //lll
-    vector<int> breaks; //lll
+    // bool fixed = false; //lll
+    // vector<int> breaks; //lll
 
-    for(int i = 1; i < (int)route.size(); i++){
-        if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
+    for(int i = 1; i < (int)route.size(); i++)
+    {
+        if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem ))
+        {
             // when found partial route, fix it
-            breaks.push_back(i); // lll
-            for(int j = testRoute.size() - 1; j >= 0; j--){
+            // breaks.push_back(i); // lll
+            for(int j = testRoute.size() - 1; j >= 0; j--)
+            {
                 int lastCurrentRealNodePosition = j;
-                for(int k = j - 1; k >= 0; k--){
-                    if(problem.realNode[testRoute[j]] == problem.realNode[testRoute[k]]){
+                for(int k = j - 1; k >= 0; k--)
+                {
+                    if(problem.realNode[testRoute[j]] == problem.realNode[testRoute[k]])
+                    {
                         if(lastCurrentRealNodePosition - k > 1)
                         {
-                            fixed = true; //lll
+                            // fixed = true; //lll
                             testRoute.insert(testRoute.begin() + j, testRoute[k]);
                             testRoute.erase(testRoute.begin() + k);
                         }
@@ -507,28 +541,33 @@ vector<int> fixFDRoute(vector<int> route, vrp problem){
             i--;
             fixedRoute.insert(fixedRoute.end(), testRoute.begin(), testRoute.end());
             testRoute.clear();
-        }else{
+        }
+        else
+        {
             testRoute.push_back(route[i]);
         }
     }
 
-    if(testRoute.size() > 0){
+    if(testRoute.size() > 0)
+    {
        fixedRoute.insert(fixedRoute.end(), testRoute.begin(), testRoute.end()); 
     }
 
-    if(fixed){
-        cout << endl << "Route before fix:"<<endl; //lll
-        printRealRoute(route, problem, breaks); //lll
-        cout << endl << "Route after fix:"<<endl; //lll
-        printRealRoute(fixedRoute, problem, breaks); //lll
-        cout << endl; //lll
-    }
+    // if(fixed)
+    // {
+    //     cout << endl << "Route before fix:"<<endl; //lll
+    //     printRealRoute(route, problem, breaks); //lll
+    //     cout << endl << "Route after fix:"<<endl; //lll
+    //     printRealRoute(fixedRoute, problem, breaks); //lll
+    //     cout << endl; //lll
+    // }
 
     return fixedRoute;
 }
 
 // teste
-bool calculateFit(vector<int> route, vrp problem){
+bool calculateFit(vector<int> route, vrp problem)
+{
     bool isFeasible = true; // if true accepts gene, if false rejects gene
     double cost;
     bool debug = true;
@@ -549,8 +588,8 @@ bool calculateFit(vector<int> route, vrp problem){
 	// VARIABLES TO DEBUG
 	vector<vehicle> vehicleDebugger(1);
     
-	for(unsigned int i = 0; i < route.size(); i++){
-		
+	for(unsigned int i = 0; i < route.size(); i++)
+    {		
 		int destinyNode = route[i];
 
 		if( vehicleTimer + problem.cost[originNode][destinyNode] <= problem.dueTime[destinyNode]
@@ -561,24 +600,30 @@ bool calculateFit(vector<int> route, vrp problem){
 			vehicleTimer += problem.cost[originNode][destinyNode];
 
 			// if vehicle arrives earlier than start of TW, it waits until the start
-			if( vehicleTimer < problem.readyTime[destinyNode] ){
+			if( vehicleTimer < problem.readyTime[destinyNode] )
+            {
 				vehicleTimer = problem.readyTime[destinyNode];
 			}
 
 			// adds service time
 			vehicleTimer += problem.serviceTime[destinyNode];
 
-			if(problem.fitCriterion == 0){
+			if(problem.fitCriterion == 0)
+            {
                 // save fit if it is bigger
-                if( vehicleTimer > biggestTimer ){
+                if( vehicleTimer > biggestTimer )
+                {
                     biggestTimer = vehicleTimer;
                 }
-            }else if(problem.fitCriterion == 1){
+            }
+            else if(problem.fitCriterion == 1)
+            {
 				// add distance
                 totalDistance += problem.cost[originNode][destinyNode];
             }
 
-			if(debug){
+			if(debug)
+            {
                 vehicleDebugger[choosenVehicle].timer = vehicleTimer;
                 vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
 				vehicleDebugger[choosenVehicle].distance += problem.cost[originNode][destinyNode];
@@ -593,17 +638,20 @@ bool calculateFit(vector<int> route, vrp problem){
 			// send vehicle back to depot
 			vehicleTimer += problem.cost[originNode][0];
 
-			if(problem.fitCriterion == 0){
+			if(problem.fitCriterion == 0)
+            {
                 // save fit if it is bigger
-                if( vehicleTimer > biggestTimer ){
+                if( vehicleTimer > biggestTimer )
+                {
                     biggestTimer = vehicleTimer;
                 }
-            }else if(problem.fitCriterion == 1){
+            }else if(problem.fitCriterion == 1)
+            {
 				totalDistance += problem.cost[originNode][0];
 			}
 
-			if(debug){
-
+			if(debug)
+            {
 				vehicleDebugger[choosenVehicle].timer = vehicleTimer;
 				vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
 				vehicle newVehicle;
@@ -613,7 +661,8 @@ bool calculateFit(vector<int> route, vrp problem){
             // try to assign this node to the next vehicle route
             choosenVehicle++;
             
-			if(choosenVehicle == problem.numVehicles){
+			if(choosenVehicle == problem.numVehicles)
+            {
 				isFeasible = false;
 				break;
 			}
@@ -629,29 +678,32 @@ bool calculateFit(vector<int> route, vrp problem){
 	}
 
 	// finalizing fit
-    if(problem.fitCriterion == 0){
-
+    if(problem.fitCriterion == 0)
+    {
 		// send vehicle back to depot
 		vehicleTimer += problem.cost[originNode][0];
 
 		// save fit if it is bigger
-		if( vehicleTimer > biggestTimer ){
+		if( vehicleTimer > biggestTimer )
+        {
 			biggestTimer = vehicleTimer;
 		}
         
         cost = biggestTimer;
     
-    }else if(problem.fitCriterion == 1){
-        
+    }else if(problem.fitCriterion == 1)
+    {        
         // Adding distance to return to depot of the last vehicle
         cost = totalDistance + problem.cost[originNode][0];
     }
 
-	if(debug){
+	if(debug)
+    {
 		vehicleDebugger.back().timer += problem.cost[originNode][0];
 		vehicleDebugger.back().distance += problem.cost[originNode][0];
 
-		for(unsigned int i = 0; i < vehicleDebugger.size(); i++){
+		for(unsigned int i = 0; i < vehicleDebugger.size(); i++)
+        {
 			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
 		}
         // cout << "\n Last node visited (or tried): p.route[" << i << "] = " << p.route[i];
@@ -666,19 +718,20 @@ bool calculateFit(vector<int> route, vrp problem){
 
 // Population functions
 // classic random generation
-vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
-
+vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 )
+{
     vector<int> newPop;
     vector<bool> visited(problem.numNodes, false);
 
 	// marking depot as visited because it do not enter de solution
 	visited[0] = true;
 
-	for(int i = 1; i < problem.numNodes; i++){
-
+	for(int i = 1; i < problem.numNodes; i++)
+    {
 		int choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 
-		while(visited[choosen]){
+		while(visited[choosen])
+        {
 			choosen = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 		}
 
@@ -690,8 +743,8 @@ vector<int> randomPop( vrp problem, const std::function<double(void)> &rnd01 ){
 }
 
 // this random generation always generate feasible solutions
-vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &rnd01 ){
-
+vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &rnd01 )
+{
     vector<int> newPop;
     vector<bool> visited(problem.numNodes, false);
     int vehicleRouteStart = 0;
@@ -699,11 +752,12 @@ vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &r
 	// marking depot as visited because it do not enter de solution
 	visited[0] = true;
 	
-	while( (int)newPop.size() < problem.numNodes - 1){
-
+	while( (int)newPop.size() < problem.numNodes - 1)
+    {
 		int choosenToAdd = (int)((int)(rnd01() * problem.numNodes) % problem.numNodes);
 
-		while(visited[choosenToAdd]){
+		while(visited[choosenToAdd])
+        {
 			choosenToAdd++;
 			choosenToAdd %= problem.numNodes;
 		}
@@ -713,40 +767,45 @@ vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &r
         vector<int> testRoute(first, last);
 
         // if insertion is not feasible, injects feasible nodes in the partial route
-        if(addIsFeasible( testRoute, choosenToAdd, (int)testRoute.size(), problem )){
-
+        if(addIsFeasible( testRoute, choosenToAdd, (int)testRoute.size(), problem ))
+        {
             newPop.push_back(choosenToAdd);
 		    visited[choosenToAdd] = true;
 
-        }else{
+        }
+        else
+        {
             // getting not visited nodes
             vector<int> notVisited;
-            for(int i = 0; i < problem.numNodes; i++){
-                if(!visited[i]){
+            for(int i = 0; i < problem.numNodes; i++)
+            {
+                if(!visited[i])
+                {
                     notVisited.push_back(i);
                 }
             }
 
             // assigning not visited nodes to partial route
-            while(notVisited.size() > 0){
-
+            while(notVisited.size() > 0)
+            {
                 choosenToAdd = (int)((int)(rnd01() * (double)notVisited.size()) % notVisited.size());
 
                 vector<bool> testedNodes((int)testRoute.size() + 1, false);
 
-                for(int i = 0; i <= (int)testRoute.size(); i++){
-
+                for(int i = 0; i <= (int)testRoute.size(); i++)
+                {
                     int choosenToTest = (int)((int)(rnd01() * ((int)testRoute.size() + 1)) % ((int)testRoute.size() + 1));
 
-                    while(testedNodes[choosenToTest]){
+                    while(testedNodes[choosenToTest])
+                    {
                         choosenToTest++;
                         choosenToTest %= ((int)testRoute.size() + 1);
                     }
 
                     testedNodes[choosenToTest] = true;
                     
-                    if(addIsFeasible( testRoute, notVisited[choosenToAdd], i, problem )){
-
+                    if(addIsFeasible( testRoute, notVisited[choosenToAdd], i, problem ))
+                    {
                         // inserting node
                         newPop.insert(newPop.begin() + vehicleRouteStart + i, notVisited[choosenToAdd]);
                         visited[notVisited[choosenToAdd]] = true;
@@ -771,8 +830,8 @@ vector<int> randomPopImproved( vrp problem, const std::function<double(void)> &r
     return newPop;
 }
 
-bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight, double timeWeight, double urgencyWeight ){
-
+bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight, double timeWeight, double urgencyWeight )
+{
     bool isFeasible = true;
     vector<bool> routedNodes( problem.numNodes, false );
     int originNode = 0;
@@ -784,24 +843,25 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
 
     routedNodes[0] = true;
 
-    for( int i = 1; i < problem.numNodes; i++ ){
-
+    for( int i = 1; i < problem.numNodes; i++ )
+    {
         destinationCost = DBL_MAX; // infinity
         
         vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
         vector<int> :: const_iterator last = newPop.end();
         vector<int> testRoute(first, last);
         
-        for( int j = 1; j < problem.numNodes; j++ ){
-        
-            if( !routedNodes[j] && addIsFeasible( testRoute, j, (int)testRoute.size(), problem ) ){
-                
+        for( int j = 1; j < problem.numNodes; j++ )
+        {        
+            if( !routedNodes[j] && addIsFeasible( testRoute, j, (int)testRoute.size(), problem ) )
+            {                
                 // the time difference between the completion of service at originNode and the beginning of service at j
                 double time = max( problem.cost[originNode][j], problem.readyTime[j] - timer );
                 double urgency = problem.dueTime[j] - ( timer + problem.cost[originNode][j] );
                 double currentCost = distanceWeight * problem.cost[originNode][j] + timeWeight * time + urgencyWeight * urgency;
 
-                if( currentCost < destinationCost ){
+                if( currentCost < destinationCost )
+                {
                     destinationCost = currentCost;
                     destinationIndex = j;
                 }
@@ -809,21 +869,24 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
 
         }
 
-        if( destinationCost != DBL_MAX ){ // if found a node to add
-
+        if( destinationCost != DBL_MAX ) // if found a node to add
+        {
             newPop.push_back( destinationIndex );
             routedNodes[destinationIndex] = true;
             timer = max( timer + problem.cost[originNode][destinationIndex], problem.readyTime[destinationIndex] ) + problem.serviceTime[destinationIndex];
             originNode = destinationIndex;
 
-        }else{
+        }
+        else
+        {
 
             vehicleRouteStart = (int)newPop.size();
             timer = 0;
             originNode = 0;
 
             vehiclesUsed++;
-            if(vehiclesUsed > problem.numVehicles){
+            if(vehiclesUsed > problem.numVehicles)
+            {
                 isFeasible = false;
                 break;
             }
@@ -837,8 +900,8 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
     return isFeasible;
 }
 
-void solomonInsertion1Injection( vector<int> &newPop, int vehicleRouteStart, vector<bool> &routedNodes, vrp problem, double mi, double lambda, double a1, double a2 ){
-        
+void solomonInsertion1Injection( vector<int> &newPop, int vehicleRouteStart, vector<bool> &routedNodes, vrp problem, double mi, double lambda, double a1, double a2 )
+{        
     int previousNode;
     int nextNode;
 
@@ -847,28 +910,35 @@ void solomonInsertion1Injection( vector<int> &newPop, int vehicleRouteStart, vec
     vector<int> testRoute(first, last);
 
     // inserting nodes using c1 and c2
-    for( int i = 1; i < problem.numNodes; i++ ){
-
-        if( !routedNodes[i] ){
+    for( int i = 1; i < problem.numNodes; i++ )
+    {
+        if( !routedNodes[i] )
+        {
             int positionToAdd = -1;
             double maxC2 = 0;
             double timer = 0;
 
-            for( int j = vehicleRouteStart; j <= (int)newPop.size(); j++ ){
-        
-                if( j == vehicleRouteStart ){
+            for( int j = vehicleRouteStart; j <= (int)newPop.size(); j++ )
+            {        
+                if( j == vehicleRouteStart )
+                {
                     previousNode = 0;
-                }else{
+                }
+                else
+                {
                     previousNode = newPop[j-1];
                 }
-                if( j == (int)newPop.size() ){
+                if( j == (int)newPop.size() )
+                {
                     nextNode = 0;
-                }else{
+                }
+                else
+                {
                     nextNode = newPop[j];
                 }
             
-                if( addIsFeasible( testRoute, i, j - vehicleRouteStart, problem ) ){
-                    
+                if( addIsFeasible( testRoute, i, j - vehicleRouteStart, problem ) )
+                {                    
                     double oldBegin = max(timer + problem.cost[previousNode][nextNode], problem.readyTime[nextNode]);
                     double newBegin = max(timer + problem.cost[previousNode][i], problem.readyTime[i]);
                     newBegin = max(newBegin + problem.cost[i][nextNode], problem.readyTime[nextNode]);
@@ -876,7 +946,8 @@ void solomonInsertion1Injection( vector<int> &newPop, int vehicleRouteStart, vec
                                 + a2 * (newBegin - oldBegin);
                     double c2 = lambda * problem.cost[0][i] - c1;
 
-                    if( c2 > maxC2 ){
+                    if( c2 > maxC2 )
+                    {
                         positionToAdd = j;
                         maxC2 = c2;
                     }
@@ -885,8 +956,8 @@ void solomonInsertion1Injection( vector<int> &newPop, int vehicleRouteStart, vec
                 timer = max(timer + problem.cost[previousNode][nextNode], problem.readyTime[nextNode]) + problem.serviceTime[nextNode];
             }
 
-            if( positionToAdd != -1 ){ // if found a feasible place to add
-
+            if( positionToAdd != -1 ) // if found a feasible place to add
+            {
                 // inserting node
                 newPop.insert(newPop.begin() + positionToAdd, i);
                 routedNodes[i] = true;
@@ -1075,8 +1146,8 @@ void solomonInsertion1Injection( vector<int> &newPop, int vehicleRouteStart, vec
     // }
 }
 
-bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double mi, double lambda, double a1, double a2 ){
-
+bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double mi, double lambda, double a1, double a2 )
+{
     bool isFeasible = true;
     vector<bool> routedNodes( problem.numNodes, false );
     int originNode = 0;
@@ -1086,62 +1157,74 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
 
     routedNodes[0] = true;
 
-    while( (int)newPop.size() < problem.numNodes ){
-        
+    while( (int)newPop.size() < problem.numNodes )
+    {        
         vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
         vector<int> :: const_iterator last = newPop.end();
         vector<int> testRoute(first, last);
         
         // creating initial partial route based on initType (0 - farthest unrouted customer | 1 - earliest deadline unrouted customer)
-        if(initType == 0){
+        if(initType == 0)
+        {
             double maxDistance = 0;
 
-            for( int i = 1; i < problem.numNodes; i++ ){
-        
-                if( !routedNodes[i] && addIsFeasible( testRoute, i, (int)testRoute.size(), problem ) && problem.cost[originNode][i] > maxDistance){
+            for( int i = 1; i < problem.numNodes; i++ )
+            {        
+                if( !routedNodes[i] && addIsFeasible( testRoute, i, (int)testRoute.size(), problem ) && problem.cost[originNode][i] > maxDistance)
+                {
                     maxDistance = problem.cost[originNode][i];
                     destinationIndex = i;
                 }
             }
 
-            if( maxDistance != 0 ){ // if found a node to add
-
+            if( maxDistance != 0 ) // if found a node to add
+            { 
                 newPop.push_back( destinationIndex );
                 routedNodes[destinationIndex] = true;
                 originNode = destinationIndex;
-            }else{
+            }
+            else
+            {
                 solomonInsertion1Injection(newPop, vehicleRouteStart, routedNodes, problem, mi, lambda, a1, a2);
                 vehicleRouteStart = (int)newPop.size();
                 originNode = 0;
 
                 vehiclesUsed++;
-                if(vehiclesUsed > problem.numVehicles){
+                if(vehiclesUsed > problem.numVehicles)
+                {
                     isFeasible = false;
                     break;
                 }
             }
-        }else{
+        }
+        else
+        {
             double earliestDeadline = DBL_MAX; // infinity
 
-            for( int i = 1; i < problem.numNodes; i++ ){
-        
-                if( !routedNodes[i] && addIsFeasible( testRoute, i, (int)testRoute.size(), problem ) && problem.dueTime[i] < earliestDeadline ){
+            for( int i = 1; i < problem.numNodes; i++ )
+            {        
+                if( !routedNodes[i] && addIsFeasible( testRoute, i, (int)testRoute.size(), problem ) && problem.dueTime[i] < earliestDeadline )
+                {
                     earliestDeadline = problem.dueTime[i];
                     destinationIndex = i;
                 }
             }
 
-            if( earliestDeadline != DBL_MAX ){ // if found a node to add
+            if( earliestDeadline != DBL_MAX ) // if found a node to add
+            { 
                 newPop.push_back( destinationIndex );
                 routedNodes[destinationIndex] = true;
                 originNode = destinationIndex;
-            }else{
+            }
+            else
+            {
                 solomonInsertion1Injection(newPop, vehicleRouteStart, routedNodes, problem, mi, lambda, a1, a2);
                 vehicleRouteStart = (int)newPop.size();
                 originNode = 0;
 
                 vehiclesUsed++;
-                if(vehiclesUsed > problem.numVehicles){
+                if(vehiclesUsed > problem.numVehicles)
+                {
                     isFeasible = false;
                     break;
                 }
@@ -1153,19 +1236,23 @@ bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double m
 }
 
 // show kmeans clusters
-void plotKMeans( vector<k_cluster> clusters, vrp problem ){
-
+void plotKMeans( vector<k_cluster> clusters, vrp problem )
+{
 	int matrix[problem.maxY + 1][problem.maxX + 1];
 
-	for(int i = 0; i < problem.maxY + 1; i++){
-		for(int j = 0; j < problem.maxX + 1; j++){
+	for(int i = 0; i < problem.maxY + 1; i++)
+    {
+		for(int j = 0; j < problem.maxX + 1; j++)
+        {
 			matrix[i][j] = -1;
 		}
 	}
 
-	for(unsigned int i = 0; i < clusters.size(); i++){	
+	for(unsigned int i = 0; i < clusters.size(); i++)
+    {	
 		printf("cluster %i:\n", clusters[i].id);
-		for(unsigned int j = 0; j < clusters[i].assigneds.size(); j++){
+		for(unsigned int j = 0; j < clusters[i].assigneds.size(); j++)
+        {
 			printf(" %i", clusters[i].assigneds[j]);
 			matrix[problem.locations[clusters[i].assigneds[j]].y][problem.locations[clusters[i].assigneds[j]].x] = clusters[i].id;
 		}
@@ -1173,14 +1260,21 @@ void plotKMeans( vector<k_cluster> clusters, vrp problem ){
 		printf("\n");	
 	}
 	
-	for(int i = 0; i < problem.maxY + 1; i++){
+	for(int i = 0; i < problem.maxY + 1; i++)
+    {
 		printf("|");
-		for(int j = 0; j < problem.maxX + 1; j++){
-			if(matrix[i][j] == -1){
+		for(int j = 0; j < problem.maxX + 1; j++)
+        {
+			if(matrix[i][j] == -1)
+            {
 				printf(" ");
-			}else if(matrix[i][j] > 64){
+			}
+            else if(matrix[i][j] > 64)
+            {
 				printf("%c", matrix[i][j]);
-			}else{
+			}
+            else
+            {
 				printf("%i", matrix[i][j]);
 			}
 		}
@@ -1194,11 +1288,12 @@ void plotKMeans( vector<k_cluster> clusters, vrp problem ){
 	// k     : number of clusters
 	// max_x : maximum size of the bidimensional map in x coordinate
 	// max_y : maximum size of the bidimensional map in y coordinate
-vector<int> k_means(vrp problem, int k){
-
+vector<int> k_means(vrp problem, int k)
+{
 	vector<k_cluster> clusters(k);
 	// starting variables
-	for( int i = 0; i < k; i++ ){
+	for( int i = 0; i < k; i++ )
+    {
 		clusters[i].id = i;
 		clusters[i].x  = problem.minX + (rand() % (problem.maxX - problem.minX + 1));
 		clusters[i].y  = problem.minY + (rand() % (problem.maxY - problem.minY + 1));
@@ -1215,20 +1310,22 @@ vector<int> k_means(vrp problem, int k){
         lastStdDeviation = stdDeviation;
         
         // reseting assigneds
-        for( int i = 0; i < k; i++ ){
+        for( int i = 0; i < k; i++ )
+        {
             clusters[i].assigneds.clear();
         }
 
-        for( int i = 1; i < problem.numNodes; i++ ){
-
+        for( int i = 1; i < problem.numNodes; i++ )
+        {
             int choosen_cluster_id = 0;
             double min_distance = DBL_MAX; // infinity
 
             // comparing node distance to all clusters centers
-            for( int j = 0; j < k; j++ ){
-                
+            for( int j = 0; j < k; j++ )
+            {                
                 double current_distance = distanceAB( clusters[j].x, clusters[j].y, clusterClients[i].x, clusterClients[i].y );
-                if( current_distance < min_distance ){
+                if( current_distance < min_distance )
+                {
                     min_distance = current_distance;
                     choosen_cluster_id = j;
                 }
@@ -1240,9 +1337,11 @@ vector<int> k_means(vrp problem, int k){
         }
 
         int avgValue = 0;
-        for( int i = 0; i < k; i++ ){
+        for( int i = 0; i < k; i++ )
+        {
             // recalculating cluster center
-            for( int j = 0; j < (int)clusters[i].assigneds.size(); j++ ){
+            for( int j = 0; j < (int)clusters[i].assigneds.size(); j++ )
+            {
                 clusters[i].x += problem.locations[clusters[i].assigneds[j]].x;
                 clusters[i].y += problem.locations[clusters[i].assigneds[j]].y;
             }
@@ -1253,7 +1352,8 @@ vector<int> k_means(vrp problem, int k){
 
         // calculating standard error        
         avgValue /= k;
-        for( int i = 0; i < k; i++ ){
+        for( int i = 0; i < k; i++ )
+        {
             stdDeviation += pow( (int)clusters[i].assigneds.size() - avgValue, 2 );
         }
 
@@ -1263,8 +1363,10 @@ vector<int> k_means(vrp problem, int k){
     
 	// uniting all the cluster in one route
     vector<int> kMeansRoute = clusters[0].assigneds;
-	for( int i = 1; i < k; i++ ){
-		for( unsigned int j = 0; j < clusters[i].assigneds.size(); j++ ){
+	for( int i = 1; i < k; i++ )
+    {
+		for( unsigned int j = 0; j < clusters[i].assigneds.size(); j++ )
+        {
 			kMeansRoute.push_back( clusters[i].assigneds[j] );
 		}
 	}

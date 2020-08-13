@@ -250,17 +250,17 @@ class Genetic
             // <<endl<<best.cost<<" "<<lastGenBest
             // <<endl;
 
-            // cout
-            // <<endl<<"Generation ["<<reportCountGeneration<<"], "
-            // <<"Best="<<best.cost<<", "
-            // <<"Average="<<average<<", "
-            // <<endl<<"Crossover: Chance "<<(initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)countGeneration/(double)minGenerationSize)))
-            // <<", Count "<<countCross
-            // <<endl<<"Mutation: Chance "<<(initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)countGeneration/(double)minGenerationSize)))
-            // <<", Count "<<countMut
-            // <<endl<<"Best genes=("<<best.genes.to_string()<<")"<<", "
-            // <<endl<<"Exe_time="<<currentTime/1000000<<"s"
-            // <<endl;
+            cout
+            <<endl<<"Generation ["<<reportCountGeneration<<"], "
+            <<"Best="<<best.cost<<", "
+            <<"Average="<<average<<", "
+            <<endl<<"Crossover: Chance "<<(initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)countGeneration/(double)minGenerationSize)))
+            <<", Count "<<countCross
+            <<endl<<"Mutation: Chance "<<(initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)countGeneration/(double)minGenerationSize)))
+            <<", Count "<<countMut
+            <<endl<<"Best genes=("<<best.genes.to_string()<<")"<<", "
+            <<endl<<"Exe_time="<<currentTime/1000000<<"s"
+            <<endl;
         }
 
         void solve()
@@ -280,7 +280,7 @@ class Genetic
             totalTime += currentTime;
             reportGeneration();
             
-            while (countGeneration < minGenerationSize || countSameGenBest < minGenerationSize)
+            while (countGeneration < minGenerationSize || countSameGenBest < minGenerationSize/4)
             {
                 countCross = 0;
                 countMut = 0;

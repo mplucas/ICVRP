@@ -498,9 +498,11 @@ int main()
 
     ga.solve();
 	
-	if(isFractionalDelivery){
+	if(isFractionalDelivery)
+	{
 		cout << endl << "RealNodes:" << endl;
 		printRealRoute(ga.population.front().genes.route, problem, vector<int>());
+		cout << endl;
 	}
 
     return 0;
