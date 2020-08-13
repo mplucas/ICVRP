@@ -87,9 +87,17 @@ void printRoute(vector<int> route){
 	cout << "}";
 }
 
-void printRealRoute(vector<int> route, vrp problem){
+void printRealRoute(vector<int> route, vrp problem, vector<int> breaks)
+{
+    int iBreaks = 0;
     cout << "{";
-    for(int i = 0; i < (int)route.size(); i++){
+    for(int i = 0; i < (int)route.size(); i++)
+    {
+        if(iBreaks < (int)breaks.size() && breaks[iBreaks] == i)
+        {
+            cout<<" | ";
+            iBreaks++;
+        }
         cout << ( i?",":"" ) << std::setprecision(10) << problem.realNode[route[i]];
     }
 	cout << "}";
@@ -251,6 +259,7 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
 
     for(int i = 0; i < problem.numNodes; i++){
         int demand = l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand);
+        int totalServiceTime = 0;
         vector<int> auxDemands = explodeFractionalDeliverNode(demand, problem.capacity * limit);
         for(auto partialDemand:auxDemands){
 
@@ -263,9 +272,11 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
             fdProblem.demand.push_back( partialDemand );
             fdProblem.readyTime.push_back( problem.readyTime[i] );
             fdProblem.dueTime.push_back( problem.dueTime[i] );
-            fdProblem.serviceTime.push_back( problem.serviceTime[i] );
+            fdProblem.serviceTime.push_back( floor(problem.serviceTime[i]*(double)((double)partialDemand/(double)demand)) );
+            totalServiceTime += fdProblem.serviceTime[fdProblem.serviceTime.size()-1];
             fdProblem.numNodes++;
         }
+        fdProblem.serviceTime[fdProblem.serviceTime.size()-auxDemands.size()] += problem.serviceTime[i] - totalServiceTime;
     }
 
     // resizing matrix
@@ -291,134 +302,6 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
     }
 
     return fdProblem;
-}
-
-vrp readFileFractionalDeliver(string fileName, double limit){
-    
-    vrp problem;
-    problem.sourceName = fileName;
-    
-    ifstream fileStream;
-    fileStream.open(fileName);
-    string line;
-
-    if (fileStream.is_open()) {
-        
-        // skipping 4 words
-        for(int i = 0; i < 4; i++)
-            fileStream >> line;
-        
-        // reading number of vehicles
-        fileStream >> line;
-        problem.numVehicles = stoi(line);
-
-        // reading capacity
-        fileStream >> line;
-        problem.capacity = stoi(line);
-
-        // skipping 12 words
-        for(int i = 0; i < 12; i++)
-            fileStream >> line;
-
-        problem.numNodes = 0;
-
-        int aux_realNode;
-        // reading first node index
-        fileStream >> line;
-        aux_realNode = stoi(line);
-
-        while (!fileStream.eof()) {
-
-            location aux_location;
-            int aux_maxX = 0;
-            int aux_minX = 0;
-            int aux_maxY = 0;
-            int aux_minY = 0;
-            int aux_demand;
-            double aux_readyTime;
-            double aux_dueTime;
-            double aux_serviceTime;
-
-            // reading x coord
-            fileStream >> line;
-            aux_location.x = stoi(line);
-
-            // reading y coord
-            fileStream >> line;
-            aux_location.y = stoi(line);
-
-            // finding limits of geografic space
-            aux_maxX = max( aux_maxX, aux_location.x );
-            aux_minX = min( aux_minX, aux_location.x );
-            aux_maxY = max( aux_maxY, aux_location.y );
-            aux_minY = min( aux_minY, aux_location.y );
-            
-            // reading demand of node
-            fileStream >> line;
-            aux_demand = stoi(line);
-
-            // reading ready time of node
-            fileStream >> line;
-            aux_readyTime = stoi(line);
-
-            // reading due time of node
-            fileStream >> line;
-            aux_dueTime = stoi(line);
-
-            // reading service time of node
-            fileStream >> line;
-            aux_serviceTime = stoi(line);
-
-            // fractional delivery tratative
-            vector<int> auxDemands = explodeFractionalDeliverNode(aux_demand, problem.capacity * limit);
-            for(auto partialDemand:auxDemands){
-
-                problem.realNode.push_back(aux_realNode);
-                problem.locations.push_back(aux_location);
-                problem.maxX = aux_maxX;
-                problem.minX = aux_minX;
-                problem.maxY = aux_maxY;
-                problem.minY = aux_minY;
-                problem.demand.push_back( partialDemand );
-                problem.readyTime.push_back( aux_readyTime );
-                problem.dueTime.push_back( aux_dueTime );
-                problem.serviceTime.push_back( aux_serviceTime );
-                problem.numNodes++;
-            }
-
-            // reading next node index
-            fileStream >> line;
-            aux_realNode = stoi(line);
-        }
-    }
-
-    fileStream.close();
-
-    // calculating costs
-    
-    // resizing matrix
-    problem.cost.resize(problem.numNodes);
-    for(int i = 0; i < problem.numNodes; i++){
-        problem.cost[i].resize(problem.numNodes);
-    }
-
-    for(int i = 0; i < problem.numNodes; i++){
-
-        for(int j = i; j < problem.numNodes; j++){
-
-            if( j == i ){
-
-                problem.cost[i][j] = 0;
-                continue;
-            }
-
-            double distance = distanceAB( problem.locations[i].x, problem.locations[i].y, problem.locations[j].x, problem.locations[j].y );
-            problem.cost[i][j] = distance;
-            problem.cost[j][i] = distance;
-        }
-    }
-
-    return problem;
 }
 
 string printVrpString(vrp problem, bool nodesDetails, bool matrix){
@@ -601,16 +484,23 @@ vector<int> fixFDRoute(vector<int> route, vrp problem){
     vector<int> testRoute;
     testRoute.push_back(route[0]);
     bool fixed = false; //lll
+    vector<int> breaks; //lll
 
     for(int i = 1; i < (int)route.size(); i++){
         if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
             // when found partial route, fix it
+            breaks.push_back(i); // lll
             for(int j = testRoute.size() - 1; j >= 0; j--){
+                int lastCurrentRealNodePosition = j;
                 for(int k = j - 1; k >= 0; k--){
                     if(problem.realNode[testRoute[j]] == problem.realNode[testRoute[k]]){
-                        fixed = true; //lll
-                        testRoute.insert(testRoute.begin() + j, testRoute[k]);
-                        testRoute.erase(testRoute.begin() + k);
+                        if(lastCurrentRealNodePosition - k > 1)
+                        {
+                            fixed = true; //lll
+                            testRoute.insert(testRoute.begin() + j, testRoute[k]);
+                            testRoute.erase(testRoute.begin() + k);
+                        }
+                        lastCurrentRealNodePosition--;
                     }
                 }
             }
@@ -627,10 +517,10 @@ vector<int> fixFDRoute(vector<int> route, vrp problem){
     }
 
     if(fixed){
-        cout << "Route before fix:"<<endl; //lll
-        printRealRoute(route, problem); //lll
+        cout << endl << "Route before fix:"<<endl; //lll
+        printRealRoute(route, problem, breaks); //lll
         cout << endl << "Route after fix:"<<endl; //lll
-        printRealRoute(fixedRoute, problem); //lll
+        printRealRoute(fixedRoute, problem, breaks); //lll
         cout << endl; //lll
     }
 

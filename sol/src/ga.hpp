@@ -108,6 +108,9 @@ class Genetic
                 init_genes(chromosome.genes);
                 while(!eval_solution(chromosome.genes, chromosome.cost))
                 {
+                    GeneType cleanGenes;
+                    chromosome.genes = cleanGenes;
+                    chromosome.cost = 0;
                     init_genes(chromosome.genes);
                 }
                 population.push_back(chromosome);
@@ -242,10 +245,10 @@ class Genetic
                 lastGenBest = best.cost;
             }
 
-            cout
-            <<endl<<reportCountGeneration<<" "<<countSameGenBest<<" "<<best.cost<<" "<<average
-            <<endl<<best.cost<<" "<<lastGenBest
-            <<endl;
+            // cout
+            // <<endl<<reportCountGeneration<<" "<<countSameGenBest<<" "<<best.cost<<" "<<average
+            // <<endl<<best.cost<<" "<<lastGenBest
+            // <<endl;
 
             // cout
             // <<endl<<"Generation ["<<reportCountGeneration<<"], "

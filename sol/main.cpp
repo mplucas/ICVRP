@@ -23,7 +23,8 @@ int numPoints;
 // variables to control pop creation
 int popSize;
 int popCount = 0;
-std::vector<std::vector<double>> nnPopParameters{
+std::vector<std::vector<double>> nnPopParameters
+{
     {0.4, 0.4, 0.2},
     {0, 1, 0},
     {0.5, 0.5, 0},
@@ -34,40 +35,52 @@ bool eval_solution(const MySolution& p, double &cost);
 
 void init_genes(MySolution& p)
 {
-    if ((int)nnPopParameters.size() > 0) {
+    if ((int)nnPopParameters.size() > 0) 
+	{
 		int choosenParameters = (int)nnPopParameters.size() - 1;
 		nearestNeighborPop( p.route, problem, nnPopParameters[choosenParameters][0], nnPopParameters[choosenParameters][1], nnPopParameters[choosenParameters][2] );
 		nnPopParameters.pop_back();
         
-	}else if(popCount < (int)(popSize * 0.35)){
+	}
+	else if(popCount < (int)(popSize * 0.35))
+	{
 		double parameters[3] = {
 			-1, -1, -1
 		};
 		double remnant = 1;
 		int parametersPopulated = 0;
 
-		while(parametersPopulated < 3){
-			
+		while(parametersPopulated < 3)
+		{
 			int parameterIndex = (int)((int)(3 * random01()) % 3);
-			if(parameters[parameterIndex] != -1){
+			if(parameters[parameterIndex] != -1)
+			{
 				continue;
 			}
-			if(parametersPopulated == 2){
+			if(parametersPopulated == 2)
+			{
 				parameters[parameterIndex] = remnant;
-			}else{
+			}
+			else
+			{
 				parameters[parameterIndex] = min(random01(), remnant);
 				remnant -= parameters[parameterIndex];
 			}
 			parametersPopulated++;
 		}
 		nearestNeighborPop( p.route, problem, parameters[0], parameters[1], parameters[2] );
-    }else if(popCount < (int)(popSize * 0.7)){
+    }
+	else if(popCount < (int)(popSize * 0.7))
+	{
         p.route = k_means( problem, (int)(popSize*0.05) + (int)(random01() * (popSize*0.08)) );
-    }else {
+    }
+	else 
+	{
         p.route = randomPopImproved( problem, random01 );
     }
 
-	if(isFractionalDelivery){
+	if(isFractionalDelivery)
+	{
 		p.route = fixFDRoute(p.route, problem);
 	}
 	popCount++;
@@ -92,8 +105,8 @@ bool eval_solution(const MySolution& p, double &cost)
 	// VARIABLES TO DEBUG
 	vector<vehicle> vehicleDebugger(1);
     
-	for(unsigned int i = 0; i < p.route.size(); i++){
-		
+	for(unsigned int i = 0; i < p.route.size(); i++)
+	{		
 		int destinyNode = p.route[i];
 
 		if( vehicleTimer + problem.cost[originNode][destinyNode] <= problem.dueTime[destinyNode]
@@ -104,24 +117,30 @@ bool eval_solution(const MySolution& p, double &cost)
 			vehicleTimer += problem.cost[originNode][destinyNode];
 
 			// if vehicle arrives earlier than start of TW, it waits until the start
-			if( vehicleTimer < problem.readyTime[destinyNode] ){
+			if( vehicleTimer < problem.readyTime[destinyNode] )
+			{
 				vehicleTimer = problem.readyTime[destinyNode];
 			}
 
 			// adds service time
 			vehicleTimer += problem.serviceTime[destinyNode];
 
-			if(problem.fitCriterion == 0){
+			if(problem.fitCriterion == 0)
+			{
                 // save fit if it is bigger
-                if( vehicleTimer > biggestTimer ){
+                if( vehicleTimer > biggestTimer )
+				{
                     biggestTimer = vehicleTimer;
                 }
-            }else if(problem.fitCriterion == 1){
+            }
+			else if(problem.fitCriterion == 1)
+			{
 				// add distance
                 totalDistance += problem.cost[originNode][destinyNode];
             }
 
-			if(debug){
+			if(debug)
+			{
                 vehicleDebugger[choosenVehicle].timer = vehicleTimer;
                 vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
 				vehicleDebugger[choosenVehicle].distance += problem.cost[originNode][destinyNode];
@@ -136,17 +155,21 @@ bool eval_solution(const MySolution& p, double &cost)
 			// send vehicle back to depot
 			vehicleTimer += problem.cost[originNode][0];
 
-			if(problem.fitCriterion == 0){
+			if(problem.fitCriterion == 0)
+			{
                 // save fit if it is bigger
-                if( vehicleTimer > biggestTimer ){
+                if( vehicleTimer > biggestTimer )
+				{
                     biggestTimer = vehicleTimer;
                 }
-            }else if(problem.fitCriterion == 1){
+            }
+			else if(problem.fitCriterion == 1)
+			{
 				totalDistance += problem.cost[originNode][0];
 			}
 
-			if(debug){
-
+			if(debug)
+			{
 				vehicleDebugger[choosenVehicle].timer = vehicleTimer;
 				vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
 				vehicle newVehicle;
@@ -156,7 +179,8 @@ bool eval_solution(const MySolution& p, double &cost)
             // try to assign this node to the next vehicle route
             choosenVehicle++;
             
-			if(choosenVehicle == problem.numVehicles){
+			if(choosenVehicle == problem.numVehicles)
+			{
 				isFeasible = false;
 				break;
 			}
@@ -172,32 +196,36 @@ bool eval_solution(const MySolution& p, double &cost)
 	}
 
 	// finalizing fit
-    if(problem.fitCriterion == 0){
-
+    if(problem.fitCriterion == 0)
+	{
         // send vehicle back to depot
         vehicleTimer += problem.cost[originNode][0];
 
         // save fit if it is bigger
-        if( vehicleTimer > biggestTimer ){
+        if( vehicleTimer > biggestTimer )
+		{
             biggestTimer = vehicleTimer;
         }
         
         cost = biggestTimer;
     
-    }else if(problem.fitCriterion == 1){
-        
+    }
+	else if(problem.fitCriterion == 1)
+	{        
         // Adding distance to return to depot of the last vehicle
         cost = totalDistance + problem.cost[originNode][0];
 	}
 
-	if(debug){
-
-		if(originNode != 0){
+	if(debug)
+	{
+		if(originNode != 0)
+		{
 			vehicleDebugger.back().timer += problem.cost[originNode][0];
 			vehicleDebugger.back().distance += problem.cost[originNode][0];
 		}
 		
-		for(unsigned int i = 0; i < vehicleDebugger.size(); i++){
+		for(unsigned int i = 0; i < vehicleDebugger.size(); i++)
+		{
 			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
 		}
 	}
@@ -217,7 +245,8 @@ MySolution mutate(const MySolution& baseGene)
 	do{
 		int choosenNode = (int)(random01() * (double)baseGene.route.size());
 		// if is not the same
-		if(find(points.begin(), points.end(), choosenNode) == points.end()){
+		if(find(points.begin(), points.end(), choosenNode) == points.end())
+		{
 			points.push_back( choosenNode );
 		}
 	}while((int)points.size() < numPoints);
@@ -225,8 +254,8 @@ MySolution mutate(const MySolution& baseGene)
 	int i = 0;
 	vector<bool> usedPoints((int)points.size(), false);
 		
-	while(i < numPoints){
-
+	while(i < numPoints)
+	{
 		unsigned int iPoint1;
 		do{
 			iPoint1 = (unsigned int)((int)(random01() * (double)points.size()) % points.size());
@@ -247,7 +276,8 @@ MySolution mutate(const MySolution& baseGene)
 		i += 2;
 	}
 
-	if(isFractionalDelivery){
+	if(isFractionalDelivery)
+	{
 		mutatedGene.route = fixFDRoute(mutatedGene.route, problem);
 	}
 
@@ -269,7 +299,8 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	do{
 		int choosenNode = (int)((int)(random01() * (double)gene1.route.size()) % gene1.route.size());
 		// if is not the same
-		if(find(cuts.begin(), cuts.end(), choosenNode) == cuts.end()){
+		if(find(cuts.begin(), cuts.end(), choosenNode) == cuts.end())
+		{
 			cuts.push_back( choosenNode );
 		}
 	}while((int)cuts.size() < numCuts);
@@ -277,18 +308,23 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	sort(cuts.begin(), cuts.end());
 	
 	int iCut = 0;
-	for(int i = 0; i < (int)gene1.route.size(); i++){
+	for(int i = 0; i < (int)gene1.route.size(); i++)
+	{
 		int choosenNode1, choosenNode2;
-		if(i >= cuts[iCut] && i < cuts[iCut + 1]){
+		if(i >= cuts[iCut] && i < cuts[iCut + 1])
+		{
 			choosenNode1 =  gene2.route[i];
 			choosenNode2 =  gene1.route[i];
-		}else{
+		}
+		else
+		{
 			choosenNode1 = gene1.route[i];
 			choosenNode2 = gene2.route[i];
 		}
 		newGene1.route.push_back(choosenNode1);
 		newGene2.route.push_back(choosenNode2);
-		if(iCut + 1 < (int)cuts.size() - 1 && i >= cuts[iCut + 1]){
+		if(iCut + 1 < (int)cuts.size() - 1 && i >= cuts[iCut + 1])
+		{
 			iCut += 2;
 		}
 	}
@@ -299,35 +335,41 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
     vector<int> missingNodes;
 	vector<int> positionsToVerify;
 
-	for(int i = 0; i < (int)cuts.size(); i += 2){
+	for(int i = 0; i < (int)cuts.size(); i += 2)
+	{
 		int smallerIndex = cuts[i];
 		int biggerIndex = cuts[i + 1];
-		for(int j = smallerIndex; j < biggerIndex; j++){
+		for(int j = smallerIndex; j < biggerIndex; j++)
+		{
 			positionsToVerify.push_back(j);
 		}
 	}
 
-	for(int i = 0; i < (int)positionsToVerify.size(); i++){
-	
+	for(int i = 0; i < (int)positionsToVerify.size(); i++)
+	{
 		bool isDuplicated = true;
 		bool isMissing = true;
 		
-		for(int j = 0; j < (int)positionsToVerify.size(); j++){
-		
+		for(int j = 0; j < (int)positionsToVerify.size(); j++)
+		{		
 			// if not found gene 2 in gene1 than it is duplicated in newGene1 and missing in newGene2
-			if(gene2.route[positionsToVerify[i]] == gene1.route[positionsToVerify[j]]){
+			if(gene2.route[positionsToVerify[i]] == gene1.route[positionsToVerify[j]])
+			{
 				isDuplicated = false;
 			}
 			// if not found gene1 in gene2 than it is missing in newGene1 and duplicated in newGene1
-			if(gene1.route[positionsToVerify[i]] == gene2.route[positionsToVerify[j]]){
+			if(gene1.route[positionsToVerify[i]] == gene2.route[positionsToVerify[j]])
+			{
 				isMissing = false;
 			}
 		}
 
-		if(isDuplicated){
+		if(isDuplicated)
+		{
 			duplicatedNodes.push_back(gene2.route[positionsToVerify[i]]);
 		}
-		if(isMissing){
+		if(isMissing)
+		{
 			missingNodes.push_back(gene1.route[positionsToVerify[i]]);
 		}
 
@@ -339,22 +381,25 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	reverseCuts.push_back((int)gene1.route.size());
 	positionsToVerify.clear();
 
-	for(int i = 0; i < (int)reverseCuts.size(); i += 2){
+	for(int i = 0; i < (int)reverseCuts.size(); i += 2)
+	{
 		int smallerIndex = reverseCuts[i];
 		int biggerIndex = reverseCuts[i + 1];
-		for(int j = smallerIndex; j < biggerIndex; j++){
+		for(int j = smallerIndex; j < biggerIndex; j++)
+		{
 			positionsToVerify.push_back(j);
 		}
 	}
 
-	for(int i = 0; i < (int)positionsToVerify.size(); i++){
-
+	for(int i = 0; i < (int)positionsToVerify.size(); i++)
+	{
 		vector<int> :: iterator itDuplicatedNodes;
 		vector<int> :: iterator itMissingNodes;
 		// if node is duplicated in newGene1, replace it with a missing one
 		itDuplicatedNodes = find(duplicatedNodes.begin(), duplicatedNodes.end(), newGene1.route[positionsToVerify[i]]);
 
-		if( itDuplicatedNodes != duplicatedNodes.end() ){
+		if( itDuplicatedNodes != duplicatedNodes.end() )
+		{
 			itMissingNodes = missingNodes.begin() + (itDuplicatedNodes - duplicatedNodes.begin());
 			newGene1.route[positionsToVerify[i]] = *itMissingNodes;
 		}
@@ -362,7 +407,8 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 		// the reverse is done in newGene2
 		itMissingNodes = find(missingNodes.begin(), missingNodes.end(), newGene2.route[positionsToVerify[i]]);
 		
-		if( itMissingNodes != missingNodes.end() ){
+		if( itMissingNodes != missingNodes.end() )
+		{
 			itDuplicatedNodes = duplicatedNodes.begin() + (itMissingNodes - missingNodes.begin());
 			newGene2.route[positionsToVerify[i]] = *itDuplicatedNodes;
 		}
@@ -372,19 +418,27 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	MySolution newGene;
 	double c1, c2;
 
-	if(!eval_solution( newGene1, c1 )){
+	if(!eval_solution( newGene1, c1 ))
+	{
 		newGene = newGene2;
-	}else if(!eval_solution( newGene2, c2 )){
+	}
+	else if(!eval_solution( newGene2, c2 ))
+	{
 		newGene = newGene1;
-	}else{
-		if(c1 < c2){
+	}
+	else
+	{
+		if(c1 < c2)
+		{
 			newGene = newGene1;
-		}else{
+		}else
+		{
 			newGene = newGene2;
 		}
 	}
 
-	if(isFractionalDelivery){
+	if(isFractionalDelivery)
+	{
 		newGene.route = fixFDRoute(newGene.route, problem);
 	}
 
@@ -415,14 +469,17 @@ int main()
 	numPoints = (int)(popSize*0.05)*2;
 	
 	// globals
-	if(!isFractionalDelivery){
+	if(!isFractionalDelivery)
+	{
 		problem = readFile("entrada.txt");
-	}else{
+	}
+	else
+	{
 		problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
 	}
     problem.fitCriterion = 1; // Distance
 
-	printVrp(problem,true,false);
+	// printVrp(problem,true,false); //lll
 
     //GA
     GA_Type ga;
@@ -440,6 +497,11 @@ int main()
 	ga.finalProbMut = 0.1;
 
     ga.solve();
+	
+	if(isFractionalDelivery){
+		cout << endl << "RealNodes:" << endl;
+		printRealRoute(ga.population.front().genes.route, problem, vector<int>());
+	}
 
     return 0;
 }

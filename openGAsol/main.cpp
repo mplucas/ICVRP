@@ -262,9 +262,9 @@ bool eval_solution(
 		}
 	}
 
-    // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
-	// else cout << "NOT FEASIBLE " << popCount << " " << p.route.size() << " " << endl; //lll
-	// cout << c.cost << endl; //lll
+    if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
+	else cout << "NOT FEASIBLE " << popCount << " " << p.route.size() << " " << endl; //lll
+	cout << c.cost << endl; //lll
 
 	return isFeasible;
 }

@@ -275,8 +275,8 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
     }
 
     for(int i = 0; i < problem.numNodes; i++){
-        int demand = l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand);
-        vector<int> auxDemands = explodeFractionalDeliverNode(demand, problem.capacity * limit);
+        int demand = (int)(l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand));
+        vector<int> auxDemands = explodeFractionalDeliverNode(demand, (int)(problem.capacity * limit));
         for(auto partialDemand:auxDemands){
 
             fdProblem.realNode.push_back(i);
@@ -395,7 +395,7 @@ vrp readFileFractionalDeliver(string fileName, double limit){
             aux_serviceTime = stoi(line);
 
             // fractional delivery tratative
-            vector<int> auxDemands = explodeFractionalDeliverNode(aux_demand, problem.capacity * limit);
+            vector<int> auxDemands = explodeFractionalDeliverNode(aux_demand, (int)(problem.capacity * limit));
             for(auto partialDemand:auxDemands){
 
                 problem.realNode.push_back(aux_realNode);
@@ -599,7 +599,7 @@ void testAddIsFeasible(vector<int> route, vrp problem){
     testRoute.push_back(route[0]);
     int v = 0;
 
-    for(int i = 1; i < route.size(); i++){
+    for(int i = 1; i < (int)route.size(); i++){
         
         if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
             cout << endl << v << ":" << endl;
@@ -627,10 +627,10 @@ vector<int> fixFDRoute(vector<int> route, vrp problem){
     testRoute.push_back(route[0]);
     bool fixed = false; //lll
 
-    for(int i = 1; i < route.size(); i++){
+    for(int i = 1; i < (int)route.size(); i++){
         if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem )){
             // when found partial route, fix it
-            for(int j = testRoute.size() - 1; j >= 0; j--){
+            for(int j = (int)testRoute.size() - 1; j >= 0; j--){
                 for(int k = j - 1; k >= 0; k--){
                     if(problem.realNode[testRoute[j]] == problem.realNode[testRoute[k]]){
                         fixed = true; //lll
