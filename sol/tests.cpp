@@ -13,22 +13,12 @@ bool debug;
 
 // variable to generate tests
 bool test;
-int mutCount = 0;
-int crossCount = 0;
 
 // variables to control crossover
 int numCuts;
-double initialProbCross;
-double finalProbCross;
 
 // variables to control mutation
 int numPoints;
-double initialProbMut;
-double finalProbMut;
-
-// variables to control generation
-int generationSize;
-int generationCount = 0;
 
 // variables to control pop creation
 int popSize;
@@ -222,11 +212,6 @@ bool eval_solution(const MySolution& p, double &cost)
 MySolution mutate(const MySolution& baseGene)
 {
 	MySolution mutatedGene = baseGene;
-
-	if( random01() > (initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)generationCount/(double)generationSize))) ){
-		return mutatedGene;
-	}
-
 	vector<int> points;
 
 	do{
@@ -262,8 +247,6 @@ MySolution mutate(const MySolution& baseGene)
 		i += 2;
 	}
 
-	mutCount++;
-
 	if(isFractionalDelivery){
 		mutatedGene.route = fixFDRoute(mutatedGene.route, problem);
 	}
@@ -281,15 +264,6 @@ MySolution mutate(const MySolution& baseGene)
 MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 {
 	MySolution newGene1, newGene2;
-
-	// chance to do crossover starts 80% and rises to 100%
-	if( random01() > (initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)generationCount/(double)generationSize))) ){
-		if(random01() >= 0.5)
-			return gene2;
-		else
-			return gene1;
-	}
-
 	vector<int> cuts;
 
 	do{
@@ -410,8 +384,6 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 		}
 	}
 
-	crossCount++;
-
 	if(isFractionalDelivery){
 		newGene.route = fixFDRoute(newGene.route, problem);
 	}
@@ -438,75 +410,75 @@ int main()
 
     debug = false;
     popSize = 100;
-	generationSize = 100;
     isFractionalDelivery = false;
 
 	// variables to control crossover
 	numCuts = 2;
-	initialProbCross = 1;
-	finalProbCross = 0.8;
 
 	// variables to control mutation
 	numPoints = (int)(popSize*0.05)*2;
-	initialProbMut = 0;
-	finalProbMut = 0.1;
 
     //GA
     GA_Type ga;
     ga.populationSize = popSize;
-	ga.generationSize = generationSize;
+	ga.minGenerationSize = 30;
 	ga.eliteSize = (int)((double)popSize*0.05);
+	ga.selectionType = 0;
     ga.init_genes = init_genes;
     ga.eval_solution = eval_solution;
 	ga.crossover = crossover;
+	ga.initialProbCross = 1;
+	ga.finalProbCross = 0.8;
 	ga.mutate = mutate;
+	ga.initialProbMut = 0;
+	ga.finalProbMut = 0.1;
 
     // ### TEST POPULATE		###############################################################################################
     ga.populate();
 
-	cout<<endl<<ga.population.size();
-    for(int i = 0; i < ga.population.size(); i++)
-    {
-        cout << ga.population[i].genes.to_string() << endl << ga.population[i].cost << endl;
-    }
-    cout << endl;
+	// cout<<endl<<ga.population.size();
+    // for(int i = 0; i < ga.population.size(); i++)
+    // {
+    //     cout << ga.population[i].genes.to_string() << endl << ga.population[i].cost << endl;
+    // }
+    // cout << endl;
     // ### END TEST POPULATE	###############################################################################################
 
     // ### TEST SELECTION		###############################################################################################
     ga.prepareRoulette();
-    // vector<double> costsDrawed;
+    vector<double> costsDrawed;
 
-    // for(int i = 0; i < 100; i++)
-    // {
-    //     costsDrawed.push_back( ga.selectParent().cost );
-    // }
+    for(int i = 0; i < 100; i++)
+    {
+        costsDrawed.push_back( ga.selectParent().cost );
+    }
 
-    // vector<pair<double,int>> timesCostsDrawed;
-    // sort(costsDrawed.begin(), costsDrawed.end());
-    // pair<double,int> aux;
-    // aux.first = costsDrawed[0];
-    // aux.second = 1;
-    // timesCostsDrawed.push_back(aux);
+    vector<pair<double,int>> timesCostsDrawed;
+    sort(costsDrawed.begin(), costsDrawed.end());
+    pair<double,int> aux;
+    aux.first = costsDrawed[0];
+    aux.second = 1;
+    timesCostsDrawed.push_back(aux);
 
-    // for(int i = 1; i < costsDrawed.size(); i++)
-    // {
-    //     if(costsDrawed[i] == timesCostsDrawed.back().first)
-    //     {
-    //         timesCostsDrawed.back().second++;
-    //     }
-    //     else
-    //     {
-    //         pair<double,int> aux;
-    //         aux.first = costsDrawed[i];
-    //         aux.second = 1;
-    //         timesCostsDrawed.push_back(aux);
-    //     }
-    // }
+    for(int i = 1; i < costsDrawed.size(); i++)
+    {
+        if(costsDrawed[i] == timesCostsDrawed.back().first)
+        {
+            timesCostsDrawed.back().second++;
+        }
+        else
+        {
+            pair<double,int> aux;
+            aux.first = costsDrawed[i];
+            aux.second = 1;
+            timesCostsDrawed.push_back(aux);
+        }
+    }
 
-    // for(int i = 0; i < timesCostsDrawed.size(); i++)
-    // {
-    //     cout << endl << timesCostsDrawed[i].first << ": " << timesCostsDrawed[i].second;
-    // }
+    for(int i = 0; i < timesCostsDrawed.size(); i++)
+    {
+        cout << endl << timesCostsDrawed[i].first << ": " << timesCostsDrawed[i].second;
+    }
     // ### END TEST SELECTION	###############################################################################################
 
 	// ### TEST CROSSOVER		###############################################################################################

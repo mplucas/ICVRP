@@ -614,7 +614,7 @@ int main()
 	test = false;
 	generationSize = 100;
 	popSize = 100;
-	isFractionalDelivery = false;
+	isFractionalDelivery = true;
 
 	// variables to control crossover and crossover
 	numCuts = 2;
@@ -659,6 +659,8 @@ int main()
 			problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
 		}
 		problem.fitCriterion = 1; // Distance
+
+		printVrp(problem,true,false);
 
 		EA::Chronometer timer;
 		timer.tic();
