@@ -26,7 +26,7 @@ int main()
 
     for(int i = 0; i < 100; i++)
     {
-        costsDrawed.push_back( ga.selectParent().cost );
+        costsDrawed.push_back( ga.selectParent().generalCost );
     }
 
     vector<pair<double,int>> timesCostsDrawed;

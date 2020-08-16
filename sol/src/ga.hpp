@@ -12,11 +12,23 @@ template<typename GeneType>
 struct ChromosomeType
 {
 	GeneType genes;
-	double cost;
+	vector<double> costs{0, 0};
+    double generalCost = 0;
 
-    bool operator < (const ChromosomeType& ct) const
+    bool operator < (const ChromosomeType& otherCT) const
     {
-        return (cost < ct.cost);
+        if(costs[0] == otherCT.costs[0])
+            return (costs[1] < otherCT.costs[1]);
+
+        return (costs[0] < otherCT.costs[0]);
+    }
+
+    void cleanChromosome()
+    {
+        GeneType cleanGenes;
+        genes = cleanGenes;
+        costs = {0,0};
+        generalCost = 0;
     }
 };
 
@@ -27,35 +39,51 @@ class Genetic
         typedef ChromosomeType<GeneType> thisChromosomeType;
         
         // Atributes
-        double sumCosts, maxCost, minCost;
+        double sumCosts, maxCost, minCost, maxSecondaryCost;
         int countGeneration, countSameGenBest, reportCountGeneration;
-        double lastGenBest;
+        vector<double> lastGenBestCosts;
         double currentTime, totalTime;
         int countMut, countCross;
         vector<double> rankCost;
 
         //Methods
+        void prepareGeneralCosts()
+        {
+            maxSecondaryCost = 0;
+            
+            for(int i = 0; i < (int)population.size(); i++)
+            {
+                if(population[i].costs[1] > maxSecondaryCost)
+                    maxSecondaryCost = population[i].costs[1];
+            }
+
+            for(int i = 0; i < (int)population.size(); i++)
+            {
+                population[i].generalCost = population[i].costs[1] + (population[i].costs[0] * maxSecondaryCost);
+            }
+        }
+
         void prepareRouletteClassic()
         {
-            maxCost = population[0].cost;
-            minCost = population[0].cost;
+            maxCost = population[0].generalCost;
+            minCost = population[0].generalCost;
 
             for(int i = 1; i < (int)population.size(); i++)
             {
-                if(population[i].cost > maxCost)
+                if(population[i].generalCost > maxCost)
                 {
-                    maxCost = population[i].cost;
+                    maxCost = population[i].generalCost;
                 }
-                if(population[i].cost < minCost)
+                if(population[i].generalCost < minCost)
                 {
-                    minCost = population[i].cost;
+                    minCost = population[i].generalCost;
                 }
             }
 
             sumCosts = 0;
             for(int i = 0; i < (int)population.size(); i++)
             {
-                sumCosts += (maxCost + minCost - population[i].cost);
+                sumCosts += (maxCost + minCost - population[i].generalCost);
             }
         }
 
@@ -94,7 +122,7 @@ class Genetic
 
         // Functions that the user will pass
         function<void(GeneType&)> init_genes;
-        function<bool(GeneType&, double&)> eval_solution;
+        function<bool(GeneType&, vector<double>&)> eval_solution;
         function<GeneType(const GeneType&, const GeneType&)> crossover;
         function<GeneType(const GeneType&)> mutate;
 
@@ -106,11 +134,9 @@ class Genetic
             {
                 thisChromosomeType chromosome;
                 init_genes(chromosome.genes);
-                while(!eval_solution(chromosome.genes, chromosome.cost))
+                while(!eval_solution(chromosome.genes, chromosome.costs))
                 {
-                    GeneType cleanGenes;
-                    chromosome.genes = cleanGenes;
-                    chromosome.cost = 0;
+                    chromosome.cleanChromosome();
                     init_genes(chromosome.genes);
                 }
                 population.push_back(chromosome);
@@ -121,6 +147,7 @@ class Genetic
 
         void prepareRoulette()
         {
+            prepareGeneralCosts();
             if(selectionType == 0)
             {
                 prepareRouletteClassic();
@@ -139,7 +166,7 @@ class Genetic
 
             for(int i = 0; i < (int)population.size(); i++)
             {
-                double currentCost = (selectionType == 0 ? population[i].cost : rankCost[i]);
+                double currentCost = (selectionType == 0 ? population[i].generalCost : rankCost[i]);
                 rouletteProgress += (maxCost + minCost - currentCost);
                 // cout << endl << rouletteProgress << " < " << drawn; // lll
                 
@@ -182,7 +209,7 @@ class Genetic
                 {
                     newChromossome = selectParent();
                 }
-                if(!eval_solution(newChromossome.genes, newChromossome.cost))
+                if(!eval_solution(newChromossome.genes, newChromossome.costs))
                 {
                     continue;
                 }
@@ -193,7 +220,7 @@ class Genetic
                     newChromossome.genes = mutate(newChromossome.genes);
                     countMut++;
                 }
-                if(!eval_solution(newChromossome.genes, newChromossome.cost))
+                if(!eval_solution(newChromossome.genes, newChromossome.costs))
                 {
                     continue;
                 }
@@ -211,7 +238,10 @@ class Genetic
             sort(population.begin(), population.end());
             cout
             <<endl<<endl<<"Best solution:"
-            <<endl<<"\tCost: "<<population.front().cost
+            <<endl<<"\tCosts: { ";
+            for(int i = 0; i < (int)population.front().costs.size(); i++)
+                cout<<(i?", ":"")<< population.front().costs[i];
+            cout<<" }"
             <<endl<<"\tChromossome:"
             <<endl<<population.front().genes.to_string()
             <<endl<<"Exec_time: "<<totalTime/1000000<<"s"
@@ -220,40 +250,50 @@ class Genetic
 
         void reportGeneration()
         {
-            double average = 0;
-            thisChromosomeType best;
-            best.cost = DBL_MAX;
+            vector<double> average {0, 0};
+            thisChromosomeType best = population[0];
 
-            for(int i = 0; i < (int)population.size(); i++)
+            for(int i = 1; i < (int)population.size(); i++)
             {
-                average += population[i].cost;
+                average[0] += population[i].costs[0];
+                average[1] += population[i].costs[1];
                 
-                if(population[i].cost < best.cost)
+                if(population[i].generalCost < best.generalCost)
                 {
                     best = population[i];
                 }
             }
-            average /= (int)population.size();
+            average[0] /= (int)population.size();
+            average[1] /= (int)population.size();
 
-            if(best.cost == lastGenBest && countGeneration >= minGenerationSize)
+            // cout //lll
+            // <<endl<<best.generalCost<<" "
+            // <<best.costs[0]<<" "<<lastGenBestCosts[0]<<" "
+            // <<best.costs[1]<<" "<<lastGenBestCosts[1]<<" "
+            // <<countGeneration<<" "<<minGenerationSize
+            // <<endl<<countSameGenBest
+            // <<endl; // lll
+
+            if(best.costs[0] == lastGenBestCosts[0] && best.costs[1] == lastGenBestCosts[1])
             {
                 countSameGenBest++;
             }
             else
             {
                 countSameGenBest = 0;
-                lastGenBest = best.cost;
+                lastGenBestCosts = best.costs;
             }
-
-            // cout
-            // <<endl<<reportCountGeneration<<" "<<countSameGenBest<<" "<<best.cost<<" "<<average
-            // <<endl<<best.cost<<" "<<lastGenBest
-            // <<endl;
 
             cout
             <<endl<<"Generation ["<<reportCountGeneration<<"], "
-            <<"Best="<<best.cost<<", "
-            <<"Average="<<average<<", "
+            <<"BestCosts: { ";
+            for(int i = 0; i < (int)best.costs.size(); i++)
+                cout<<(i?", ":"")<< best.costs[i];
+            cout<<" }, "
+            <<"Averages: { ";
+            for(int i = 0; i < (int)average.size(); i++)
+                cout<<(i?", ":"")<< average[i];
+            cout<<" }, "
             <<endl<<"Crossover: Chance "<<(initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)countGeneration/(double)minGenerationSize)))
             <<", Count "<<countCross
             <<endl<<"Mutation: Chance "<<(initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)countGeneration/(double)minGenerationSize)))
@@ -268,7 +308,7 @@ class Genetic
             countGeneration = 0;
             countSameGenBest = 0;
             reportCountGeneration = 0;
-            lastGenBest = 0;
+            lastGenBestCosts = {DBL_MAX, DBL_MAX};
             totalTime = 0;
             countCross = 0;
             countMut = 0;
@@ -280,17 +320,19 @@ class Genetic
             totalTime += currentTime;
             reportGeneration();
             
-            while (countGeneration < minGenerationSize || countSameGenBest < minGenerationSize/4)
+            while (countGeneration < minGenerationSize || countSameGenBest < (minGenerationSize/4))
             {
                 countCross = 0;
                 countMut = 0;
+                
                 start = high_resolution_clock::now();
                 newGeneration();
                 stop = high_resolution_clock::now();
-                if(countGeneration < minGenerationSize) countGeneration++;
-                reportCountGeneration++;
                 currentTime = duration_cast<microseconds>(stop - start).count();
                 totalTime += currentTime;
+
+                if(countGeneration < minGenerationSize) countGeneration++;
+                reportCountGeneration++;
                 reportGeneration();
             }
             displayBest();

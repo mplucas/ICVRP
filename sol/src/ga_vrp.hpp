@@ -30,7 +30,7 @@ std::vector<std::vector<double>> nnPopParameters
     {0.3, 0.3, 0.4}
 };
 
-bool eval_solution(MySolution &p, double &cost);
+bool eval_solution(MySolution &p, vector<double> &cost);
 
 void init_genes(MySolution& p)
 {
@@ -85,7 +85,7 @@ void init_genes(MySolution& p)
 	popCount++;
 }
 
-bool eval_solution(MySolution &p, double &cost)
+bool eval_solution(MySolution &p, vector<double> &costs)
 {
 	bool isFeasible = true; // if true accepts gene, if false rejects gene
 
@@ -212,13 +212,13 @@ bool eval_solution(MySolution &p, double &cost)
             biggestTimer = vehicleTimer;
         }
         
-        cost = biggestTimer;
+        costs[1] = biggestTimer;
     
     }
 	else if(problem.fitCriterion == 1)
 	{        
         // Adding distance to return to depot of the last vehicle
-        cost = totalDistance + problem.cost[originNode][0];
+        costs[1] = totalDistance + problem.cost[originNode][0];
 	}
 
 	if(debug)
@@ -234,6 +234,8 @@ bool eval_solution(MySolution &p, double &cost)
 			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
 		}
 	}
+
+    costs[0] = p.subRouteEnds.size() + 1;
 
     // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
 	// else cout << "NOT FEASIBLE " << popCount << " " << p.route.size() << " " << endl; //lll
@@ -421,7 +423,7 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	}
 
 	MySolution newGene;
-	double c1, c2;
+	vector<double> c1{0, 0}, c2{0, 0};
 
 	if(!eval_solution( newGene1, c1 ))
 	{
@@ -457,46 +459,6 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	// printRoute(newGene.route);
 
 	return newGene;
-}
-
-void init_variables(GA_Type& ga)
-{
-    debug = false;
-    popSize = 100;
-    isFractionalDelivery = true;
-    
-	// variables to control crossover
-	numCuts = 2;
-
-	// variables to control mutation
-	numPoints = (int)(popSize*0.05)*2;
-	
-	// globals
-	if(!isFractionalDelivery)
-	{
-		problem = readFile("entrada.txt");
-	}
-	else
-	{
-		problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
-	}
-    problem.fitCriterion = 1; // Distance
-
-	// printVrp(problem,true,false); //lll
-
-    //GA
-    ga.populationSize = popSize;
-	ga.minGenerationSize = 100;
-	ga.eliteSize = (int)((double)popSize*0.05);
-	ga.selectionType = 1;
-    ga.init_genes = init_genes;
-    ga.eval_solution = eval_solution;
-	ga.crossover = crossover;
-	ga.initialProbCross = 1;
-	ga.finalProbCross = 0.8;
-	ga.mutate = mutate;
-	ga.initialProbMut = 0;
-	ga.finalProbMut = 0.1;
 }
 
 // void batteryTests(GA_Type ga_obj, vrp &problem, string entry, int timesToRepeat, int fitCriterion, void (*resetGlobals)(), ofstream &output){
@@ -573,3 +535,43 @@ void init_variables(GA_Type& ga)
 //     cout << results;
 //     output << results;
 // }
+
+void init_variables(GA_Type& ga)
+{
+    debug = false;
+    popSize = 100;
+    isFractionalDelivery = true;
+    
+	// variables to control crossover
+	numCuts = 2;
+
+	// variables to control mutation
+	numPoints = (int)(popSize*0.05)*2;
+	
+	// globals
+	if(!isFractionalDelivery)
+	{
+		problem = readFile("entrada.txt");
+	}
+	else
+	{
+		problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
+	}
+    problem.fitCriterion = 1; // Distance
+
+	// printVrp(problem,true,false); //lll
+
+    //GA
+    ga.populationSize = popSize;
+	ga.minGenerationSize = 100;
+	ga.eliteSize = (int)((double)popSize*0.05);
+	ga.selectionType = 1;
+    ga.init_genes = init_genes;
+    ga.eval_solution = eval_solution;
+	ga.crossover = crossover;
+	ga.initialProbCross = 1;
+	ga.finalProbCross = 0.8;
+	ga.mutate = mutate;
+	ga.initialProbMut = 0;
+	ga.finalProbMut = 0.1;
+}
