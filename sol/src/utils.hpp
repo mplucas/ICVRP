@@ -10,7 +10,6 @@ typedef struct
 
 typedef struct Vehicle
 {
-
 	double timer = 0;
     int usedCapacity = 0;
     double distance = 0;
@@ -28,7 +27,6 @@ typedef struct Vehicle
 		out << endl << "}";
 		return out.str();
     }
-
 }vehicle;
 
 typedef struct Vrp
@@ -91,20 +89,45 @@ void printRoute(vector<int> route)
 	cout << "}";
 }
 
-void printRealRoute(vector<int> route, vrp problem, vector<int> breaks)
+struct MySolution
 {
-    int iBreaks = 0;
+	std::vector<int> route;
+	std::vector<int> subRouteEnds;
+	std::string to_string() const
+	{
+		std::ostringstream out;
+		int indexBreak = 0;
+		out << "{";
+		for(unsigned long i = 0;i < route.size(); i++)
+		{
+			if(indexBreak < (int)subRouteEnds.size() && subRouteEnds[indexBreak] == (int)i)
+			{
+				out << "|";
+				indexBreak++;
+			}
+			out << ( i?",":"" ) << std::setprecision(10) << route[i];
+		}
+		out << "}";
+		return out.str();
+	}
+};
+
+typedef Genetic<MySolution> GA_Type;
+
+void printRealRoute(MySolution genes, vrp problem)
+{
+    int indexBreak = 0;
     cout << "{";
-    for(int i = 0; i < (int)route.size(); i++)
+    for(unsigned long i = 0;i < genes.route.size(); i++)
     {
-        if(iBreaks < (int)breaks.size() && breaks[iBreaks] == i)
+        if(indexBreak < (int)genes.subRouteEnds.size() && genes.subRouteEnds[indexBreak] == (int)i)
         {
-            cout<<" | ";
-            iBreaks++;
+            cout << "|";
+            indexBreak++;
         }
-        cout << ( i?",":"" ) << std::setprecision(10) << problem.realNode[route[i]];
+        cout << ( i?",":"" ) << std::setprecision(10) << problem.realNode[genes.route[i]];
     }
-	cout << "}";
+    cout << "}";
 }
 
 vrp readFile(string fileName)
@@ -513,14 +536,14 @@ vector<int> fixFDRoute(vector<int> route, vrp problem)
     vector<int> testRoute;
     testRoute.push_back(route[0]);
     // bool fixed = false; //lll
-    // vector<int> breaks; //lll
+    // vector<int> subRouteEnds; //lll
 
     for(int i = 1; i < (int)route.size(); i++)
     {
         if(!addIsFeasible( testRoute, route[i], (int)testRoute.size(), problem ))
         {
             // when found partial route, fix it
-            // breaks.push_back(i); // lll
+            // subRouteEnds.push_back(i); // lll
             for(int j = testRoute.size() - 1; j >= 0; j--)
             {
                 int lastCurrentRealNodePosition = j;
@@ -556,9 +579,9 @@ vector<int> fixFDRoute(vector<int> route, vrp problem)
     // if(fixed)
     // {
     //     cout << endl << "Route before fix:"<<endl; //lll
-    //     printRealRoute(route, problem, breaks); //lll
+    //     printRealRoute(route, problem, subRouteEnds); //lll
     //     cout << endl << "Route after fix:"<<endl; //lll
-    //     printRealRoute(fixedRoute, problem, breaks); //lll
+    //     printRealRoute(fixedRoute, problem, subRouteEnds); //lll
     //     cout << endl; //lll
     // }
 
@@ -1373,103 +1396,3 @@ vector<int> k_means(vrp problem, int k)
 
 	return kMeansRoute;
 }
-
-
-struct MySolution
-{
-	std::vector<int> route;
-	std::string to_string() const
-	{
-		std::ostringstream out;
-		out << "{";
-		for(unsigned long i = 0;i < route.size(); i++)
-			out << ( i?",":"" ) << std::setprecision(10) << route[i];
-		out << "}";
-		return out.str();
-	}
-};
-
-// struct MyMiddleCost
-// {
-// 	// This is where the results of simulation
-// 	// is stored but not yet finalized.
-// 	double cost;
-// };
-
-typedef Genetic<MySolution> GA_Type;
-
-
-// void batteryTests(GA_Type ga_obj, vrp &problem, string entry, int timesToRepeat, int fitCriterion, void (*resetGlobals)(), ofstream &output){
-
-//     double avgTime = 0;
-//     double bestTime = DBL_MAX; // infinity
-//     double avgValue = 0;
-//     double bestValue = DBL_MAX;
-//     MySolution bestSolution;
-//     double samples[timesToRepeat];
-
-//     for(int i = 0; i < timesToRepeat; i++){
-    
-//         problem = readFile(entry);
-//         problem.fitCriterion = fitCriterion;
-
-//         EA::Chronometer timer;
-//         timer.tic();
-        
-//         ga_obj.solve();
-
-//         // std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
-//         double currentTime = timer.toc();
-        
-//         avgTime += currentTime;
-        
-//         bestTime = min(currentTime, bestTime);
-
-//         avgValue += ga_obj.last_generation.best_total_cost;
-
-//         if(ga_obj.last_generation.best_total_cost < bestValue){
-//             bestValue = ga_obj.last_generation.best_total_cost;
-//             bestSolution = ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes;
-//         }
-
-//         samples[i] = ga_obj.last_generation.best_total_cost;
-
-//         // reseting global variables
-//         (*resetGlobals)();
-//     }
-
-//     avgTime /= timesToRepeat;
-
-//     avgValue /= timesToRepeat;
-
-//     // calculating standard error
-//     double stdDeviation = 0;
-//     double stdError;
-	
-// 	for( int i = 0; i < timesToRepeat; i++ ){
-// 		stdDeviation += pow( samples[i] - avgValue, 2 );
-// 	}
-
-// 	stdDeviation = sqrt( stdDeviation / (timesToRepeat - 1) );
-// 	stdError = stdDeviation / sqrt(timesToRepeat);
-
-//     // printf("\nAfter %d executions using %s:\n", timesToRepeat, entry.c_str());
-// 	// printf("Average Time: %.2f seconds\n", avgTime);
-// 	// printf("Best Time: %.2f seconds\n", bestTime);
-// 	// printf("Average Value: %.2f\n", avgValue);
-// 	// printf("Best Value: %.2f\n", bestValue);
-// 	// printf("Standard Error: %.2f\n", stdError);
-// 	// printf("Exiting code\n");
-
-//     string results;
-//     results = "\nAfter " + to_string(timesToRepeat) + " executions using " + entry + ":\n";
-// 	results += "Average Time: " + to_string(avgTime) + " seconds\n";
-// 	results += "Best Time: " + to_string(bestTime) + " seconds\n";
-// 	results += "Average Value: " + to_string(avgValue) + "\n";
-// 	results += "Best Value: " + to_string(bestValue) + "\n";
-// 	results += "Standard Error: " + to_string(stdError) + "\n";
-// 	results += "Best Solution:\n" + bestSolution.to_string() + "\n";
-
-//     cout << results;
-//     output << results;
-// }
