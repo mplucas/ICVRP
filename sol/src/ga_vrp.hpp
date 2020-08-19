@@ -461,81 +461,6 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	return newGene;
 }
 
-// void batteryTests(GA_Type ga_obj, vrp &problem, string entry, int timesToRepeat, int fitCriterion, void (*resetGlobals)(), ofstream &output){
-
-//     double avgTime = 0;
-//     double bestTime = DBL_MAX; // infinity
-//     double avgValue = 0;
-//     double bestValue = DBL_MAX;
-//     MySolution bestSolution;
-//     double samples[timesToRepeat];
-
-//     for(int i = 0; i < timesToRepeat; i++){
-    
-//         problem = readFile(entry);
-//         problem.fitCriterion = fitCriterion;
-
-//         EA::Chronometer timer;
-//         timer.tic();
-        
-//         ga_obj.solve();
-
-//         // std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;
-//         double currentTime = timer.toc();
-        
-//         avgTime += currentTime;
-        
-//         bestTime = min(currentTime, bestTime);
-
-//         avgValue += ga_obj.last_generation.best_total_cost;
-
-//         if(ga_obj.last_generation.best_total_cost < bestValue){
-//             bestValue = ga_obj.last_generation.best_total_cost;
-//             bestSolution = ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes;
-//         }
-
-//         samples[i] = ga_obj.last_generation.best_total_cost;
-
-//         // reseting global variables
-//         (*resetGlobals)();
-//     }
-
-//     avgTime /= timesToRepeat;
-
-//     avgValue /= timesToRepeat;
-
-//     // calculating standard error
-//     double stdDeviation = 0;
-//     double stdError;
-	
-// 	for( int i = 0; i < timesToRepeat; i++ ){
-// 		stdDeviation += pow( samples[i] - avgValue, 2 );
-// 	}
-
-// 	stdDeviation = sqrt( stdDeviation / (timesToRepeat - 1) );
-// 	stdError = stdDeviation / sqrt(timesToRepeat);
-
-//     // printf("\nAfter %d executions using %s:\n", timesToRepeat, entry.c_str());
-// 	// printf("Average Time: %.2f seconds\n", avgTime);
-// 	// printf("Best Time: %.2f seconds\n", bestTime);
-// 	// printf("Average Value: %.2f\n", avgValue);
-// 	// printf("Best Value: %.2f\n", bestValue);
-// 	// printf("Standard Error: %.2f\n", stdError);
-// 	// printf("Exiting code\n");
-
-//     string results;
-//     results = "\nAfter " + to_string(timesToRepeat) + " executions using " + entry + ":\n";
-// 	results += "Average Time: " + to_string(avgTime) + " seconds\n";
-// 	results += "Best Time: " + to_string(bestTime) + " seconds\n";
-// 	results += "Average Value: " + to_string(avgValue) + "\n";
-// 	results += "Best Value: " + to_string(bestValue) + "\n";
-// 	results += "Standard Error: " + to_string(stdError) + "\n";
-// 	results += "Best Solution:\n" + bestSolution.to_string() + "\n";
-
-//     cout << results;
-//     output << results;
-// }
-
 void init_variables(GA_Type& ga)
 {
     debug = false;
@@ -574,4 +499,5 @@ void init_variables(GA_Type& ga)
 	ga.mutate = mutate;
 	ga.initialProbMut = 0;
 	ga.finalProbMut = 0.1;
+	ga.debug = true;
 }

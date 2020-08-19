@@ -40,9 +40,9 @@ class Genetic
         
         // Atributes
         double sumCosts, maxCost, minCost, maxSecondaryCost;
-        int countGeneration, countSameGenBest, reportCountGeneration;
+        int countGeneration, countSameGenBest;
         vector<double> lastGenBestCosts;
-        double currentTime, totalTime;
+        double currentTime;
         int countMut, countCross;
         vector<double> rankCost;
 
@@ -119,6 +119,12 @@ class Genetic
         int selectionType;  // 0: Classic, 1: By Rank
         double initialProbMut, finalProbMut;
         double initialProbCross, finalProbCross;
+
+        // Atributes for measuring
+        bool debug;
+        double totalTime;
+        int reportCountGeneration;
+        thisChromosomeType best;
 
         // Functions that the user will pass
         function<void(GeneType&)> init_genes;
@@ -236,16 +242,22 @@ class Genetic
         void displayBest()
         {
             sort(population.begin(), population.end());
-            cout
-            <<endl<<endl<<"Best solution:"
-            <<endl<<"\tCosts: { ";
-            for(int i = 0; i < (int)population.front().costs.size(); i++)
-                cout<<(i?", ":"")<< population.front().costs[i];
-            cout<<" }"
-            <<endl<<"\tChromossome:"
-            <<endl<<population.front().genes.to_string()
-            <<endl<<"Exec_time: "<<totalTime/1000000<<"s"
-            <<endl;
+            best = population.front();
+
+            if(debug)
+            {
+                cout
+                <<endl<<"Best solution:"
+                <<endl<<"Costs: { ";
+                for(int i = 0; i < (int)best.costs.size(); i++)
+                    cout<<(i?", ":"")<< best.costs[i];
+                cout<<" }"
+                <<endl<<"Chromossome:"
+                <<endl<<best.genes.to_string()
+                <<endl<<"Exec_time: "<<totalTime/1000000<<"s"
+                <<", Number of Generations: "<<reportCountGeneration
+                <<endl;
+            }
         }
 
         void reportGeneration()
@@ -284,23 +296,26 @@ class Genetic
                 lastGenBestCosts = best.costs;
             }
 
-            cout
-            <<endl<<"Generation ["<<reportCountGeneration<<"], "
-            <<"BestCosts: { ";
-            for(int i = 0; i < (int)best.costs.size(); i++)
-                cout<<(i?", ":"")<< best.costs[i];
-            cout<<" }, "
-            <<"Averages: { ";
-            for(int i = 0; i < (int)average.size(); i++)
-                cout<<(i?", ":"")<< average[i];
-            cout<<" }, "
-            <<endl<<"Crossover: Chance "<<(initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)countGeneration/(double)minGenerationSize)))
-            <<", Count "<<countCross
-            <<endl<<"Mutation: Chance "<<(initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)countGeneration/(double)minGenerationSize)))
-            <<", Count "<<countMut
-            <<endl<<"Best genes=("<<best.genes.to_string()<<")"<<", "
-            <<endl<<"Exe_time="<<currentTime/1000000<<"s"
-            <<endl;
+            if(debug)
+            {
+                cout
+                <<endl<<"Generation ["<<reportCountGeneration<<"], "
+                <<"BestCosts: { ";
+                for(int i = 0; i < (int)best.costs.size(); i++)
+                    cout<<(i?", ":"")<< best.costs[i];
+                cout<<" }, "
+                <<"Averages: { ";
+                for(int i = 0; i < (int)average.size(); i++)
+                    cout<<(i?", ":"")<< average[i];
+                cout<<" }, "
+                <<endl<<"Crossover: Chance "<<(initialProbCross + ((finalProbCross - initialProbCross) * (double)((double)countGeneration/(double)minGenerationSize)))
+                <<", Count "<<countCross
+                <<endl<<"Mutation: Chance "<<(initialProbMut + ((finalProbMut - initialProbMut) * (double)((double)countGeneration/(double)minGenerationSize)))
+                <<", Count "<<countMut
+                <<endl<<"Best genes=("<<best.genes.to_string()<<")"<<", "
+                <<endl<<"Exe_time="<<currentTime<<"s"
+                <<endl;
+            }
         }
 
         void solve()
@@ -308,15 +323,14 @@ class Genetic
             countGeneration = 0;
             countSameGenBest = 0;
             reportCountGeneration = 0;
-            lastGenBestCosts = {DBL_MAX, DBL_MAX};
+            lastGenBestCosts = vector<double>{DBL_MAX, DBL_MAX};
             totalTime = 0;
             countCross = 0;
             countMut = 0;
-
             auto start = high_resolution_clock::now();
             populate();
             auto stop = high_resolution_clock::now();
-            currentTime = duration_cast<microseconds>(stop - start).count();
+            currentTime = (double)duration_cast<microseconds>(stop - start).count()/1000000;
             totalTime += currentTime;
             reportGeneration();
             
@@ -328,7 +342,7 @@ class Genetic
                 start = high_resolution_clock::now();
                 newGeneration();
                 stop = high_resolution_clock::now();
-                currentTime = duration_cast<microseconds>(stop - start).count();
+                currentTime = (double)duration_cast<microseconds>(stop - start).count()/1000000;
                 totalTime += currentTime;
 
                 if(countGeneration < minGenerationSize) countGeneration++;

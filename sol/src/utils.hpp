@@ -114,20 +114,27 @@ struct MySolution
 
 typedef Genetic<MySolution> GA_Type;
 
-void printRealRoute(MySolution genes, vrp problem)
+string printRealRouteString(MySolution genes, vrp problem)
 {
     int indexBreak = 0;
-    cout << "{";
+    string result = "";
+    result += "{";
     for(unsigned long i = 0;i < genes.route.size(); i++)
     {
         if(indexBreak < (int)genes.subRouteEnds.size() && genes.subRouteEnds[indexBreak] == (int)i)
         {
-            cout << "|";
+            result += "|";
             indexBreak++;
         }
-        cout << ( i?",":"" ) << std::setprecision(10) << problem.realNode[genes.route[i]];
+        result += ( i?",":"" ) + to_string(problem.realNode[genes.route[i]]);
     }
-    cout << "}";
+    result += "}";
+    return result;
+}
+
+void printRealRoute(MySolution genes, vrp problem)
+{
+    cout << printRealRouteString(genes, problem);
 }
 
 vrp readFile(string fileName)
