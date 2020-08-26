@@ -57,19 +57,12 @@ class Genetic
                     maxSecondaryCost = population[i].costs[1];
             }
 
+            maxCost = 0;
+            minCost = DBL_MAX;
+
             for(int i = 0; i < (int)population.size(); i++)
             {
                 population[i].generalCost = population[i].costs[1] + (population[i].costs[0] * maxSecondaryCost);
-            }
-        }
-
-        void prepareRouletteClassic()
-        {
-            maxCost = population[0].generalCost;
-            minCost = population[0].generalCost;
-
-            for(int i = 1; i < (int)population.size(); i++)
-            {
                 if(population[i].generalCost > maxCost)
                 {
                     maxCost = population[i].generalCost;
@@ -79,7 +72,10 @@ class Genetic
                     minCost = population[i].generalCost;
                 }
             }
+        }
 
+        void prepareRouletteClassic()
+        {
             sumCosts = 0;
             for(int i = 0; i < (int)population.size(); i++)
             {
@@ -89,9 +85,6 @@ class Genetic
 
         void prepareRouletteRanking()
         {
-            maxCost = 1.1;
-            minCost = 0.9;
-
             sort(population.begin(), population.end());
             rankCost.clear();
 
@@ -174,7 +167,7 @@ class Genetic
             {
                 double currentCost = (selectionType == 0 ? population[i].generalCost : rankCost[i]);
                 rouletteProgress += (maxCost + minCost - currentCost);
-                // cout << endl << rouletteProgress << " < " << drawn; // lll
+                // cout<<endl<<currentCost<<" "<<population[i].costs[0]<<" "<<population[i].costs[1]<<" "<<(maxCost + minCost - currentCost); // lll
                 
                 if(rouletteProgress > drawn)
                 {
@@ -182,7 +175,7 @@ class Genetic
                     break;
                 }
             }
-
+            // cout<<endl;//lll
             // cout << endl << drawn << " " << choosenParent; // lll
 
             return population[choosenParent];

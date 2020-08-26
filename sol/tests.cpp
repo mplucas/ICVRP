@@ -78,3 +78,4 @@ int main()
 
     return 0;
 }
+// g++ tests.cpp -Wall -O3 -I/src -std=c++11
