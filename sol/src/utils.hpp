@@ -119,14 +119,21 @@ string printRealRouteString(MySolution genes, vrp problem)
     int indexBreak = 0;
     string result = "";
     result += "{";
+    int lastRealNode = -1;
+
     for(unsigned long i = 0;i < genes.route.size(); i++)
     {
         if(indexBreak < (int)genes.subRouteEnds.size() && genes.subRouteEnds[indexBreak] == (int)i)
         {
             result += "|";
             indexBreak++;
+            lastRealNode = -1;
         }
-        result += ( i?",":"" ) + to_string(problem.realNode[genes.route[i]]);
+        if(lastRealNode != problem.realNode[genes.route[i]])
+        {
+            result += ( i?",":"" ) + to_string(problem.realNode[genes.route[i]]);
+            lastRealNode = problem.realNode[genes.route[i]];
+        }
     }
     result += "}";
     return result;
@@ -135,6 +142,24 @@ string printRealRouteString(MySolution genes, vrp problem)
 void printRealRoute(MySolution genes, vrp problem)
 {
     cout << printRealRouteString(genes, problem);
+}
+
+void debugRealRoute(MySolution genes, vrp problem)
+{
+    int indexBreak = 0;
+    cout<<"{";
+
+    for(unsigned long i = 0;i < genes.route.size(); i++)
+    {
+        if(indexBreak < (int)genes.subRouteEnds.size() && genes.subRouteEnds[indexBreak] == (int)i)
+        {
+            cout<<"|";
+            indexBreak++;
+        }
+        cout<<( i?",":"" )<<to_string(problem.realNode[genes.route[i]])<<"-"<<genes.route[i];
+    
+    }
+    cout<<"}";
 }
 
 vrp readFile(string fileName)
@@ -241,11 +266,11 @@ vrp readFile(string fileName)
     return problem;
 }
 
-vector<int> explodeFractionalDeliverNode(int demand, int limit)
+vector<int> explodeFractionalDeliverNode(int demand, int minLimit, int maxLimit)
 {    
     vector<int> newDemands;
 
-    if(demand > limit)
+    if(demand > minLimit && demand < maxLimit)
     {
         int d1, d2, d3;
         d1 = demand / 7;
@@ -253,19 +278,19 @@ vector<int> explodeFractionalDeliverNode(int demand, int limit)
         d3 = demand * 4 / 7;
         d1 += demand - (d1 + d2 + d3);
 
-        vector<int> aux = explodeFractionalDeliverNode(d1, limit);
+        vector<int> aux = explodeFractionalDeliverNode(d1, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
         }
 
-        aux = explodeFractionalDeliverNode(d2, limit);
+        aux = explodeFractionalDeliverNode(d2, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
         }
 
-        aux = explodeFractionalDeliverNode(d3, limit);
+        aux = explodeFractionalDeliverNode(d3, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
@@ -279,7 +304,7 @@ vector<int> explodeFractionalDeliverNode(int demand, int limit)
     return newDemands;
 }
 
-vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, double u)
+vrp readAndAdaptFileFractionalDeliver(string fileName, double minLimit, double maxLimit, double l, double u)
 {    
     vrp problem = readFile(fileName);
     vrp fdProblem;
@@ -302,7 +327,7 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
     {
         int demand = l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand);
         int totalServiceTime = 0;
-        vector<int> auxDemands = explodeFractionalDeliverNode(demand, problem.capacity * limit);
+        vector<int> auxDemands = explodeFractionalDeliverNode(demand, problem.capacity * minLimit, problem.capacity * maxLimit);
         for(auto partialDemand:auxDemands)
         {
             fdProblem.realNode.push_back(i);

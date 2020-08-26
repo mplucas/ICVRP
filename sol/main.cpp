@@ -13,9 +13,11 @@ int main()
 	
 	if(isFractionalDelivery)
 	{
-		cout << endl << "RealNodes:" << endl;
+		cout<<endl<<"RealNodes:"<<endl;
 		printRealRoute(ga.population.front().genes, problem);
-		cout << endl;
+		// cout<<endl<<"DebugRealNodes:"<<endl;//lll
+		// debugRealRoute(ga.population.front().genes, problem);//lll
+		cout<<endl;
 	}
 
     return 0;

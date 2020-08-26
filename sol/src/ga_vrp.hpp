@@ -480,7 +480,7 @@ void init_variables(GA_Type& ga)
 	}
 	else
 	{
-		problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
+		problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.75, 0.5, 1);
 	}
     problem.fitCriterion = 1; // Distance
 

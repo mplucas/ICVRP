@@ -115,7 +115,7 @@ class Genetic
 
         // Atributes for measuring
         bool debug;
-        double totalTime;
+        double totalTime, setupTime = 0;
         int reportCountGeneration;
         thisChromosomeType best;
 
@@ -232,27 +232,6 @@ class Genetic
             prepareRoulette();
         }
 
-        void displayBest()
-        {
-            sort(population.begin(), population.end());
-            best = population.front();
-
-            if(debug)
-            {
-                cout
-                <<endl<<"Best solution:"
-                <<endl<<"Costs: { ";
-                for(int i = 0; i < (int)best.costs.size(); i++)
-                    cout<<(i?", ":"")<< best.costs[i];
-                cout<<" }"
-                <<endl<<"Chromossome:"
-                <<endl<<best.genes.to_string()
-                <<endl<<"Exec_time: "<<totalTime/1000000<<"s"
-                <<", Number of Generations: "<<reportCountGeneration
-                <<endl;
-            }
-        }
-
         void reportGeneration()
         {
             vector<double> average {0, 0};
@@ -311,13 +290,34 @@ class Genetic
             }
         }
 
+        void displayBest()
+        {
+            sort(population.begin(), population.end());
+            best = population.front();
+
+            if(debug)
+            {
+                cout
+                <<endl<<"Best solution:"
+                <<endl<<"Costs: { ";
+                for(int i = 0; i < (int)best.costs.size(); i++)
+                    cout<<(i?", ":"")<< best.costs[i];
+                cout<<" }"
+                <<endl<<"Chromossome:"
+                <<endl<<best.genes.to_string()
+                <<endl<<"Exec_time: "<<totalTime/1000000<<"s (Setup: "<<setupTime<<"s)"
+                <<", Number of Generations: "<<reportCountGeneration
+                <<endl;
+            }
+        }
+
         void solve()
         {
             countGeneration = 0;
             countSameGenBest = 0;
             reportCountGeneration = 0;
             lastGenBestCosts = vector<double>{DBL_MAX, DBL_MAX};
-            totalTime = 0;
+            totalTime = setupTime;
             countCross = 0;
             countMut = 0;
             auto start = high_resolution_clock::now();
