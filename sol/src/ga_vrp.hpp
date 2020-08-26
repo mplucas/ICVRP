@@ -4,7 +4,7 @@
 // global vrp problem variable
 vrp problem;
 
-// variable for fractional delivery
+// variable for split delivery
 bool isSplitDelivery;
 
 // easy debug variable
@@ -466,6 +466,7 @@ void init_variables(GA_Type& ga)
     debug = false;
     popSize = 100;
     isSplitDelivery = true;
+	double timeSpentOnAdaptation = 0;
     
 	// variables to control crossover
 	numCuts = 2;
@@ -480,7 +481,7 @@ void init_variables(GA_Type& ga)
 	}
 	else
 	{
-		problem = readAndAdaptFileSplitDelivery("entrada.txt", 0.5, 0.75, 0.5, 1, 0.3);
+		problem = readAndAdaptFileSplitDelivery("entrada.txt", 0.5, 0.75, 0.5, 1, 0.3, timeSpentOnAdaptation);
 	}
     problem.fitCriterion = 1; // Distance
 
@@ -499,5 +500,6 @@ void init_variables(GA_Type& ga)
 	ga.mutate = mutate;
 	ga.initialProbMut = 0;
 	ga.finalProbMut = 0.1;
+	ga.setupTime = timeSpentOnAdaptation;
 	ga.debug = true;
 }

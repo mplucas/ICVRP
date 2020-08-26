@@ -87,11 +87,13 @@ void batteryTestsSplitDelivery(GA_Type ga_obj, vrp &problem, string entry, int t
     vector<double> bestValue {DBL_MAX, DBL_MAX};
     MySolution bestSolution;
     double samples[timesToRepeat];
+    double timeSpentOnAdaptation = 0;
 
     for(int i = 0; i < timesToRepeat; i++)
     {    
-        problem = readAndAdaptFileSplitDelivery(entry, 0.5, 0.75, l, u, 0.3);
+        problem = readAndAdaptFileSplitDelivery(entry, 0.5, 0.75, l, u, 0.3, timeSpentOnAdaptation);
         problem.fitCriterion = 1;
+        ga_obj.setupTime = timeSpentOnAdaptation;
 
         ga_obj.solve();
 
