@@ -266,7 +266,7 @@ vrp readFile(string fileName)
     return problem;
 }
 
-vector<int> explodeFractionalDeliverNode(int demand, int minLimit, int maxLimit)
+vector<int> explodeSplitDeliveryNode(int demand, int minLimit, int maxLimit)
 {    
     vector<int> newDemands;
 
@@ -278,19 +278,19 @@ vector<int> explodeFractionalDeliverNode(int demand, int minLimit, int maxLimit)
         d3 = demand * 4 / 7;
         d1 += demand - (d1 + d2 + d3);
 
-        vector<int> aux = explodeFractionalDeliverNode(d1, minLimit, maxLimit);
+        vector<int> aux = explodeSplitDeliveryNode(d1, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
         }
 
-        aux = explodeFractionalDeliverNode(d2, minLimit, maxLimit);
+        aux = explodeSplitDeliveryNode(d2, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
         }
 
-        aux = explodeFractionalDeliverNode(d3, minLimit, maxLimit);
+        aux = explodeSplitDeliveryNode(d3, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
@@ -304,7 +304,7 @@ vector<int> explodeFractionalDeliverNode(int demand, int minLimit, int maxLimit)
     return newDemands;
 }
 
-vrp readAndAdaptFileFractionalDeliver(string fileName, double minLimit, double maxLimit, double l, double u)
+vrp readAndAdaptFileSplitDelivery(string fileName, double minLimit, double maxLimit, double l, double u)
 {    
     vrp problem = readFile(fileName);
     vrp fdProblem;
@@ -327,7 +327,7 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double minLimit, double m
     {
         int demand = l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand);
         int totalServiceTime = 0;
-        vector<int> auxDemands = explodeFractionalDeliverNode(demand, problem.capacity * minLimit, problem.capacity * maxLimit);
+        vector<int> auxDemands = explodeSplitDeliveryNode(demand, problem.capacity * minLimit, problem.capacity * maxLimit);
         for(auto partialDemand:auxDemands)
         {
             fdProblem.realNode.push_back(i);

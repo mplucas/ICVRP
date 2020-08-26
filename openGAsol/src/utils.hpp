@@ -223,7 +223,7 @@ vrp readFile(string fileName){
     return problem;
 }
 
-vector<int> explodeFractionalDeliverNode(int demand, int limit){
+vector<int> explodeSplitDeliveryNode(int demand, int limit){
     
     vector<int> newDemands;
 
@@ -235,17 +235,17 @@ vector<int> explodeFractionalDeliverNode(int demand, int limit){
         d3 = demand * 4 / 7;
         d1 += demand - (d1 + d2 + d3);
 
-        vector<int> aux = explodeFractionalDeliverNode(d1, limit);
+        vector<int> aux = explodeSplitDeliveryNode(d1, limit);
         for(auto newDemand:aux){
             newDemands.push_back(newDemand);
         }
 
-        aux = explodeFractionalDeliverNode(d2, limit);
+        aux = explodeSplitDeliveryNode(d2, limit);
         for(auto newDemand:aux){
             newDemands.push_back(newDemand);
         }
 
-        aux = explodeFractionalDeliverNode(d3, limit);
+        aux = explodeSplitDeliveryNode(d3, limit);
         for(auto newDemand:aux){
             newDemands.push_back(newDemand);
         }
@@ -256,7 +256,7 @@ vector<int> explodeFractionalDeliverNode(int demand, int limit){
     return newDemands;
 }
 
-vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, double u){
+vrp readAndAdaptFileSplitDelivery(string fileName, double limit, double l, double u){
     
     vrp problem = readFile(fileName);
     vrp fdProblem;
@@ -276,7 +276,7 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
 
     for(int i = 0; i < problem.numNodes; i++){
         int demand = (int)(l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand));
-        vector<int> auxDemands = explodeFractionalDeliverNode(demand, (int)(problem.capacity * limit));
+        vector<int> auxDemands = explodeSplitDeliveryNode(demand, (int)(problem.capacity * limit));
         for(auto partialDemand:auxDemands){
 
             fdProblem.realNode.push_back(i);
@@ -318,7 +318,7 @@ vrp readAndAdaptFileFractionalDeliver(string fileName, double limit, double l, d
     return fdProblem;
 }
 
-vrp readFileFractionalDeliver(string fileName, double limit){
+vrp readFileSplitDelivery(string fileName, double limit){
     
     vrp problem;
     problem.sourceName = fileName;
@@ -395,7 +395,7 @@ vrp readFileFractionalDeliver(string fileName, double limit){
             aux_serviceTime = stoi(line);
 
             // fractional delivery tratative
-            vector<int> auxDemands = explodeFractionalDeliverNode(aux_demand, (int)(problem.capacity * limit));
+            vector<int> auxDemands = explodeSplitDeliveryNode(aux_demand, (int)(problem.capacity * limit));
             for(auto partialDemand:auxDemands){
 
                 problem.realNode.push_back(aux_realNode);

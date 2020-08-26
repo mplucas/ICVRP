@@ -5,7 +5,7 @@
 vrp problem;
 
 // variable for fractional delivery
-bool isFractionalDelivery = false;
+bool isSplitDelivery = false;
 
 // easy debug variable
 bool debug;
@@ -98,7 +98,7 @@ void init_genes(MySolution& p,const std::function<double(void)> &rnd01)
 		// p.route = randomPop( problem, rnd01 );
     }
 
-	if(isFractionalDelivery){
+	if(isSplitDelivery){
 		p.route = fixFDRoute(p.route, problem);
 	}
 	popCount++;
@@ -331,7 +331,7 @@ MySolution mutate(
 
 	mutCount++;
 
-	if(isFractionalDelivery){
+	if(isSplitDelivery){
 		mutatedGene.route = fixFDRoute(mutatedGene.route, problem);
 	}
 
@@ -526,7 +526,7 @@ MySolution crossover(
 
 	crossCount++;
 
-	if(isFractionalDelivery){
+	if(isSplitDelivery){
 		newGene.route = fixFDRoute(newGene.route, problem);
 	}
 
@@ -614,7 +614,7 @@ int main()
 	test = false;
 	generationSize = 100;
 	popSize = 100;
-	isFractionalDelivery = true;
+	isSplitDelivery = true;
 
 	// variables to control crossover and crossover
 	numCuts = 2;
@@ -653,10 +653,10 @@ int main()
 		initialProbMut = 0;
 		finalProbMut = 0.1;
 
-		if(!isFractionalDelivery){
+		if(!isSplitDelivery){
 			problem = readFile("entrada.txt");
 		}else{
-			problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
+			problem = readAndAdaptFileSplitDelivery("entrada.txt", 0.5, 0.5, 1);
 		}
 		problem.fitCriterion = 1; // Distance
 
@@ -673,7 +673,7 @@ int main()
 		MyMiddleCost c;
 		ga_obj.eval_solution( ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes, c );
 		
-		if(isFractionalDelivery){
+		if(isSplitDelivery){
 			cout << endl << "RealNodes:" << endl;
 			printRealRoute(ga_obj.last_generation.chromosomes[ga_obj.last_generation.best_chromosome_index].genes.route, problem);
 		}
@@ -687,7 +687,7 @@ int main()
 
 		// testAddIsFeasible(perfectTest.route, problem);
 
-		// problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.5, 1);
+		// problem = readAndAdaptFileSplitDelivery("entrada.txt", 0.5, 0.5, 1);
 		// printVrp(problem, true, true);
 		// ### END CLASSIC TEST
 	}else{

@@ -11,7 +11,7 @@ int main()
 
     ga.solve();
 	
-	if(isFractionalDelivery)
+	if(isSplitDelivery)
 	{
 		cout<<endl<<"RealNodes:"<<endl;
 		printRealRoute(ga.population.front().genes, problem);

@@ -5,7 +5,7 @@
 vrp problem;
 
 // variable for fractional delivery
-bool isFractionalDelivery;
+bool isSplitDelivery;
 
 // easy debug variable
 bool debug;
@@ -78,7 +78,7 @@ void init_genes(MySolution& p)
         p.route = randomPopImproved( problem, random01 );
     }
 
-	if(isFractionalDelivery)
+	if(isSplitDelivery)
 	{
 		p.route = fixFDRoute(p.route, problem);
 	}
@@ -283,7 +283,7 @@ MySolution mutate(const MySolution& baseGene)
 		i += 2;
 	}
 
-	if(isFractionalDelivery)
+	if(isSplitDelivery)
 	{
 		mutatedGene.route = fixFDRoute(mutatedGene.route, problem);
 	}
@@ -444,7 +444,7 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 		}
 	}
 
-	if(isFractionalDelivery)
+	if(isSplitDelivery)
 	{
 		newGene.route = fixFDRoute(newGene.route, problem);
 	}
@@ -465,7 +465,7 @@ void init_variables(GA_Type& ga)
 {
     debug = false;
     popSize = 100;
-    isFractionalDelivery = true;
+    isSplitDelivery = true;
     
 	// variables to control crossover
 	numCuts = 2;
@@ -474,13 +474,13 @@ void init_variables(GA_Type& ga)
 	numPoints = (int)(popSize*0.05)*2;
 	
 	// globals
-	if(!isFractionalDelivery)
+	if(!isSplitDelivery)
 	{
 		problem = readFile("entrada.txt");
 	}
 	else
 	{
-		problem = readAndAdaptFileFractionalDeliver("entrada.txt", 0.5, 0.75, 0.5, 1);
+		problem = readAndAdaptFileSplitDelivery("entrada.txt", 0.5, 0.75, 0.5, 1);
 	}
     problem.fitCriterion = 1; // Distance
 
