@@ -51,8 +51,8 @@ typedef struct Vrp
 	vector<double> readyTime;	    // ready times of nodes
 	vector<double> dueTime;	        // due times of nodes
 	vector<double> serviceTime;     // service times of nodes
-	vector<vector<double>> cost;    // matrix with the costs between all the nodes
 	vector<location> locations;     // array with the location of each node:
+	vector<vector<double>> cost;    // matrix with the costs between all the nodes
 }vrp;
 
 typedef struct
@@ -198,6 +198,9 @@ vrp readFile(string fileName)
         {
             location auxLocation;
 
+            // realNode
+            problem.realNode.push_back(problem.numNodes);
+
             // reading x coord
             fileStream >> line;
             auxLocation.x = stoi(line);
@@ -266,11 +269,28 @@ vrp readFile(string fileName)
     return problem;
 }
 
-vector<int> explodeSplitDeliveryNode(int demand, int minLimit, int maxLimit)
+vector<int> explodeDemand(int demand)
+{    
+    vector<int> newDemands;
+    
+    int d1, d2, d3;
+    d1 = demand / 7;
+    d2 = demand * 2 / 7;
+    d3 = demand * 4 / 7;
+    d1 += demand - (d1 + d2 + d3);
+
+    newDemands.push_back(d1);
+    newDemands.push_back(d2);
+    newDemands.push_back(d3);
+
+    return newDemands;
+}
+
+vector<int> explodeDemandIfExceedLimits(int demand, int minLimit, int maxLimit)
 {    
     vector<int> newDemands;
 
-    if(demand > minLimit && demand < maxLimit)
+    if(demand >= minLimit && demand <= maxLimit)
     {
         int d1, d2, d3;
         d1 = demand / 7;
@@ -278,19 +298,19 @@ vector<int> explodeSplitDeliveryNode(int demand, int minLimit, int maxLimit)
         d3 = demand * 4 / 7;
         d1 += demand - (d1 + d2 + d3);
 
-        vector<int> aux = explodeSplitDeliveryNode(d1, minLimit, maxLimit);
+        vector<int> aux = explodeDemandIfExceedLimits(d1, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
         }
 
-        aux = explodeSplitDeliveryNode(d2, minLimit, maxLimit);
+        aux = explodeDemandIfExceedLimits(d2, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
         }
 
-        aux = explodeSplitDeliveryNode(d3, minLimit, maxLimit);
+        aux = explodeDemandIfExceedLimits(d3, minLimit, maxLimit);
         for(auto newDemand:aux)
         {
             newDemands.push_back(newDemand);
@@ -304,7 +324,112 @@ vector<int> explodeSplitDeliveryNode(int demand, int minLimit, int maxLimit)
     return newDemands;
 }
 
-vrp readAndAdaptFileSplitDelivery(string fileName, double minLimit, double maxLimit, double l, double u)
+bool minimalExplodedFractionIsReachable(vrp problem, double mi, double minLimit, double maxLimit, int &explosionsNeeded)
+{
+    int minToBeExploded = mi * problem.numNodes;
+    int explosionsCount = 0;
+
+    for(int i = 0; i < problem.numNodes; i++)
+    {
+        if(problem.demand[i] > minLimit && problem.demand[i] < maxLimit)
+        {
+            explosionsCount++;
+        }
+    }
+
+    explosionsNeeded = minToBeExploded - explosionsCount;
+
+    return explosionsCount >= minToBeExploded;
+}
+
+// Driver function to sort the vector elements 
+// by second element of pairs 
+bool sortbysec(const pair<int,int> &a, 
+              const pair<int,int> &b) 
+{ 
+    return (a.second < b.second); 
+}
+
+// gets the biggest nodes with demands < minLimit
+vector<int> getNodesWithDemandBelowLimit(vrp problem, double minLimit, int &explosionsNeeded)
+{
+    vector<int> nodesToExplode;
+    vector<pair<int,double>> nodesDemands;
+    
+    for(int i = 0; i < problem.numNodes; i++)
+    {
+        if(problem.demand[i] < minLimit)
+        {
+            pair<int,double> nodeDemand;
+            nodeDemand.first = problem.realNode[i];
+            nodeDemand.second = problem.demand[i];
+            nodesDemands.push_back(nodeDemand);
+        }
+    }
+
+    sort(nodesDemands.begin(), nodesDemands.end(), sortbysec);
+    
+    for(int i = (int)nodesDemands.size() - 1; i >= 0; i--)
+    {
+        nodesToExplode.push_back(nodesDemands[i].first);
+        explosionsNeeded--;
+        if(explosionsNeeded <= 0)
+        {
+            break;
+        }
+    }
+
+    return nodesToExplode;
+}
+
+// gets the smallest nodes with demands > maxLimit
+vector<int> getNodesWithDemandAboveLimit(vrp problem, double maxLimit, int &explosionsNeeded)
+{
+    vector<int> nodesToExplode;
+    vector<pair<int,double>> nodesDemands;
+    
+    for(int i = 0; i < problem.numNodes; i++)
+    {
+        if(problem.demand[i] > maxLimit)
+        {
+            pair<int,double> nodeDemand;
+            nodeDemand.first = problem.realNode[i];
+            nodeDemand.second = problem.demand[i];
+            nodesDemands.push_back(nodeDemand);
+        }
+    }
+
+    sort(nodesDemands.begin(), nodesDemands.end(), sortbysec);
+    
+    for(int i = 0; i < (int)nodesDemands.size(); i++)
+    {
+        nodesToExplode.push_back(nodesDemands[i].first);
+        explosionsNeeded--;
+        if(explosionsNeeded <= 0)
+        {
+            break;
+        }
+    }
+
+    return nodesToExplode;
+}
+
+vector<int> getNodesToFillMinimalExplodedFraction(vrp problem, double minLimit, double maxLimit, int explosionsNeeded)
+{
+    vector<int> nodesToExplode;
+
+    nodesToExplode = getNodesWithDemandBelowLimit(problem, minLimit, explosionsNeeded);
+
+    if(explosionsNeeded > 0)
+    {
+        vector<int> otherNodesToExplode = getNodesWithDemandAboveLimit(problem, maxLimit, explosionsNeeded);
+        nodesToExplode.insert(nodesToExplode.end(), otherNodesToExplode.begin(), otherNodesToExplode.end());
+    }
+
+    return nodesToExplode;
+}
+
+vrp readAndAdaptFileSplitDelivery(string fileName, double minLimitPercentage, double maxLimitPercentage, double l, double u, double mi)
 {    
     vrp problem = readFile(fileName);
     vrp fdProblem;
@@ -313,6 +438,19 @@ vrp readAndAdaptFileSplitDelivery(string fileName, double minLimit, double maxLi
     fdProblem.numVehicles = problem.numVehicles;
     fdProblem.capacity = problem.capacity;
     fdProblem.numNodes = 0;
+    fdProblem.maxX = problem.maxX;
+    fdProblem.minX = problem.minX;
+    fdProblem.maxY = problem.maxY;
+    fdProblem.minY = problem.minY;
+
+    vector<int> additionalExplosions;
+    int explosionsNeeded = 0;
+    int additionalExplosionsIndex = 0;
+    if(!minimalExplodedFractionIsReachable(problem, mi, problem.capacity * minLimitPercentage, problem.capacity * maxLimitPercentage, explosionsNeeded))
+    {
+        additionalExplosions = getNodesToFillMinimalExplodedFraction(problem, problem.capacity * minLimitPercentage, problem.capacity * maxLimitPercentage, explosionsNeeded);
+        sort(additionalExplosions.begin(), additionalExplosions.end());
+    }
 
     int maxDemand = 0;
     int minDemand = INT_MAX;
@@ -323,19 +461,26 @@ vrp readAndAdaptFileSplitDelivery(string fileName, double minLimit, double maxLi
         if(demand > maxDemand) maxDemand = demand;
     }
 
+    int countExploded = 0; //lll
     for(int i = 0; i < problem.numNodes; i++)
     {
         int demand = l*problem.capacity + problem.capacity * ((u - l)/(maxDemand - minDemand)) * (problem.demand[i] - minDemand);
+        // int demand = problem.demand[i]; //lll
         int totalServiceTime = 0;
-        vector<int> auxDemands = explodeSplitDeliveryNode(demand, problem.capacity * minLimit, problem.capacity * maxLimit);
+        vector<int> auxDemands = explodeDemandIfExceedLimits(demand, problem.capacity * minLimitPercentage, problem.capacity * maxLimitPercentage);
+
+        if(auxDemands.size() == 1 && additionalExplosionsIndex < (int)additionalExplosions.size() && additionalExplosions[additionalExplosionsIndex] == problem.realNode[i])
+        {
+            auxDemands = explodeDemand(demand);
+            additionalExplosionsIndex++;
+        }
+
+        if(auxDemands.size() > 1) countExploded++;//lll
+
         for(auto partialDemand:auxDemands)
         {
             fdProblem.realNode.push_back(i);
             fdProblem.locations.push_back(problem.locations[i]);
-            fdProblem.maxX = problem.maxX;
-            fdProblem.minX = problem.minX;
-            fdProblem.maxY = problem.maxY;
-            fdProblem.minY = problem.minY;
             fdProblem.demand.push_back( partialDemand );
             fdProblem.readyTime.push_back( problem.readyTime[i] );
             fdProblem.dueTime.push_back( problem.dueTime[i] );
@@ -345,6 +490,7 @@ vrp readAndAdaptFileSplitDelivery(string fileName, double minLimit, double maxLi
         }
         fdProblem.serviceTime[fdProblem.serviceTime.size()-auxDemands.size()] += problem.serviceTime[i] - totalServiceTime;
     }
+    cout<<endl<<problem.numNodes<<" "<<countExploded<<" "<<fdProblem.numNodes<<endl;//lll
 
     // resizing matrix
     fdProblem.cost.resize(fdProblem.numNodes);

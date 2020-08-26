@@ -90,7 +90,7 @@ void batteryTestsSplitDelivery(GA_Type ga_obj, vrp &problem, string entry, int t
 
     for(int i = 0; i < timesToRepeat; i++)
     {    
-        problem = readAndAdaptFileSplitDelivery(entry, 0.5, l, u);
+        problem = readAndAdaptFileSplitDelivery(entry, 0.5, 0.75, l, u, 0.3);
         problem.fitCriterion = 1;
 
         ga_obj.solve();
