@@ -71,7 +71,7 @@ void init_genes(MySolution& p)
     }
 	else if(popCount < (int)(popSize * 0.7))
 	{
-        p.route = k_means( problem, (int)(popSize*0.05) + (int)(random01() * (popSize*0.08)) );
+        p.route = k_means( problem, 2 + (int)(random01() * (popSize*0.05)) );
     }
 	else 
 	{
@@ -80,7 +80,7 @@ void init_genes(MySolution& p)
 
 	if(isSplitDelivery)
 	{
-		p.route = fixFDRoute(p.route, problem);
+		p.route = fixSplitDeliveryRoute(p.route, problem);
 	}
 	popCount++;
 }
@@ -107,139 +107,146 @@ bool eval_solution(MySolution &p, vector<double> &costs)
 	// clear subroute ends marking
 	p.subRouteEnds.clear();
     
-	for(unsigned int i = 0; i < p.route.size(); i++)
-	{		
-		int destinyNode = p.route[i];
+	if((int)p.route.size() == problem.numNodes - 1)
+	{
+		for(unsigned int i = 0; i < p.route.size(); i++)
+		{		
+			// cout<<endl<<i<<" "<<p.route.size()<<" "<<problem.numNodes; //lll
+			int destinyNode = p.route[i];
 
-		if( vehicleTimer + problem.cost[originNode][destinyNode] <= problem.dueTime[destinyNode]
-			&& vehicleUsedCapacity + problem.demand[destinyNode] <= problem.capacity )
-		{
-			// add cost and demand to vehicle
-			vehicleUsedCapacity += problem.demand[destinyNode];
-			vehicleTimer += problem.cost[originNode][destinyNode];
-
-			// if vehicle arrives earlier than start of TW, it waits until the start
-			if( vehicleTimer < problem.readyTime[destinyNode] )
+			if( vehicleTimer + problem.cost[originNode][destinyNode] <= problem.dueTime[destinyNode]
+				&& vehicleUsedCapacity + problem.demand[destinyNode] <= problem.capacity )
 			{
-				vehicleTimer = problem.readyTime[destinyNode];
-			}
+				// add cost and demand to vehicle
+				vehicleUsedCapacity += problem.demand[destinyNode];
+				vehicleTimer += problem.cost[originNode][destinyNode];
 
-			// adds service time
-			vehicleTimer += problem.serviceTime[destinyNode];
-
-			if(problem.fitCriterion == 0)
-			{
-                // save fit if it is bigger
-                if( vehicleTimer > biggestTimer )
+				// if vehicle arrives earlier than start of TW, it waits until the start
+				if( vehicleTimer < problem.readyTime[destinyNode] )
 				{
-                    biggestTimer = vehicleTimer;
-                }
-            }
-			else if(problem.fitCriterion == 1)
-			{
-				// add distance
-                totalDistance += problem.cost[originNode][destinyNode];
-            }
+					vehicleTimer = problem.readyTime[destinyNode];
+				}
 
-			if(debug)
-			{
-                vehicleDebugger[choosenVehicle].timer = vehicleTimer;
-                vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
-				vehicleDebugger[choosenVehicle].distance += problem.cost[originNode][destinyNode];
-				vehicleDebugger[choosenVehicle].route.push_back(destinyNode);
+				// adds service time
+				vehicleTimer += problem.serviceTime[destinyNode];
+
+				if(problem.fitCriterion == 0)
+				{
+					// save fit if it is bigger
+					if( vehicleTimer > biggestTimer )
+					{
+						biggestTimer = vehicleTimer;
+					}
+				}
+				else if(problem.fitCriterion == 1)
+				{
+					// add distance
+					totalDistance += problem.cost[originNode][destinyNode];
+				}
+
+				if(debug)
+				{
+					vehicleDebugger[choosenVehicle].timer = vehicleTimer;
+					vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
+					vehicleDebugger[choosenVehicle].distance += problem.cost[originNode][destinyNode];
+					vehicleDebugger[choosenVehicle].route.push_back(destinyNode);
+				}
+
+				// update next origin
+				originNode = destinyNode;
 			}
+			else
+			{   
+				// send vehicle back to depot
+				vehicleTimer += problem.cost[originNode][0];
 
-			// update next origin
-			originNode = destinyNode;
+				if(problem.fitCriterion == 0)
+				{
+					// save fit if it is bigger
+					if( vehicleTimer > biggestTimer )
+					{
+						biggestTimer = vehicleTimer;
+					}
+				}
+				else if(problem.fitCriterion == 1)
+				{
+					totalDistance += problem.cost[originNode][0];
+				}
+
+				if(debug)
+				{
+					vehicleDebugger[choosenVehicle].timer = vehicleTimer;
+					vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
+					vehicle newVehicle;
+					vehicleDebugger.push_back(newVehicle);
+				}
+
+				// try to assign this node to the next vehicle route
+				choosenVehicle++;
+				
+				if(choosenVehicle >= problem.numVehicles)
+				{
+					isFeasible = false;
+					break;
+				}
+
+				// resets variables of vehicle
+				vehicleTimer = 0;
+				vehicleUsedCapacity = 0;
+				originNode = 0;
+
+				// mark subroute end
+				p.subRouteEnds.push_back(i);
+
+				// returns to same client
+				i--;
+			}
 		}
-		else
-		{   
+
+		// finalizing fit
+		if(problem.fitCriterion == 0)
+		{
 			// send vehicle back to depot
 			vehicleTimer += problem.cost[originNode][0];
 
-			if(problem.fitCriterion == 0)
+			// save fit if it is bigger
+			if( vehicleTimer > biggestTimer )
 			{
-                // save fit if it is bigger
-                if( vehicleTimer > biggestTimer )
-				{
-                    biggestTimer = vehicleTimer;
-                }
-            }
-			else if(problem.fitCriterion == 1)
-			{
-				totalDistance += problem.cost[originNode][0];
+				biggestTimer = vehicleTimer;
 			}
-
-			if(debug)
-			{
-				vehicleDebugger[choosenVehicle].timer = vehicleTimer;
-				vehicleDebugger[choosenVehicle].usedCapacity = vehicleUsedCapacity;
-				vehicle newVehicle;
-				vehicleDebugger.push_back(newVehicle);
-			}
-
-            // try to assign this node to the next vehicle route
-            choosenVehicle++;
-            
-			if(choosenVehicle == problem.numVehicles)
-			{
-				isFeasible = false;
-				break;
-			}
-
-            // resets variables of vehicle
-			vehicleTimer = 0;
-			vehicleUsedCapacity = 0;
-			originNode = 0;
-
-			// mark subroute end
-			p.subRouteEnds.push_back(i);
-
-			// returns to same client
-			i--;
-		}
-	}
-
-	// finalizing fit
-    if(problem.fitCriterion == 0)
-	{
-        // send vehicle back to depot
-        vehicleTimer += problem.cost[originNode][0];
-
-        // save fit if it is bigger
-        if( vehicleTimer > biggestTimer )
-		{
-            biggestTimer = vehicleTimer;
-        }
-        
-        costs[1] = biggestTimer;
-    
-    }
-	else if(problem.fitCriterion == 1)
-	{        
-        // Adding distance to return to depot of the last vehicle
-        costs[1] = totalDistance + problem.cost[originNode][0];
-	}
-
-	if(debug)
-	{
-		if(originNode != 0)
-		{
-			vehicleDebugger.back().timer += problem.cost[originNode][0];
-			vehicleDebugger.back().distance += problem.cost[originNode][0];
-		}
+			
+			costs[1] = biggestTimer;
 		
-		for(unsigned int i = 0; i < vehicleDebugger.size(); i++)
-		{
-			cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
 		}
+		else if(problem.fitCriterion == 1)
+		{        
+			// Adding distance to return to depot of the last vehicle
+			costs[1] = totalDistance + problem.cost[originNode][0];
+		}
+
+		if(debug)
+		{
+			if(originNode != 0)
+			{
+				vehicleDebugger.back().timer += problem.cost[originNode][0];
+				vehicleDebugger.back().distance += problem.cost[originNode][0];
+			}
+			
+			for(unsigned int i = 0; i < vehicleDebugger.size(); i++)
+			{
+				cout << "\nVehicle " << i << ":\n" << vehicleDebugger[i].to_string();
+			}
+		}
+
+		costs[0] = p.subRouteEnds.size() + 1;
+	}
+	else
+	{
+		isFeasible = false;
 	}
 
-    costs[0] = p.subRouteEnds.size() + 1;
-
-    // if(isFeasible) cout << "FEASIBLE " << popCount << endl; //lll
-	// else cout << "NOT FEASIBLE " << popCount << " " << p.route.size() << " " << endl; //lll
-    // cout << cost << endl; //lll
+    if(isFeasible) cout<<"FEASIBLE "<<popCount<<" "<<p.route.size()<<" "<<problem.numNodes<<endl; //lll
+	else cout<<"NOT FEASIBLE "<<popCount<<" "<<p.route.size()<<" "<<problem.numNodes<<endl; //lll
 
 	return isFeasible;
 }
@@ -285,7 +292,7 @@ MySolution mutate(const MySolution& baseGene)
 
 	if(isSplitDelivery)
 	{
-		mutatedGene.route = fixFDRoute(mutatedGene.route, problem);
+		mutatedGene.route = fixSplitDeliveryRoute(mutatedGene.route, problem);
 	}
 
 	// cout<<endl<<"Points:"<<endl;
@@ -425,6 +432,12 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 	MySolution newGene;
 	vector<double> c1{0, 0}, c2{0, 0};
 
+	if(isSplitDelivery)
+	{
+		newGene1.route = fixSplitDeliveryRoute(newGene1.route, problem);
+		newGene2.route = fixSplitDeliveryRoute(newGene2.route, problem);
+	}
+
 	if(!eval_solution( newGene1, c1 ))
 	{
 		newGene = newGene2;
@@ -442,11 +455,6 @@ MySolution crossover(const MySolution& gene1, const MySolution& gene2)
 		{
 			newGene = newGene2;
 		}
-	}
-
-	if(isSplitDelivery)
-	{
-		newGene.route = fixFDRoute(newGene.route, problem);
 	}
 
 	// cout<<endl<<"CUTS:"<<endl;
@@ -482,6 +490,7 @@ void init_variables(GA_Type& ga)
 	else
 	{
 		problem = readAndAdaptFileSplitDelivery("entrada.txt", 0.5, 0.75, 0.5, 1, 0.3, timeSpentOnAdaptation);
+		problem.numVehicles = problem.numNodes;
 	}
     problem.fitCriterion = 1; // Distance
 

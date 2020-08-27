@@ -720,7 +720,7 @@ void testAddIsFeasible(vector<int> route, vrp problem)
     }
 }
 
-vector<int> fixFDRoute(vector<int> route, vrp problem)
+vector<int> fixSplitDeliveryRoute(vector<int> route, vrp problem)
 {
     vector<int> fixedRoute;
     vector<int> testRoute;
@@ -1079,7 +1079,6 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
                     destinationIndex = j;
                 }
             }
-
         }
 
         if( destinationCost != DBL_MAX ) // if found a node to add
@@ -1088,11 +1087,77 @@ bool nearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight
             routedNodes[destinationIndex] = true;
             timer = max( timer + problem.cost[originNode][destinationIndex], problem.readyTime[destinationIndex] ) + problem.serviceTime[destinationIndex];
             originNode = destinationIndex;
-
         }
         else
         {
+            vehicleRouteStart = (int)newPop.size();
+            timer = 0;
+            originNode = 0;
 
+            vehiclesUsed++;
+            if(vehiclesUsed > problem.numVehicles)
+            {
+                isFeasible = false;
+                break;
+            }
+
+            // returns to same node
+            i--;
+        }
+
+    }    
+
+    return isFeasible;
+}
+
+// applyes nearestNeighbor in subroutes
+bool subRouteNearestNeighborPop( vector<int> &newPop, vrp problem, double distanceWeight, double timeWeight, double urgencyWeight, vector<int> subRoute )
+{
+    bool isFeasible = true;
+    vector<bool> routedNodes( problem.numNodes, false );
+    int originNode = 0;
+    int destinationIndex;
+    double destinationCost;
+    double timer = 0;
+    int vehicleRouteStart = 0;
+    int vehiclesUsed = 0;
+
+    routedNodes[0] = true;
+
+    for( int i = 0; i < (int)subRoute.size(); i++ )
+    {
+        destinationCost = DBL_MAX; // infinity
+        
+        vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
+        vector<int> :: const_iterator last = newPop.end();
+        vector<int> testRoute(first, last);
+        
+        for( int j = 0; j < (int)subRoute.size(); j++ )
+        {        
+            if( !routedNodes[subRoute[j]] && addIsFeasible( testRoute, subRoute[j], (int)testRoute.size(), problem ) )
+            {                
+                // the time difference between the completion of service at originNode and the beginning of service at subRoute[j]
+                double time = max( problem.cost[originNode][subRoute[j]], problem.readyTime[subRoute[j]] - timer );
+                double urgency = problem.dueTime[subRoute[j]] - ( timer + problem.cost[originNode][subRoute[j]] );
+                double currentCost = distanceWeight * problem.cost[originNode][subRoute[j]] + timeWeight * time + urgencyWeight * urgency;
+
+                if( currentCost < destinationCost )
+                {
+                    destinationCost = currentCost;
+                    destinationIndex = subRoute[j];
+                }
+            }
+        }
+
+        if( destinationCost != DBL_MAX ) // if found a node to add
+        {
+            newPop.push_back( destinationIndex );
+            routedNodes[destinationIndex] = true;
+            timer = max( timer + problem.cost[originNode][destinationIndex], problem.readyTime[destinationIndex] ) + problem.serviceTime[destinationIndex];
+            originNode = destinationIndex;
+        }
+        else
+        {
             vehicleRouteStart = (int)newPop.size();
             timer = 0;
             originNode = 0;
@@ -1182,181 +1247,6 @@ void solomonInsertion1Injection( vector<int> &newPop, int vehicleRouteStart, vec
             }
         }
     }
-
-    // inserting nodes using c1 and c2
-    // for( int i = 1; i < problem.numNodes; i++ ){
-
-    //     if( !routedNodes[i] ){
-    //         int positionToAdd = -1;
-    //         double minC1 = DBL_MAX; // infinity
-    //         double timer = 0;
-
-    //         for( int j = vehicleRouteStart; j <= (int)newPop.size(); j++ ){
-        
-    //             if( j == vehicleRouteStart ){
-    //                 previousNode = 0;
-    //             }else{
-    //                 previousNode = newPop[j-1];
-    //             }
-    //             if( j == (int)newPop.size() ){
-    //                 nextNode = 0;
-    //             }else{
-    //                 nextNode = newPop[j];
-    //             }
-            
-    //             if( addIsFeasible( testRoute, i, j - vehicleRouteStart, problem ) ){
-                    
-    //                 double oldBegin = max(timer + problem.cost[previousNode][nextNode], problem.readyTime[nextNode]);
-    //                 double newBegin = max(timer + problem.cost[previousNode][i], problem.readyTime[i]);
-    //                 newBegin = max(newBegin + problem.cost[i][nextNode], problem.readyTime[nextNode]);
-    //                 double c1 = a1 * (problem.cost[previousNode][i] + problem.cost[i][nextNode] - mi * problem.cost[previousNode][nextNode])
-    //                             + a2 * (newBegin - oldBegin);
-
-    //                 if( c1 < minC1 ){
-    //                     positionToAdd = j;
-    //                     minC1 = c1;
-    //                 }
-    //                 // if(j == (int)newPop.size()) cout << "\n ultimo " << j << " | escolhido " << positionToAdd; // lll
-    //             } //else if(j == (int)newPop.size()) cout << "\n ultimo rejected " << j; // lll
-    //             // updating timer
-    //             timer = max(timer + problem.cost[previousNode][nextNode], problem.readyTime[nextNode]) + problem.serviceTime[nextNode];
-    //         }
-
-    //         // if(positionToAdd == (int)newPop.size()) cout << "\n adicionando na ultima posição " << i; // lll
-
-    //         if( positionToAdd != -1 ){ // if found a feasible position
-    //             int nodeToAdd = -1;
-    //             double maxC2 = 0;
-
-    //             for( int j = 1; j < problem.numNodes; j++ ){
-
-    //                 if( !routedNodes[j] && addIsFeasible( testRoute, j, positionToAdd - vehicleRouteStart, problem ) ){
-    //                     double c2 = lambda * problem.cost[0][j] - minC1;
-
-    //                     if( c2 > maxC2 ){
-    //                         nodeToAdd = j;
-    //                         maxC2 = c2;
-    //                     }
-    //                 }
-    //             }
-
-    //             if(nodeToAdd != -1){ // if found a feasible node
-
-    //                 // inserting node
-    //                 newPop.insert(newPop.begin() + positionToAdd, nodeToAdd);
-    //                 routedNodes[nodeToAdd] = true;
-
-    //                 // updating test route
-    //                 first = newPop.begin() + vehicleRouteStart;
-    //                 last = newPop.end();
-    //                 testRoute = vector<int>(first, last);
-    //             }
-    //         }
-    //     }
-    // }
-    // cout << "\nvirou " << newPop.size() << endl; //lll
-    // printRoute(newPop); // lll
-
-    // // inserting nodes using c1
-    // for( int i = vehicleRouteStart; i <= (int)newPop.size(); i++ ){
-        
-    //     double minCost = DBL_MAX; // infinity
-    //     int choosenToAdd = -1;
-    //     if( i == vehicleRouteStart ){
-    //         previousNode = 0;
-    //     }else{
-    //         previousNode = newPop[i-1];
-    //     }
-    //     if( i == (int)newPop.size() ){
-    //         nextNode = 0;
-    //     }else{
-    //         nextNode = newPop[i];
-    //     }
-
-    //     vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
-    //     vector<int> :: const_iterator last = newPop.end();
-    //     vector<int> testRoute(first, last);
-    //     // finding node to add
-    //     for( int j = 1; j < problem.numNodes; j++ ){
-        
-    //         if( !routedNodes[j] && addIsFeasible( testRoute, j, i - vehicleRouteStart, problem ) ){
-                
-    //             double oldBegin = max(timer + problem.cost[previousNode][nextNode], problem.readyTime[nextNode]);
-    //             double newBegin = max(timer + problem.cost[previousNode][j], problem.readyTime[j]);
-    //             newBegin = max(newBegin + problem.cost[j][nextNode], problem.readyTime[nextNode]);
-    //             double c1 = a1 * (problem.cost[previousNode][j] + problem.cost[j][nextNode] - mi * problem.cost[previousNode][nextNode])
-    //                         + a2 * (newBegin - oldBegin);
-
-    //             if( c1 < minCost ){
-    //                 choosenToAdd = j;
-    //                 minCost = c1;
-    //             }
-    //         }
-    //     }
-
-    //     if( choosenToAdd != -1 ){ // if found a node to add
-
-    //         // inserting node
-    //         newPop.insert(newPop.begin() + i, choosenToAdd);
-    //         routedNodes[choosenToAdd] = true;
-        
-    //         // updating timer
-    //         timer += problem.cost[previousNode][choosenToAdd] + problem.serviceTime[choosenToAdd];
-    //         // returning i to test insertion before node added
-    //         i--;
-    //     }
-    // }
-
-    // // inserting nodes using c2
-    // for( int i = vehicleRouteStart; i <= (int)newPop.size(); i++ ){
-        
-    //     double minCost = DBL_MAX; // infinity
-    //     int choosenToAdd = -1;
-    //     if( i == vehicleRouteStart ){
-    //         previousNode = 0;
-    //     }else{
-    //         previousNode = newPop[i-1];
-    //     }
-    //     if( i == (int)newPop.size() ){
-    //         nextNode = 0;
-    //     }else{
-    //         nextNode = newPop[i];
-    //     }
-
-    //     vector<int> :: const_iterator first = newPop.begin() + vehicleRouteStart;
-    //     vector<int> :: const_iterator last = newPop.end();
-    //     vector<int> testRoute(first, last);
-    //     // finding node to add
-    //     for( int j = 1; j < problem.numNodes; j++ ){
-        
-    //         if( !routedNodes[j] && addIsFeasible( testRoute, j, i - vehicleRouteStart, problem ) ){
-                
-    //             double oldBegin = max(timer + problem.cost[previousNode][nextNode], problem.readyTime[nextNode]);
-    //             double newBegin = max(timer + problem.cost[previousNode][j], problem.readyTime[j]);
-    //             newBegin = max(newBegin + problem.cost[j][nextNode], problem.readyTime[nextNode]);
-    //             double c1 = a1 * (problem.cost[previousNode][j] + problem.cost[j][nextNode] - mi * problem.cost[previousNode][nextNode])
-    //                         + a2 * (newBegin - oldBegin);
-    //             double c2 = lambda * problem.cost[0][j] - c1;
-
-    //             if( c2 < minCost ){
-    //                 choosenToAdd = j;
-    //                 minCost = c2;
-    //             }
-    //         }
-    //     }
-
-    //     if( choosenToAdd != -1 ){ // if found a node to add
-
-    //         // inserting node
-    //         newPop.insert(newPop.begin() + i, choosenToAdd);
-    //         routedNodes[choosenToAdd] = true;
-        
-    //         // updating timer
-    //         timer += problem.cost[previousNode][choosenToAdd] + problem.serviceTime[choosenToAdd];
-    //         // returning i to test insertion before node added
-    //         i--;
-    //     }
-    // }
 }
 
 bool solomonInsertion1( vector<int> &newPop, vrp problem, int initType, double mi, double lambda, double a1, double a2 )
@@ -1463,7 +1353,7 @@ void plotKMeans( vector<k_cluster> clusters, vrp problem )
 
 	for(unsigned int i = 0; i < clusters.size(); i++)
     {	
-		printf("cluster %i:\n", clusters[i].id);
+		printf("cluster %i - %c:\n", clusters[i].id, 65 + clusters[i].id);
 		for(unsigned int j = 0; j < clusters[i].assigneds.size(); j++)
         {
 			printf(" %i", clusters[i].assigneds[j]);
@@ -1480,15 +1370,15 @@ void plotKMeans( vector<k_cluster> clusters, vrp problem )
         {
 			if(matrix[i][j] == -1)
             {
-				printf(" ");
+				printf("  ");
 			}
             else if(matrix[i][j] > 64)
             {
-				printf("%c", matrix[i][j]);
+				printf("%c%c", matrix[i][j], matrix[i][j]);
 			}
             else
             {
-				printf("%i", matrix[i][j]);
+				printf("%02i", matrix[i][j]);
 			}
 		}
 		printf("|\n");
@@ -1513,7 +1403,7 @@ vector<int> k_means(vrp problem, int k)
 	}
 	// creating list of nodes to order by x position
 	vector<location> clusterClients = problem.locations;
-	sort(clusterClients.begin(), clusterClients.end(), xLocationComparator);
+	// sort(clusterClients.begin(), clusterClients.end(), xLocationComparator);
     double step = 0.00001;
     double errorMargin = step;
     double lastStdDeviation = 0;
@@ -1549,6 +1439,8 @@ vector<int> k_means(vrp problem, int k)
             clusters[choosen_cluster_id].assigneds.push_back(i);
         }
 
+        if(!(stdDeviation < lastStdDeviation - errorMargin || stdDeviation > lastStdDeviation + errorMargin)) break;
+
         int avgValue = 0;
         for( int i = 0; i < k; i++ )
         {
@@ -1575,14 +1467,19 @@ vector<int> k_means(vrp problem, int k)
     }while(stdDeviation < lastStdDeviation - errorMargin || stdDeviation > lastStdDeviation + errorMargin);
     
 	// uniting all the cluster in one route
-    vector<int> kMeansRoute = clusters[0].assigneds;
-	for( int i = 1; i < k; i++ )
+    vector<int> kMeansRoute;
+    // int sizeDebug = 0; //lll
+	for( int i = 0; i < k; i++ )
     {
-		for( unsigned int j = 0; j < clusters[i].assigneds.size(); j++ )
-        {
-			kMeansRoute.push_back( clusters[i].assigneds[j] );
-		}
+        vector<int> clusterWithNearestNeighbor;
+        subRouteNearestNeighborPop(clusterWithNearestNeighbor, problem, 0.4, 0.4, 0.2, clusters[i].assigneds);
+        kMeansRoute.insert(kMeansRoute.end(), clusterWithNearestNeighbor.begin(), clusterWithNearestNeighbor.end());
+        // sizeDebug+=clusters[i].assigneds.size();//lll
 	}
+    
+    // cout<<sizeDebug<<endl;//lll
+    // printRoute(kMeansRoute); //lll
+    // plotKMeans(clusters, problem); //lll
 
 	return kMeansRoute;
 }

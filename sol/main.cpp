@@ -15,8 +15,8 @@ int main()
 	{
 		cout<<endl<<"RealNodes:"<<endl;
 		printRealRoute(ga.population.front().genes, problem);
-		cout<<endl<<"DebugRealNodes:"<<endl;//lll
-		debugRealRoute(ga.population.front().genes, problem);//lll
+		// cout<<endl<<"DebugRealNodes:"<<endl;//lll
+		// debugRealRoute(ga.population.front().genes, problem);//lll
 		cout<<endl;
 	}
 
