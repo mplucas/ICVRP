@@ -245,8 +245,8 @@ bool eval_solution(MySolution &p, vector<double> &costs)
 		isFeasible = false;
 	}
 
-    if(isFeasible) cout<<"FEASIBLE "<<popCount<<" "<<p.route.size()<<" "<<problem.numNodes<<endl; //lll
-	else cout<<"NOT FEASIBLE "<<popCount<<" "<<p.route.size()<<" "<<problem.numNodes<<endl; //lll
+    // if(isFeasible) cout<<"FEASIBLE "<<popCount<<" "<<p.route.size()<<" "<<problem.numNodes<<endl; //lll
+	// else cout<<"NOT FEASIBLE "<<popCount<<" "<<p.route.size()<<" "<<problem.numNodes<<endl; //lll
 
 	return isFeasible;
 }

@@ -77,17 +77,21 @@
 //     output << results;
 // }
 
+void resetGlobals()
+{
+    popCount = 0;
+}
 
-void batteryTestsSplitDelivery(GA_Type ga_obj, vrp &problem, string entry, int timesToRepeat, ofstream &output, double l, double u)
+void batteryTestsSplitDelivery(GA_Type ga_obj, vrp &problem, string entry, int timesToRepeat, ofstream &output, double l, double u, void (*resetGlobals)())
 {
     double avgTime = 0;
     double bestTime = DBL_MAX; // infinity
     vector<double> avgValue {0, 0};
-    double avgGeneralValue = 0;
     vector<double> bestValue {DBL_MAX, DBL_MAX};
     MySolution bestSolution;
-    double samples[timesToRepeat];
+    double samples[timesToRepeat][2] = {0, 0};
     double timeSpentOnAdaptation = 0;
+    double avgNumberOfGenerations = 0;
 
     for(int i = 0; i < timesToRepeat; i++)
     {    
@@ -103,7 +107,6 @@ void batteryTestsSplitDelivery(GA_Type ga_obj, vrp &problem, string entry, int t
 
         avgValue[0] += ga_obj.best.costs[0];
         avgValue[1] += ga_obj.best.costs[1];
-        avgGeneralValue += ga_obj.best.generalCost;
 
         if(ga_obj.best.costs[0] < bestValue[0] || (ga_obj.best.costs[0] == bestValue[0] && ga_obj.best.costs[1] < bestValue[1])){
             bestValue[0] = ga_obj.best.costs[0];
@@ -111,25 +114,31 @@ void batteryTestsSplitDelivery(GA_Type ga_obj, vrp &problem, string entry, int t
             bestSolution = ga_obj.best.genes;
         }
 
-        samples[i] = ga_obj.best.generalCost;
+        samples[i][0] = ga_obj.best.costs[0];
+        samples[i][1] = ga_obj.best.costs[1];
+        avgNumberOfGenerations += ga_obj.reportCountGeneration;
+        (*resetGlobals)();
     }
 
     avgTime /= timesToRepeat;
+    avgNumberOfGenerations /= timesToRepeat;
 
     avgValue[0] /= timesToRepeat;
     avgValue[1] /= timesToRepeat;
-    avgGeneralValue /= timesToRepeat;
 
     // calculating standard error
-    double stdDeviation = 0;
-    double stdError;
+    double stdDeviation[2] = {0, 0};
+    double stdError[2] = {0, 0};
 	
 	for( int i = 0; i < timesToRepeat; i++ ){
-		stdDeviation += pow( samples[i] - avgGeneralValue, 2 );
+		stdDeviation[0] += pow( samples[i][0] - avgValue[0], 2 );
+        stdDeviation[1] += pow( samples[i][1] - avgValue[1], 2 );
 	}
 
-	stdDeviation = sqrt( stdDeviation / (timesToRepeat - 1) );
-	stdError = stdDeviation / sqrt(timesToRepeat);
+	stdDeviation[0] = sqrt( stdDeviation[0] / (timesToRepeat - 1) );
+    stdDeviation[1] = sqrt( stdDeviation[1] / (timesToRepeat - 1) );
+	stdError[0] = stdDeviation[0] / sqrt(timesToRepeat);
+    stdError[1] = stdDeviation[1] / sqrt(timesToRepeat);
 
     string results;
     results = "\nAfter " + to_string(timesToRepeat) + " executions using " + entry + ":\n";
@@ -147,7 +156,14 @@ void batteryTestsSplitDelivery(GA_Type ga_obj, vrp &problem, string entry, int t
         results += (i?", ":"") + to_string(bestValue[i]);
     }
     results += " }\n";
-	results += "Standard Error: " + to_string(stdError) + "\n";
+    results += "Standard Error: { ";
+    for(int i = 0; i < 2; i++)
+    {
+        results += (i?", ":"") + to_string(stdError[i]);
+    }
+    results += " }\n";
+    results += "Average number of generations: " + to_string(avgNumberOfGenerations) + "\n";
+    results += "Size of population: " + to_string(problem.numNodes) + "\n";
 	results += "Best Solution:\n" + bestSolution.to_string() + "\n";
     results += "RealNodes:\n";
 	results += printRealRouteString(ga_obj.best.genes, problem) + "\n";
@@ -165,6 +181,7 @@ int main()
     // globals
     debug = false;
     popSize = 100;
+    popCount = 0;
     
 	// variables to control crossover
 	numCuts = 2;
@@ -192,13 +209,21 @@ int main()
     // split delivery battery tests
     isSplitDelivery = true;	
     string instancesBasePath = "";
-    vector<string> instances {"rc101"};
+    vector<string> instances 
+    {
+        "c101", "c102", "c103", "c104", "c105", "c106", "c107", "c108", "c109",
+        "c201", "c202", "c203", "c204", "c205", "c206", "c207", "c208",
+        "r101", "r102", "r103", "r104", "r105", "r106", "r107", "r108", "r109", "r110", "r111", "r112",
+        "r201", "r202", "r203", "r204", "r205", "r206", "r207", "r208", "r209", "r210", "r211",
+        "rc101", "rc102", "rc103", "rc104", "rc105", "rc106", "rc107", "rc108",
+        "rc201", "rc202", "rc203", "rc204", "rc205", "rc206", "rc207", "rc208",
+    };
     vector<vector<double>> splitParameters
     {
         {0.01, 0.5},
-        // {0.02, 1.0},
-        // {0.50, 1.0},
-        // {0.70, 1.0},
+        {0.02, 1.0},
+        {0.50, 1.0},
+        {0.70, 1.0},
     };
 
     for(auto instance:instances)
@@ -222,7 +247,8 @@ int main()
             cout << results;
             outputTests << results;
 
-            batteryTestsSplitDelivery(ga, problem, "../instances/solomon100/" + instance + ".txt", timesToTest, outputTests, splitParameter[0], splitParameter[1]);
+            // batteryTestsSplitDelivery(ga, problem, "entrada.txt", timesToTest, outputTests, splitParameter[0], splitParameter[1], resetGlobals); //lll
+            batteryTestsSplitDelivery(ga, problem, "../instances/solomon100/" + instance + ".txt", timesToTest, outputTests, splitParameter[0], splitParameter[1], resetGlobals);
 
             outputTests.close();
         }
