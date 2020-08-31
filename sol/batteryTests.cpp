@@ -96,6 +96,7 @@ void batteryTestsSplitDelivery(GA_Type ga_obj, vrp &problem, string entry, int t
     for(int i = 0; i < timesToRepeat; i++)
     {    
         problem = readAndAdaptFileSplitDelivery(entry, 0.5, 0.75, l, u, 0.3, timeSpentOnAdaptation);
+        problem.numVehicles = problem.numNodes;
         problem.fitCriterion = 1;
         ga_obj.setupTime = timeSpentOnAdaptation;
 
@@ -204,7 +205,7 @@ int main()
 	ga.finalProbMut = 0.1;
 	ga.debug = debug;
 
-    int timesToTest = 2;
+    int timesToTest = 10;
     
     // split delivery battery tests
     isSplitDelivery = true;	
